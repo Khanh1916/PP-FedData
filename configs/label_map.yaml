@@ -1,0 +1,54 @@
+# Label mapping: directory names → scenario codes and attack types
+# Scenario directories → 5-letter codes
+scenarios:
+  "Basic Connect Flooding": BCF
+  "Connect Flooding with WILL payload": WILL
+  "Delayed Connect Flooding": DELAYED
+  "Invalid Subscription Flooding": INVALID
+  "SYN TCP Flooding": SYN
+
+# Attack type subdirectories
+attack_types: ["DoS", "DDoS"]
+
+# Normal data
+normal:
+  scenario: NORMAL
+  attack_type: NONE
+  csv_dir_key: normal_csv_dir   # relative to raw_root
+
+# File prefix → scenario (for cross-checking)
+file_prefixes:
+  BF1: BCF
+  WILL: WILL
+  Delay: DELAYED
+  Sub: INVALID
+  SYN: SYN
+
+# Class mapping (6-class mode)
+class6:
+  NORMAL: NORMAL
+  BCF_DoS: BCF
+  BCF_DDoS: BCF
+  WILL_DoS: WILL
+  WILL_DDoS: WILL
+  DELAYED_DoS: DELAYED
+  DELAYED_DDoS: DELAYED
+  INVALID_DoS: INVALID
+  INVALID_DDoS: INVALID
+  SYN_DoS: SYN
+  SYN_DDoS: SYN
+
+# Expected row counts for verification (from spec)
+expected_counts:
+  total: 59624826
+  NORMAL: 45580102
+  BCF_DoS: 5825026
+  BCF_DDoS: 6455848
+  WILL_DoS: 114474
+  WILL_DDoS: 156055
+  DELAYED_DoS: 291988
+  DELAYED_DDoS: 309554
+  INVALID_DoS: 109150
+  INVALID_DDoS: 181190
+  SYN_DoS: 103828
+  SYN_DDoS: 497611
