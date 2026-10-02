@@ -1,0 +1,40 @@
+# Data (large, not committed)
+data/inventory/
+data/interim/
+data/processed/
+data/partitions/
+
+# Artifacts
+artifacts/*/
+
+# Results (generated)
+results/*.csv
+results/figures/
+results/reports/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Pytest
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+/PP-FedData_Implementation_Spec.md
