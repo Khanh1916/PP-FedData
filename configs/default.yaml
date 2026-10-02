@@ -1,0 +1,59 @@
+seeds: [0, 1, 2]
+paths:
+  raw_root: "C:/Users/Lenovo legion 5/Downloads/data/DoS-DDoS-MQTT-IoT_Dataset"
+  normal_csv_dir: "NormalData/CSV_Extracted_Split"
+  work_dir: "./data"
+label_mode: "6class"
+split:
+  test_groups_per_subclass: 1
+  val_groups_per_subclass: 1
+  fallback_block_split: {n_blocks: 10, gap_rows: 1000}
+quota:
+  NORMAL:    [60000, 2000, 5000]
+  BCF:       [20000, 2000, 5000]
+  DELAYED:   [3000,  2000, 5000]
+  SYN:       [3000,  2000, 5000]
+  INVALID:   [1500,  2000, 5000]
+  WILL:      [1000,  2000, 5000]
+quota_11class:
+  NORMAL:        [60000, 2000, 5000]
+  BCF_DoS:       [10000, 1000, 2500]
+  BCF_DDoS:      [10000, 1000, 2500]
+  DELAYED_DoS:   [1500,  1000, 2500]
+  DELAYED_DDoS:  [1500,  1000, 2500]
+  SYN_DoS:       [1500,  1000, 2500]
+  SYN_DDoS:      [1500,  1000, 2500]
+  INVALID_DoS:   [750,   1000, 2500]
+  INVALID_DDoS:  [750,   1000, 2500]
+  WILL_DoS:      [500,   1000, 2500]
+  WILL_DDoS:     [500,   1000, 2500]
+train_sampling:
+  max_rows_per_stream: null
+preprocess:
+  multi_value: {message_type: first+count, numeric_multi: sum}
+  categorical_top_k: 10
+  log1p_skew_threshold: 2.0
+  clip_sigma: 5
+cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
+       lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false}
+fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
+dp: {epsilons: [1, 5, 10], delta: 1.0e-5, max_grad_norm: 1.0}
+secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 8.0}
+generate: {target_per_class: 20000}
+eval:
+  rf: {n_estimators: 200}
+  mlp: {hidden: [128, 64], max_iter: 100, early_stopping: true}
+  bootstrap: 1000
+tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100}
+thresholds:
+  c2st_auc_max: 0.95
+  dup_rate_max: 0.01
+  dcr_ratio_min: 0.5
+  mia_auc_max: 0.55
+  overhead_ratio_max: 3.0
+  seed_std_max: 0.02
+  leakage_gap_flag: 0.05
+compute:
+  artifacts_dir: "./artifacts"
+  checkpoint_every_rounds: 5
+  budget_hours: null
