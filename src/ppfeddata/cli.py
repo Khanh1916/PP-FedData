@@ -58,9 +58,24 @@ def main(argv: list[str] | None = None) -> None:
 
     logger.info("Command: %s", args.command)
 
-    # Dispatch to subcommands (implemented in later phases)
+    from ppfeddata.utils import load_config
+
+    def cmd_inventory(a):
+        from ppfeddata.data.inventory import run_inventory
+        c = load_config(a.config)
+        result = run_inventory(c)
+        if result["verification_errors"]:
+            logger.error("Verification FAILED")
+            sys.exit(1)
+        logger.info("Inventory complete. Groups per subclass:")
+        print(result["group_counts_df"].to_string(index=False))
+        if result["low_group_warnings"]:
+            for w in result["low_group_warnings"]:
+                logger.warning(w)
+
+    # Dispatch to subcommands
     dispatch = {
-        # Will be populated as phases are implemented
+        "inventory": cmd_inventory,
     }
     handler = dispatch.get(args.command)
     if handler is None:
