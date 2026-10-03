@@ -31,7 +31,10 @@ def build_parser() -> argparse.ArgumentParser:
     p_h.add_argument("--decisions-only", action="store_true",
                      help="Skip streaming; rebuild feature_decisions.yaml and heatmap from cached CSVs")
     # Phase 3
-    sub.add_parser("sample", help="Group-split and sample data")
+    p_s = sub.add_parser("sample", help="Group-split and sample data")
+    p_s.add_argument("--label-mode", choices=["6class", "11class"], default=None,
+                     help="Override label_mode from the config (output goes to data/interim/<mode>/)")
+    p_s.add_argument("--no-cache", action="store_true", help="Ignore the pass-A scan cache")
     # Phase 4
     sub.add_parser("preprocess", help="Parse multi-value cells and preprocess features")
     # Phase 5
@@ -87,10 +90,23 @@ def main(argv: list[str] | None = None) -> None:
             for col, reason in result["suspects"]:
                 logger.warning("  %s: %s", col, reason)
 
+    def cmd_sample(a):
+        from ppfeddata.data.split_sample import QuotaError, run_sample
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        try:
+            m = run_sample(c, use_cache=not a.no_cache)
+        except QuotaError as e:
+            logger.error("STOP: %s", e)
+            raise SystemExit(2)
+        logger.info("rows=%s peak_rss_gb=%s", m["rows"], m["peak_rss_gb"])
+
     # Dispatch to subcommands
     dispatch = {
         "inventory": cmd_inventory,
         "harmonize": cmd_harmonize,
+        "sample": cmd_sample,
     }
     handler = dispatch.get(args.command)
     if handler is None:

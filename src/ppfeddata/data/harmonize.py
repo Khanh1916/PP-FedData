@@ -588,8 +588,8 @@ def generate_feature_decisions(
             dec[col]["format_note"] = "Normal uses numeric codes, Attack uses text; parser maps text to code."
     apply_user_overrides(dec, hcfg.get("user_overrides") or {})
     if hcfg.get("row_filters"):
-        dec["_row_filters"] = {"normal_only": hcfg["row_filters"],
-                               "note": "Applied in Phase 3 sampling to Normal rows only."}
+        dec["_row_filters"] = {"all_sources": hcfg["row_filters"],
+                               "note": "Applied in Phase 3 sampling to Normal and Attack rows (keeps only listed values)."}
     if hcfg.get("g1_log"):
         dec["_g1"] = hcfg["g1_log"]
     return dec
@@ -744,7 +744,7 @@ def write_g1_report(decisions: dict, presence_df: pd.DataFrame, cfg: dict[str, A
             if "g1_decision" in d:
                 L.append(f"  - decision: {d['g1_decision']}")
     if "_row_filters" in decisions:
-        L.append(f"- Normal row filter for Phase 3: {decisions['_row_filters']['normal_only']}")
+        L.append(f"- Row filter for Phase 3 (all sources): {decisions['_row_filters']['all_sources']}")
     L.append("")
     L.append("## Not SUSPECT but needs the parser (Phase 4) to handle")
     for col, d in decisions.items():
