@@ -25,7 +25,11 @@ def build_parser() -> argparse.ArgumentParser:
     # Phase 1
     sub.add_parser("inventory", help="Scan and inventory raw data files")
     # Phase 2
-    sub.add_parser("harmonize", help="Harmonize schema and audit formats")
+    p_h = sub.add_parser("harmonize", help="Harmonize schema and audit formats")
+    p_h.add_argument("--recompute", action="store_true",
+                     help="Redo all streaming statistics instead of using cached CSVs")
+    p_h.add_argument("--decisions-only", action="store_true",
+                     help="Skip streaming; rebuild feature_decisions.yaml and heatmap from cached CSVs")
     # Phase 3
     sub.add_parser("sample", help="Group-split and sample data")
     # Phase 4
@@ -73,9 +77,20 @@ def main(argv: list[str] | None = None) -> None:
             for w in result["low_group_warnings"]:
                 logger.warning(w)
 
+    def cmd_harmonize(a):
+        from ppfeddata.data.harmonize import run_harmonize
+        c = load_config(a.config)
+        result = run_harmonize(c, recompute=a.recompute, decisions_only=a.decisions_only)
+        logger.info("Harmonize complete.")
+        if result["suspects"]:
+            logger.warning("SUSPECT columns found:")
+            for col, reason in result["suspects"]:
+                logger.warning("  %s: %s", col, reason)
+
     # Dispatch to subcommands
     dispatch = {
         "inventory": cmd_inventory,
+        "harmonize": cmd_harmonize,
     }
     handler = dispatch.get(args.command)
     if handler is None:
