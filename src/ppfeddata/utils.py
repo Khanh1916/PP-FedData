@@ -70,6 +70,17 @@ def config_hash(cfg: dict[str, Any]) -> str:
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()[:12]
 
 
+def git_commit() -> str | None:
+    """Current git commit hash, or None outside a repository."""
+    import subprocess
+
+    try:
+        return subprocess.run(["git", "rev-parse", "HEAD"], capture_output=True, text=True, check=True,
+                              cwd=Path(__file__).resolve().parents[2]).stdout.strip()
+    except Exception:
+        return None
+
+
 def setup_logging(level: str = "INFO") -> logging.Logger:
     """Configure and return the ppfeddata root logger."""
     logger = logging.getLogger("ppfeddata")

@@ -51,6 +51,7 @@ secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 8.0}
 generate: {target_per_class: 20000}
 eval:
   rf: {n_estimators: 200}
+  smote: {k_neighbors: 5}
   mlp: {hidden: [128, 64], max_iter: 100, early_stopping: true}
   bootstrap: 1000
 tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100}
@@ -73,6 +74,7 @@ leakage:
   figures_dir: "./results/figures"
 compute:
   artifacts_dir: "./artifacts"
+  runs_csv: "./results/runs.csv"   # Colab: a path on Drive
   checkpoint_every_rounds: 5
   budget_hours: null
 harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT flags (user decides at G1)

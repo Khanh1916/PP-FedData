@@ -93,6 +93,7 @@ class Preprocessor:
         self.core_blocks: list[dict[str, Any]] = []
         self.diag_blocks: list[dict[str, Any]] = []
         self.fitted = False
+        self.fit_info: dict[str, Any] = {}
 
     # ---- fit ---------------------------------------------------------------------------------
     def fit(self, df: pd.DataFrame) -> "Preprocessor":
@@ -104,6 +105,7 @@ class Preprocessor:
         self.core_blocks = self._layout([c for c, _ in self.core_spec])
         self.diag_blocks = self._layout(self.diag_cols)
         self.fitted = True
+        self.fit_info = {"split": "train", "n_rows": int(len(df))}   # recorded so later phases can verify
         return self
 
     def _fit_column(self, s: pd.Series, col: str, action: str) -> dict[str, Any]:
@@ -284,6 +286,7 @@ class Preprocessor:
         return {
             "n_features": int(sum(b["width"] for b in self.core_blocks)),
             "n_na_flags": int(n_flags),
+            "fit": dict(self.fit_info),
             "settings": {"categorical_top_k": self.top_k, "log1p_skew_threshold": self.skew_thr,
                          "clip_sigma": self.clip, "na_flag_range": [self.na_lo, self.na_hi],
                          "ultra_sparse_fix": self.ultra_fix, "numeric_scale": self.scales,

@@ -43,7 +43,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_c = sub.add_parser("check", help="Leakage and label reliability checks")
     p_c.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     # Phase 6
-    sub.add_parser("baseline", help="Run baseline evaluations")
+    p_b = sub.add_parser("baseline", help="Run baseline evaluations (B0, B1a, B1b) and write the G3 report")
+    p_b.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_b.add_argument("--configs", nargs="+", default=None, help="subset of B0-rf B0-mlp B1a-rf B1b-rf B1b-mlp")
+    p_b.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_b.add_argument("--no-resume", action="store_true", help="re-run runs that are already in results/runs.csv")
     # Phase 7
     sub.add_parser("tune", help="Optuna hyperparameter tuning for CVAE")
     # Phase 8-10
@@ -124,6 +128,15 @@ def main(argv: list[str] | None = None) -> None:
         r = run_leakage(c)
         logger.info("reference macro-F1 on val: %.4f", r["results"]["reference"]["macro_f1"][0])
 
+    def cmd_baseline(a):
+        from ppfeddata.eval.baselines import run_baselines, write_g3_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_baselines(c, a.configs, a.seeds, resume=not a.no_resume)
+        gate = write_g3_report(c)
+        logger.info("G3 checks: %s", gate)
+
     # Dispatch to subcommands
     dispatch = {
         "inventory": cmd_inventory,
@@ -131,6 +144,7 @@ def main(argv: list[str] | None = None) -> None:
         "sample": cmd_sample,
         "preprocess": cmd_preprocess,
         "check": cmd_check,
+        "baseline": cmd_baseline,
     }
     handler = dispatch.get(args.command)
     if handler is None:

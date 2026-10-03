@@ -74,3 +74,16 @@ Chưa phải lệch spec, là điều Phase 4 phải xử lý (số liệu đo t
 | 5.4 | Ngưỡng ở `thresholds` | Thêm 3 ngưỡng heuristic (cần người dùng chốt): `single_feature_f1_flag=0.9`, `na_only_f1_flag=0.5`, `dos_ddos_f1_flag=0.6`; khối `leakage` (cây, số fold, đường dẫn) | `default.yaml` Xác nhận ở G2. | ĐÃ DUYỆT |
 | 5.5 | B0 kỳ vọng không ≈ 1,000 (G3) | Đã thấy sớm: RF toàn bộ đặc trưng đạt macro-F1 val 0,3946 (không trọng số), 0,4420 (cân bằng lớp). Chia ngẫu nhiên theo dòng trong train pool cũng chỉ 0,4756. Không phải rò rỉ; các lớp tấn công khó phân biệt ở mức từng packet | `leakage_report.md` (đã vào danh sách hạn chế của spec v1.2) | ĐÃ DUYỆT |
 
+## Phase 6 - Baseline và khung đánh giá
+
+| # | Spec v1.2 nói | Thực tế / thay đổi | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| 6.1 | B1a: RF `class_weight="balanced"` | B1a chỉ có cho RF (sklearn `MLPClassifier` không có `class_weight`; code từ chối tổ hợp này). Bộ chạy: B0-rf, B0-mlp, B1a-rf, B1b-rf, B1b-mlp | `eval/utility.make_classifier` | TỰ QUYẾT |
+| 6.2 | `run_id = {config}_{seed}` | `config` đã gồm bộ phân loại (`B0-rf`, `B1b-mlp`); với chế độ 11 lớp id thêm `11class` để hai chế độ không đè nhau (`B0-rf_11class_0`) | `eval/runs.run_id` | TỰ QUYẾT |
+| 6.3 | Đối chứng dương MIA: huấn luyện một CVAE cố ý overfit (500 mẫu) | CVAE chưa có (Phase 7). Phase 6 cung cấp `privacy.positive_control(generator, ...)` kèm test bằng bộ sinh sao chép (AUC > 0,9) và bộ sinh độc lập (≈ 0,5). Phase 7 phải gọi nó với CVAE overfit và báo cáo AUC | `tests/test_eval.py` | MỞ (làm ở Phase 7) |
+| 6.4 | Đánh giá trên test thật | Runner từ chối chạy nếu `feature_schema.json` không ghi `fit = {split: train, n_rows}` khớp số dòng train (Phase 4 nay ghi trường này); val chỉ để báo cáo sanity | `baselines.check_fit_on_train` | TỰ QUYẾT |
+| 6.5 | `run_experiment.py` ghi `results/runs.csv` (Phase 11) | Sổ chạy đã có từ Phase 6: `eval/runs.py` (`RunLedger`, resume bỏ qua run đã xong, thay thế run cùng id), dự đoán test lưu ở `artifacts/<run_id>/preds/test.npz`; đường dẫn `compute.runs_csv` (Colab trỏ vào Drive) | `eval/runs.py` | TỰ QUYẾT |
+| 6.6 | Thư viện | Cài thêm `imbalanced-learn 0.14.2` (có trong `requirements.txt`); `scikit-learn` giữ 1.9.1 | `pip` | ĐÃ DUYỆT |
+| 6.7 | W: WGAN-GP tập trung (tuỳ chọn) | Chưa làm (cần `torch`, chưa cài). Bỏ qua trừ khi muốn chứng minh "WGAN-GP nặng hơn CVAE" | | MỞ (tuỳ chọn) |
+| 6.8 | Kỳ vọng G3 | 15 lượt chạy (5 cấu hình × 3 seed) xong trong khoảng 8 phút; MLP dừng sớm (n_iter 31-95 < 100). Bảng B0/B1 ở `results/reports/g3_baseline.md` | `results/runs.csv` | |
+
