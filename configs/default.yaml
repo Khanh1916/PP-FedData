@@ -40,6 +40,8 @@ preprocess:
   categorical_top_k: 10
   log1p_skew_threshold: 2.0
   clip_sigma: 5
+  na_flag_range: [0.005, 0.995]   # add <col>_is_na when the train NA rate is strictly inside this range
+  ultra_sparse_fix: true          # NA rate >= upper bound (not all NA): stats on applicable rows + flag (spec rule would clip them all to +5 sigma)
 cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
        lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false}
 fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}

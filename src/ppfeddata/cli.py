@@ -36,7 +36,9 @@ def build_parser() -> argparse.ArgumentParser:
                      help="Override label_mode from the config (output goes to data/interim/<mode>/)")
     p_s.add_argument("--no-cache", action="store_true", help="Ignore the pass-A scan cache")
     # Phase 4
-    sub.add_parser("preprocess", help="Parse multi-value cells and preprocess features")
+    p_p = sub.add_parser("preprocess", help="Parse multi-value cells and preprocess features")
+    p_p.add_argument("--label-mode", choices=["6class", "11class"], default=None,
+                     help="Override label_mode from the config (reads data/interim/<mode>/)")
     # Phase 5
     sub.add_parser("check", help="Leakage and label reliability checks")
     # Phase 6
@@ -102,11 +104,23 @@ def main(argv: list[str] | None = None) -> None:
             raise SystemExit(2)
         logger.info("rows=%s peak_rss_gb=%s", m["rows"], m["peak_rss_gb"])
 
+    def cmd_preprocess(a):
+        from ppfeddata.data.preprocess import run_preprocess
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        s = run_preprocess(c)
+        logger.info("D=%d, is_na flags=%d, diagnostic features=%d", s["n_features"], s["n_na_flags"],
+                    s["diagnostic"]["n_features"])
+        for split, dist in s["class_distribution"].items():
+            logger.info("%s: %s", split, dist)
+
     # Dispatch to subcommands
     dispatch = {
         "inventory": cmd_inventory,
         "harmonize": cmd_harmonize,
         "sample": cmd_sample,
+        "preprocess": cmd_preprocess,
     }
     handler = dispatch.get(args.command)
     if handler is None:

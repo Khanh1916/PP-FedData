@@ -40,7 +40,7 @@ khi xem v1.2, `MỞ` = chưa chốt.
 
 ## Phase 4 - Ghi chú đầu vào (rà soát dữ liệu interim 6 lớp, 130.500 dòng)
 
-Chưa phải lệch spec, là điều Phase 4 phải xử lý (số liệu đo trên `data/interim/6class/*.parquet`).
+Chưa phải lệch spec, là điều Phase 4 phải xử lý (số liệu đo trên `data/interim/6class/*.parquet`). **Cả 4 mục đã được xử lý và có test** (`tests/test_preprocess.py`).
 
 | # | Phát hiện | Việc Phase 4 phải làm |
 |---|---|---|
@@ -49,3 +49,15 @@ Chưa phải lệch spec, là điều Phase 4 phải xử lý (số liệu đo t
 | 4.3 | Ô nhiều giá trị vẫn còn trong interim (`message_type` 4.071 ô, `topic_length` 3.912 ô, ...) vì Phase 3 giữ giá trị thô | `parse_multi` lấy phần tử đầu (`multi_policy: first_only`) |
 | 4.4 | Khảo sát token: 0 token chưa ánh xạ trong mẫu 6 lớp; 11 mã `message_type` | Ô cắt cụt vẫn vào `OTHER` cho các lần chạy khác (mẫu 11 lớp, seed khác) |
 
+## Phase 4 - Lệch spec và kết quả
+
+| # | Spec v1.1 nói | Thực tế / thay đổi | Bằng chứng | Trạng thái |
+|---|---|---|---|---|
+| 4.5 | Cờ `<col>_is_na` chỉ khi tỉ lệ trống trong (0,5%; 99,5%); điền 0, rồi log1p và chuẩn hóa trên cả cột | Cột **siêu thưa** (trống ≥ 99,5% nhưng không phải 100%) dùng thống kê của các dòng áp dụng, dòng trống = 0 sau chuẩn hóa, và **có cờ**. Theo đúng quy tắc spec, cả 90 dòng train của `will_message_length` bị cắt ở +5σ nên hai giá trị 2 và 3164 (khác nhau giữa WILL_DDoS và WILL_DoS) bị gộp làm một. Công tắc: `preprocess.ultra_sparse_fix` (false = đúng spec). Áp dụng cho `will_message_length`, `will_topic_length` (trống 99,9%) | `feature_schema.json` (`ultra_sparse`), `test_ultra_sparse_keeps_distinct_values` | TỰ QUYẾT |
+| 4.6 | `multi_value: first+count`, `sum` | `first_only` cho mọi cột (đã ở 2.4); không sinh `n_mqtt_msgs` | `parse_multi.first_values` | ĐÃ DUYỆT (G1) |
+| 4.7 | Xuất `data/processed/{train,val,test}.npz` | Xuất `data/processed/<label_mode>/`, kèm `X_diag` (cột `diagnostic`), `stream_id`, `class11`, `feature_schema.json`, `label_map.json`, `preprocessor.joblib` | `preprocess.run_preprocess` | TỰ QUYẾT |
+| 4.8 | `feature_schema.json` liệt kê khối numeric/binary/categorical/na-flag | Bố cục cột liền khối: `[numeric][binary][na_flag][categorical]`, mỗi khối có `start`, `width` để đầu ra CVAE tách theo loại (MSE, BCE, CE) | `feature_schema.json` | TỰ QUYẾT |
+| 4.9 | `inverse_transform_block` | Thêm `inverse_transform(X)` cho cả bảng: NaN khi cờ = 1 hoặc loại `NONE`. Cột không có cờ (trống < 0,5%) giữ giá trị lấp 0, hiểu là "không áp dụng" | `preprocess.py` | TỰ QUYẾT |
+| 4.10 | `log1p` nếu skew > 2 | Đúng spec, nhưng với các cột thời gian giây (≤ 0,6 s) `log1p` gần như là hàm đồng nhất (std = 0,022) nên 918/88.500 dòng train (1,04%) của `time_delta_from_previous_displayed_frame` bị cắt ở 5σ (giá trị > ~0,11 s gộp lại). Chưa sửa | `feature_schema.json` (`audit`) | MỞ: cân nhắc `log1p(x*1000)` cho cột thời gian ở G2 |
+| 4.11 | one-hot top-K + OTHER + NONE | Đúng spec, nhưng có 6 cột luôn bằng 0 trong train (OTHER/NONE không xuất hiện: `protocol` OTHER và NONE, `qos_level_1/2` OTHER, `requested_qos` OTHER; cộng `will_topic_length` hằng 15 mà cờ đã mang thông tin). Giữ để val/test và dữ liệu sinh không lỗi; Phase 7 có thể che | `feature_schema.json` | MỞ |
+| 4.12 | (không nhắc) | Mã `message_type` = 0 (Reserved) nằm ngoài top-10 nên thành `OTHER` (đúng 1 dòng train, `train_counts.OTHER = 1`); số dòng `message_type` = NONE (54.752) đúng bằng số dòng `protocol` = TCP (54.752), nên hai cột này dư thừa một phần. Round-trip số đo trên dữ liệu thật: sai lệch tương đối tối đa 3,3e-7 | đo trực tiếp | ĐÃ DUYỆT |
