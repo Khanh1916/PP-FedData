@@ -1,3 +1,6 @@
+# Machine-specific config
+configs/local.yaml
+
 # Data (large, not committed)
 data/inventory/
 data/interim/
@@ -37,4 +40,3 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-/PP-FedData_Implementation_Spec.md

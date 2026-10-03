@@ -65,3 +65,30 @@ class TestConfigHash:
         h2 = config_hash(cfg)
         assert h1 == h2
         assert isinstance(h1, str) and len(h1) == 12
+
+
+class TestMachineSpecificConfig:
+    def _write(self, d):
+        (d / "default.yaml").write_text("paths:\n  raw_root: ./raw\nseeds: [0]\nx: {a: 1, b: 2}\n", encoding="utf-8")
+
+    def test_local_yaml_deep_merges(self, tmp_path, monkeypatch):
+        monkeypatch.delenv("PPFEDDATA_RAW_ROOT", raising=False)
+        self._write(tmp_path)
+        (tmp_path / "local.yaml").write_text("paths:\n  raw_root: /data/x\nx: {b: 3}\n", encoding="utf-8")
+        cfg = load_config(tmp_path / "default.yaml")
+        assert cfg["paths"]["raw_root"] == "/data/x" and cfg["x"] == {"a": 1, "b": 3} and cfg["seeds"] == [0]
+
+    def test_env_overrides_raw_root(self, tmp_path, monkeypatch):
+        self._write(tmp_path)
+        monkeypatch.setenv("PPFEDDATA_RAW_ROOT", "/env/root")
+        assert load_config(tmp_path / "default.yaml")["paths"]["raw_root"] == "/env/root"
+
+    def test_hash_ignores_paths_but_not_settings(self):
+        a = {"paths": {"raw_root": "C:/a"}, "seeds": [0]}
+        b = {"paths": {"raw_root": "/b"}, "seeds": [0]}
+        c = {"paths": {"raw_root": "/b"}, "seeds": [1]}
+        assert config_hash(a) == config_hash(b) != config_hash(c)
+
+    def test_default_yaml_has_no_personal_path(self):
+        text = DEFAULT_CFG.read_text(encoding="utf-8")
+        assert "Users" not in text and "C:/" not in text

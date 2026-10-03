@@ -204,6 +204,10 @@ def count_groups_per_subclass(files_df: pd.DataFrame) -> pd.DataFrame:
 def run_inventory(cfg: dict[str, Any]) -> dict[str, Any]:
     """Main inventory pipeline. Returns dict with DataFrames and verification results."""
     raw_root = Path(cfg["paths"]["raw_root"])
+    if not raw_root.exists():
+        raise FileNotFoundError(
+            f"raw_root {raw_root} does not exist. Set paths.raw_root in configs/local.yaml "
+            "or the environment variable PPFEDDATA_RAW_ROOT.")
     normal_csv_dir = cfg["paths"]["normal_csv_dir"]
     label_map = _load_label_map(cfg)
 

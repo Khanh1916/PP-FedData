@@ -195,8 +195,8 @@ protocol:
     5642, ''DHCPv6'': 44, ''DNS'': 80, ''ICMP'': 80, ''ICMPv6'': 22, ''IGMPv3'': 16,
     ''LLDP'': 362, ''LLMNR'': 54, ''LOOP'': 33855, ''MDNS'': 88, ''NBNS'': 120, ''SSDP'':
     7546, ''STP'': 168958}.'
-  g1_decision: Keep. Normal rows are filtered to row_filters.protocol in Phase 3 (STP/LOOP/SSDP/...
-    occur in every Normal capture, never in Attack).
+  g1_decision: Keep. Rows are filtered to row_filters.protocol in Phase 3 (all sources)
+    (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack).
 message_type:
   action: categorical
   reason: message type
@@ -310,17 +310,17 @@ n_mqtt_msgs:
   g1_decision: Drop. Multi-value cells exist only in Attack (Normal export used occurrence=f);
     policy for message_type etc. is first_only.
 _row_filters:
-  normal_only:
+  all_sources:
     protocol:
     - TCP
     - MQTT
-  note: Applied in Phase 3 sampling to Normal rows only.
+  note: Applied in Phase 3 sampling to Normal and Attack rows (keeps only listed values).
 _g1:
   approved_on: '2026-10-03'
   decisions:
   - 'will_message_length, will_topic_length: keep (genuine protocol semantics; Normal
     exports will_flag for all CONNECT packets and never sets it).'
-  - 'protocol: keep and filter Normal rows to {TCP, MQTT} in Phase 3.'
+  - 'protocol: keep and filter rows (Normal and Attack) to {TCP, MQTT} in Phase 3.'
   - 'multi-value cells: first_only; drop n_mqtt_msgs.'
   - 'time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2.'
   - 'requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE).'

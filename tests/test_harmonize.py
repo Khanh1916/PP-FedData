@@ -291,7 +291,7 @@ class TestG1Overrides:
         assert d["protocol"]["action"] == "categorical" and d["protocol"]["suspect"] is False
         assert d["protocol"]["suspect_reasons_resolved"]
         assert d["time_since_first_frame_in_this_tcp_stream"]["diagnostic"] is True
-        assert d["_row_filters"]["normal_only"] == {"protocol": ["TCP", "MQTT"]}
+        assert d["_row_filters"]["all_sources"] == {"protocol": ["TCP", "MQTT"]}
 
     def test_unknown_override_column_raises(self):
         from ppfeddata.data.harmonize import apply_user_overrides

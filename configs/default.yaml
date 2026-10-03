@@ -1,13 +1,19 @@
 seeds: [0, 1, 2]
 paths:
-  raw_root: "C:/Users/Lenovo legion 5/Downloads/data/DoS-DDoS-MQTT-IoT_Dataset"
+  raw_root: "./raw/DoS-DDoS-MQTT-IoT_Dataset"   # set the real location in configs/local.yaml (git-ignored) or env PPFEDDATA_RAW_ROOT
   normal_csv_dir: "NormalData/CSV_Extracted_Split"
   work_dir: "./data"
+  shared_manifest_dir: "./results/manifests"   # git-tracked copies of split manifests (no data rows)
 label_mode: "6class"
 split:
   test_groups_per_subclass: 1
   val_groups_per_subclass: 1
   fallback_block_split: {n_blocks: 10, gap_rows: 1000}
+  split_seed: 0                 # fixes WHICH groups/blocks go to val/test and which rows are sampled (A4 changes it)
+  min_groups_for_group_split: 3 # fewer groups in a sub-class -> block split
+  min_eval_rows: 1000           # val/test class below this -> stop and ask the user
+  max_peak_gb: 4.0              # Phase 3 gate: peak RSS
+  drop_cross_block_streams: true # block-split only: drop TCP streams that span several blocks (a gap cannot separate them)
 quota:
   NORMAL:    [60000, 2000, 5000]
   BCF:       [20000, 2000, 5000]
@@ -71,7 +77,7 @@ harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT 
   user_overrides:
     protocol:
       action: categorical
-      g1_decision: "Keep. Normal rows are filtered to row_filters.protocol in Phase 3 (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack)."
+      g1_decision: "Keep. Rows are filtered to row_filters.protocol in Phase 3 (all sources) (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack)."
     time_since_first_frame_in_this_tcp_stream:
       action: drop
       diagnostic: true
@@ -85,7 +91,7 @@ harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT 
     approved_on: "2026-10-03"
     decisions:
       - "will_message_length, will_topic_length: keep (genuine protocol semantics; Normal exports will_flag for all CONNECT packets and never sets it)."
-      - "protocol: keep and filter Normal rows to {TCP, MQTT} in Phase 3."
+      - "protocol: keep and filter rows (Normal and Attack) to {TCP, MQTT} in Phase 3."
       - "multi-value cells: first_only; drop n_mqtt_msgs."
       - "time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2."
       - "requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE)."
