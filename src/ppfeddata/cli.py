@@ -40,7 +40,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_p.add_argument("--label-mode", choices=["6class", "11class"], default=None,
                      help="Override label_mode from the config (reads data/interim/<mode>/)")
     # Phase 5
-    sub.add_parser("check", help="Leakage and label reliability checks")
+    p_c = sub.add_parser("check", help="Leakage and label reliability checks")
+    p_c.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     # Phase 6
     sub.add_parser("baseline", help="Run baseline evaluations")
     # Phase 7
@@ -115,12 +116,21 @@ def main(argv: list[str] | None = None) -> None:
         for split, dist in s["class_distribution"].items():
             logger.info("%s: %s", split, dist)
 
+    def cmd_check(a):
+        from ppfeddata.checks.leakage import run_leakage
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        r = run_leakage(c)
+        logger.info("reference macro-F1 on val: %.4f", r["results"]["reference"]["macro_f1"][0])
+
     # Dispatch to subcommands
     dispatch = {
         "inventory": cmd_inventory,
         "harmonize": cmd_harmonize,
         "sample": cmd_sample,
         "preprocess": cmd_preprocess,
+        "check": cmd_check,
     }
     handler = dispatch.get(args.command)
     if handler is None:

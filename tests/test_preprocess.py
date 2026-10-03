@@ -202,12 +202,22 @@ class TestFitRules:
         assert pre.params["calculated_window_size"]["log1p"] is True
         assert pre.params["frame_length_on_wire_2"]["log1p"] is False
 
-    def test_diagnostic_columns_are_outside_core(self, pre, train_val):
-        core_cols = {b["column"] for b in pre.core_blocks}
-        assert "time_since_first_frame_in_this_tcp_stream" not in core_cols
-        Xd = pre.transform_diagnostic(train_val[0])
-        assert Xd.shape == (len(train_val[0]), pre.schema()["diagnostic"]["n_features"]) and Xd.shape[1] >= 1
+    def test_diagnostic_columns_are_outside_core(self, train_val):
+        """The diagnostic mechanism (kept for other configurations): such a column is not part of X."""
+        dec = copy.deepcopy(DECISIONS)
+        dec["time_since_first_frame_in_this_tcp_stream"].update(diagnostic=True, action="drop")
+        p = Preprocessor(dec, PCFG).fit(train_val[0])
+        assert "time_since_first_frame_in_this_tcp_stream" not in {b["column"] for b in p.core_blocks}
+        Xd = p.transform_diagnostic(train_val[0])
+        assert Xd.shape == (len(train_val[0]), p.schema()["diagnostic"]["n_features"]) and Xd.shape[1] >= 1
+        assert p.transform(train_val[0]).shape[1] == p.schema()["n_features"]
         assert np.isfinite(Xd).all()
+
+    def test_g2_decision_stream_time_is_a_core_feature(self, pre):
+        """G2 (2026-10-03): time_since_first_frame_in_this_tcp_stream was promoted from diagnostic to core."""
+        assert "time_since_first_frame_in_this_tcp_stream" in {b["column"] for b in pre.core_blocks}
+        assert pre.schema()["diagnostic"]["n_features"] == 0
+        assert DECISIONS["_g2"]["approved_on"] == "2026-10-03"
 
     def test_dropped_columns_never_used(self, pre):
         used = {b["column"] for b in pre.core_blocks}
@@ -290,3 +300,36 @@ class TestPipeline:
     def test_label_map_order_follows_config(self):
         cfg = {"label_mode": "6class", "quota": {"NORMAL": [1, 1, 1], "BCF": [1, 1, 1]}}
         assert label_map(cfg) == {"NORMAL": 0, "BCF": 1}
+
+
+class TestNumericScale:
+    COL = "time_delta_from_previous_displayed_frame"
+
+    def _df(self):
+        df = make_df(4000, 7)
+        rng = np.random.default_rng(3)
+        gaps = np.minimum(rng.lognormal(np.log(5e-4), 1.8, 4000), 0.6)      # heavy tail over orders of magnitude, < 1 s
+        df[self.COL] = [f"{v:.9f}" for v in gaps]
+        return df
+
+    def test_scale_reduces_clipping_and_restores_raw_units(self):
+        df = self._df()
+        base = Preprocessor(DECISIONS, PCFG).fit(df)
+        scaled = Preprocessor(DECISIONS, {**PCFG, "numeric_scale": {self.COL: 1000}}).fit(df)
+        n0 = base.audit(df)["clipped_sigma"].get(self.COL, 0)
+        n1 = scaled.audit(df)["clipped_sigma"].get(self.COL, 0)
+        assert n1 < n0 and scaled.params[self.COL]["scale"] == 1000.0 and base.params[self.COL]["scale"] == 1.0
+        X = scaled.transform(df)
+        b = next(b for b in scaled.core_blocks if b["name"] == self.COL)
+        ok = np.abs(X[:, b["start"]]) < PCFG["clip_sigma"] - 1e-3
+        inv = scaled.inverse_transform(X)[self.COL].to_numpy()
+        raw = pd.to_numeric(df[self.COL]).clip(lower=0).to_numpy()
+        assert (np.abs(inv[ok] - raw[ok]) / (1 + raw[ok])).max() < 1e-4        # back in seconds, not milliseconds
+
+    def test_raw_range_is_stored_in_original_units(self):
+        df = self._df()
+        p = Preprocessor(DECISIONS, {**PCFG, "numeric_scale": {self.COL: 1000}}).fit(df).params[self.COL]
+        assert p["raw_max"] == pytest.approx(pd.to_numeric(df[self.COL]).max(), rel=1e-6) and p["raw_max"] < 1.0
+
+    def test_other_columns_unscaled_by_default(self, pre):
+        assert all(p["scale"] == 1.0 for p in pre.params.values() if p["type"] == "numeric")

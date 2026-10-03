@@ -45,7 +45,7 @@ irtt:
     p75: 1.29
     p99: 4.01
 time_since_first_frame_in_this_tcp_stream:
-  action: drop
+  action: numeric
   reason: time since first frame in this tcp stream
   multi: false
   time_ratios:
@@ -57,9 +57,11 @@ time_since_first_frame_in_this_tcp_stream:
   suspect_reasons_resolved:
   - Normal vs Attack on TCP-only packets differ x9883.3 at p99 (Normal 9989.31, Attack
     1.01073).
-  diagnostic: true
-  g1_decision: Excluded from the core feature set; Phase 4 exports it as a diagnostic
-    column so Phase 5 C3 can measure it. Final call at G2.
+  diagnostic: false
+  g1_decision: Was a diagnostic column (decided at G1, final call at G2).
+  g2_decision: 'Core feature. Phase 5: adding it lifts val macro-F1 0.442 -> 0.499
+    (class-balanced RF), mostly on attack classes (BCF +0.10, DELAYED +0.11, NORMAL
+    +0.013), so the gain is not a Normal-vs-Attack extraction artefact.'
 tcp_segment_len:
   action: numeric
   reason: tcp segment len
@@ -324,3 +326,13 @@ _g1:
   - 'multi-value cells: first_only; drop n_mqtt_msgs.'
   - 'time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2.'
   - 'requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE).'
+_g2:
+  approved_on: '2026-10-03'
+  decisions:
+  - 'time_since_first_frame_in_this_tcp_stream: promoted to the core feature set.'
+  - 'irtt, time_delta_from_previous_displayed_frame, will_*, requested_qos, keep_alive:
+    keep (no leakage flag in Phase 5).'
+  - 'label_mode: 6class (C5: DoS vs DDoS macro-F1 BCF 0.586, DELAYED 0.599 are near
+    chance).'
+  - 'leakage thresholds confirmed: single_feature_f1_flag 0.9, na_only_f1_flag 0.5,
+    dos_ddos_f1_flag 0.6, leakage_gap_flag 0.05.'

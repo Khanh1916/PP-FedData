@@ -42,6 +42,7 @@ preprocess:
   clip_sigma: 5
   na_flag_range: [0.005, 0.995]   # add <col>_is_na when the train NA rate is strictly inside this range
   ultra_sparse_fix: true          # NA rate >= upper bound (not all NA): stats on applicable rows + flag (spec rule would clip them all to +5 sigma)
+  numeric_scale: {time_delta_from_previous_displayed_frame: 1000}   # seconds -> ms before log1p: clipped rows 1.04% -> 0.08%; RF val macro-F1 unchanged
 cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
        lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false}
 fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
@@ -61,6 +62,15 @@ thresholds:
   overhead_ratio_max: 3.0
   seed_std_max: 0.02
   leakage_gap_flag: 0.05
+  single_feature_f1_flag: 0.9   # C3: one raw column alone gives macro-F1 above this -> inspect its meaning
+  na_only_f1_flag: 0.5          # C2: RF on is_na flags only above this -> model learns the extraction pattern
+  dos_ddos_f1_flag: 0.6         # C5: DoS vs DDoS binary macro-F1 below this -> not separable (chance = 0.5)
+leakage:
+  rf_trees: 100
+  cv_folds: 5                   # C4
+  reports_dir: "./results/reports/leakage"
+  report_path: "./results/reports/leakage_report.md"
+  figures_dir: "./results/figures"
 compute:
   artifacts_dir: "./artifacts"
   checkpoint_every_rounds: 5
@@ -81,9 +91,10 @@ harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT 
       action: categorical
       g1_decision: "Keep. Rows are filtered to row_filters.protocol in Phase 3 (all sources) (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack)."
     time_since_first_frame_in_this_tcp_stream:
-      action: drop
-      diagnostic: true
-      g1_decision: "Excluded from the core feature set; Phase 4 exports it as a diagnostic column so Phase 5 C3 can measure it. Final call at G2."
+      action: numeric
+      diagnostic: false
+      g1_decision: "Was a diagnostic column (decided at G1, final call at G2)."
+      g2_decision: "Core feature. Phase 5: adding it lifts val macro-F1 0.442 -> 0.499 (class-balanced RF), mostly on attack classes (BCF +0.10, DELAYED +0.11, NORMAL +0.013), so the gain is not a Normal-vs-Attack extraction artefact."
     n_mqtt_msgs:
       action: drop
       g1_decision: "Drop. Multi-value cells exist only in Attack (Normal export used occurrence=f); policy for message_type etc. is first_only."
@@ -97,3 +108,10 @@ harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT 
       - "multi-value cells: first_only; drop n_mqtt_msgs."
       - "time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2."
       - "requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE)."
+  g2_log:
+    approved_on: "2026-10-03"
+    decisions:
+      - "time_since_first_frame_in_this_tcp_stream: promoted to the core feature set."
+      - "irtt, time_delta_from_previous_displayed_frame, will_*, requested_qos, keep_alive: keep (no leakage flag in Phase 5)."
+      - "label_mode: 6class (C5: DoS vs DDoS macro-F1 BCF 0.586, DELAYED 0.599 are near chance)."
+      - "leakage thresholds confirmed: single_feature_f1_flag 0.9, na_only_f1_flag 0.5, dos_ddos_f1_flag 0.6, leakage_gap_flag 0.05."

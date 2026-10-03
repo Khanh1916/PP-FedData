@@ -1,6 +1,6 @@
-# PP-FedData — Đặc tả triển khai cho coding agent (v1.1)
+# PP-FedData — Đặc tả triển khai cho coding agent (v1.2)
 
-> Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt.
+> Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt. v1.2 gộp các thay đổi rút ra khi thực hiện Phase 0-5 (bằng chứng chi tiết ở `SPEC_DEVIATIONS.md`); các mục 🔶 và quyết định G1, G2 đã được người dùng chốt ghi rõ trong từng Phase.
 
 **Đề tài:** Khung sinh dữ liệu bảo toàn quyền riêng tư trong học liên kết (FL) để tăng cường phát hiện tấn công MQTT DoS/DDoS trên IoT.
 **Ý tưởng:** CVAE có điều kiện nhãn, huấn luyện bằng FL trên dữ liệu non-IID; so sánh ba cơ chế bảo vệ: **DP** (DP-SGD tại client), **SecAgg** (Flower), và **DP + SecAgg**; dữ liệu sinh ra dùng để cân bằng lớp cho bộ phân loại IDS (Random Forest, MLP).
@@ -54,23 +54,24 @@ Thư viện (ghim phiên bản sau khi cài): `python>=3.10`, `numpy`, `pandas`,
 ppfeddata/
 ├── configs/
 │   ├── default.yaml            # xem mục 3
+│   ├── local.yaml              # riêng từng máy (đường dẫn dữ liệu thô), KHÔNG commit, merge sâu lên default.yaml
 │   ├── label_map.yaml          # ánh xạ thư mục/file → lớp
-│   ├── feature_decisions.yaml  # sinh ở Phase 2, người duyệt (G1)
+│   ├── feature_decisions.yaml  # sinh ở Phase 2 từ số liệu + quyết định người dùng (G1, G2)
 │   └── exp/                    # 1 file / cấu hình thí nghiệm (B0..M3)
 ├── src/ppfeddata/
 │   ├── data/      inventory.py, harmonize.py, split_sample.py, parse_multi.py, preprocess.py, partition.py
 │   ├── models/    cvae.py, generate.py
 │   ├── fl/        client_app.py, server_app.py, dp_utils.py, secagg_sim.py (fallback)
 │   ├── eval/      utility.py, fidelity.py, privacy.py, overhead.py, stats.py
-│   ├── checks/    leakage.py
+│   ├── checks/    leakage.py, leakage_report.py
 │   ├── tune.py, run_experiment.py, aggregate.py, cli.py
 ├── tests/
 ├── notebooks/     00_eda.ipynb ... (chỉ để xem, không chứa logic)
-├── data/          inventory/, interim/, processed/, partitions/   (KHÔNG commit)
+├── data/          inventory/, interim/<mode>/, processed/<mode>/, partitions/   (KHÔNG commit; <mode> = 6class | 11class)
 ├── artifacts/     {run_id}/ model.pt, synthetic.parquet, preds/
-├── results/       runs.csv, summary.csv, figures/, reports/
+├── results/       runs.csv, summary.csv, figures/, reports/, manifests/   (manifests/split_manifest_<mode>.json được commit: chỉ có mã nhóm, số lượng, hash, phiên bản thư viện)
 ├── demo/          app.py
-├── requirements.txt, README.md, BLOCKERS.md (nếu có)
+├── requirements.txt, README.md, BLOCKERS.md (nếu có), SPEC_DEVIATIONS.md (nhật ký bằng chứng cho các thay đổi spec)
 ```
 
 CLI thống nhất: `python -m ppfeddata.cli {inventory|harmonize|sample|preprocess|check|baseline|tune|run|aggregate|demo} --config ...`.
@@ -85,11 +86,17 @@ paths:
   raw_root: "./raw/DoS-DDoS-MQTT-IoT_Dataset"   # đường dẫn thật đặt trong configs/local.yaml (không commit) hoặc biến môi trường PPFEDDATA_RAW_ROOT; trong dấu nháy
   normal_csv_dir: "NormalData/CSV_Extracted_Split"
   work_dir: "./data"
+  shared_manifest_dir: "./results/manifests"   # bản sao split_manifest (không có dòng dữ liệu) để commit
 label_mode: "6class"            # "6class" | "11class"  (chốt ở G2). Nhị phân Normal/Attack chỉ là bảng phụ suy ra từ dự đoán đa lớp
 split:
   test_groups_per_subclass: 1
   val_groups_per_subclass: 1
   fallback_block_split: {n_blocks: 10, gap_rows: 1000}
+  split_seed: 0                  # quyết định NHÓM/KHỐI nào vào val/test và dòng nào được lấy mẫu (A4 đổi giá trị này)
+  min_groups_for_group_split: 3  # ít nhóm hơn -> block-split
+  min_eval_rows: 1000            # val/test của một lớp dưới mức này -> dừng và hỏi người dùng
+  max_peak_gb: 4.0               # Gate Phase 3: bộ nhớ đỉnh
+  drop_cross_block_streams: true # block-split: bỏ các TCP stream vắt qua nhiều khối (khoảng đệm không tách được chúng)
 quota:                          # [train, val, test] số dòng mỗi lớp (6 lớp)
   NORMAL:    [60000, 2000, 5000]
   BCF:       [20000, 2000, 5000]   # Basic Connect Flooding
@@ -112,10 +119,13 @@ quota_11class:                  # [train, val, test]; dùng khi label_mode = 11c
 train_sampling:
   max_rows_per_stream: null     # null = tắt. Số nguyên (ví dụ 20) = giới hạn số packet mỗi stream_id trong train pool (xem Phase 3, Phase 9)
 preprocess:
-  multi_value: {message_type: first+count, numeric_multi: sum}
+  multi_value: {message_type: first, numeric_multi: first}   # v1.2: export Normal chỉ giữ phần tử đầu (occurrence=f) nên chỉ phần tử đầu so sánh được
   categorical_top_k: 10
   log1p_skew_threshold: 2.0
   clip_sigma: 5
+  na_flag_range: [0.005, 0.995]  # thêm cờ <cột>_is_na khi tỉ lệ trống trong train nằm TRONG khoảng này
+  ultra_sparse_fix: true         # trống >= cận trên (nhưng không phải 100%): thống kê trên dòng áp dụng + có cờ (false = đúng quy tắc v1.1)
+  numeric_scale: {time_delta_from_previous_displayed_frame: 1000}   # nhân trước log1p (giây -> ms): với cột thời gian < 1 s, log1p gần như đồng nhất nên 1,04% dòng bị cắt ở 5σ, sau khi nhân còn 0,08%
 cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
        lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false}
 fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
@@ -134,7 +144,19 @@ thresholds:                     # 🔶 heuristic khởi điểm — người dù
   mia_auc_max: 0.55
   overhead_ratio_max: 3.0
   seed_std_max: 0.02
-  leakage_gap_flag: 0.05        # chênh macro-F1 giữa chia ngẫu nhiên và chia theo nhóm
+  leakage_gap_flag: 0.05        # chênh macro-F1 giữa chia ngẫu nhiên và chia theo nhóm (hoặc theo stream)
+  single_feature_f1_flag: 0.9   # C3: một cột riêng lẻ, macro-F1 hoặc F1 tốt nhất theo lớp vượt mức này -> soi ngữ nghĩa
+  na_only_f1_flag: 0.5          # C2: RF chỉ dùng cờ _is_na vượt mức này -> mô hình học cách trích xuất
+  dos_ddos_f1_flag: 0.6         # C5: F1 phân biệt DoS/DDoS dưới mức này -> không tách được (ngẫu nhiên = 0,5)
+leakage: {rf_trees: 100, cv_folds: 5}
+harmonize:                      # 🔶 heuristic của Phase 2; quyết định của người dùng nằm ở user_overrides / row_filters / g1_log / g2_log
+  suspect_presence_diff: 0.95
+  absent_presence_max: 0.001
+  present_presence_min: 0.01
+  time_ratio_suspect: 10.0
+  token_min_share: 0.001
+  token_min_count: 100
+  # user_overrides, row_filters (protocol: [TCP, MQTT]), g1_log, g2_log: xem configs/default.yaml
 compute:
   artifacts_dir: "./artifacts"  # Colab: "/content/drive/MyDrive/ppfeddata/artifacts"
   checkpoint_every_rounds: 5
@@ -170,81 +192,91 @@ Số liệu tham chiếu để kiểm chứng ở Phase 1 (`expected_counts`, t�
 
 ## Phase 2 — Hài hòa schema, kiểm toán định dạng và ma trận hiện diện (`harmonize.py`)
 
-**Việc:**
-1. Chuẩn hóa tên cột sang snake_case; 3 cột trùng tên gán hậu tố theo **vị trí** (`qos_level_1/_2`, `frame_length_on_wire_1/_2`, `clean_session_flag_1/_2`); ánh xạ `.1` của Normal về `_2`. Kiểm tra 33 cột khớp thứ tự giữa Normal và Attack.
-2. **Presence matrix:** với mỗi cột × mỗi lớp con (11 lớp), tỉ lệ ô trống, tính trên toàn bộ dữ liệu bằng streaming (có thể dùng lại `data_profile_full.csv` nếu khớp cấu trúc, nhưng phải tính lại theo lớp con). Xuất `presence_matrix.csv` và heatmap.
-3. **Format audit:** với mỗi cột × nguồn (Normal vs Attack), thống kê "kiểu giá trị" bằng regex: số nguyên, số thực, hex, chứa dấu phẩy, chuỗi chữ, True/False, Set/Not set, rỗng. Xuất `format_audit.csv`. Mục tiêu: phát hiện khác biệt do **quy trình trích xuất** (TShark tự chạy cho Normal, CSV có sẵn cho Attack) chứ không phải do hành vi mạng.
-4. Sinh `configs/feature_decisions.yaml` với luật mặc định (mỗi cột có `action: drop|numeric|binary|categorical|multi`, kèm lý do):
-   - `drop`: `no`, `epoch_time`, `time_since_reference_or_first_frame`, `stream_index` (bỏ khỏi đặc trưng nhưng **giữ làm metadata** `stream_id = (group_id, stream_index)`), `source`, `info`, `requested_qos` (nếu trống > 99,9% ở mọi lớp), mọi cột trống 100% ở mọi lớp.
-   - `SUSPECT` (mặc định drop, cần người quyết): cột có tỉ lệ trống chênh > 0,95 giữa Normal và bất kỳ lớp Attack nào, hoặc có định dạng khác hẳn giữa hai nguồn.
-   - `numeric`: `frame_length_on_wire` (bản còn thông tin), `time_delta_from_previous_displayed_frame`, `irtt`, `time_since_first_frame_in_this_tcp_stream`, `tcp_segment_len`, `calculated_window_size`, `keep_alive`, `user_name_length`, `password_length`, `will_message_length`, `will_topic_length`, `topic_length`, `msg_len`.
-   - `binary`: `syn`, `reset`, `acknowledgment`, `clean_session_flag_*`, `retain`, `will_retain`, `will_flag`.
-   - `categorical`: `protocol`, `message_type`, `qos_level_*`.
-   - `multi` (ô nhiều giá trị): `message_type`, `msg_len`, `qos_level_1`, `retain`, `topic_length`.
+**Việc:** (mọi thống kê tính bằng streaming trên toàn bộ dữ liệu, kết quả lưu cache; `--recompute` để tính lại, `--decisions-only` để chỉ sinh lại yaml)
+1. Chuẩn hóa tên cột sang snake_case; 3 cột trùng tên gán hậu tố theo **vị trí** (`qos_level_1/_2`, `frame_length_on_wire_1/_2`, `clean_session_flag_1/_2`); ánh xạ `.1` của Normal về `_2`. Đọc header từng file: 33 cột khớp thứ tự giữa Normal và Attack (Normal thêm `Label`, `Capture_ID`), sai lệch thì dừng → `header_check.csv`.
+2. **Presence matrix:** với mỗi cột × mỗi lớp con (11 lớp), tỉ lệ ô không trống. Xuất `presence_matrix.csv` và heatmap `results/figures/presence_heatmap.png`.
+3. **Format audit:** với mỗi cột × nguồn (Normal vs Attack), thống kê "kiểu giá trị" bằng regex: số nguyên, số thực, hex, chứa dấu phẩy, chuỗi chữ, True/False, Set/Not set, rỗng → `format_audit.csv`. Mục tiêu: phát hiện khác biệt do **quy trình trích xuất**, không phải hành vi mạng.
+4. **Kiểm toán token** (`token_audit.csv`): đếm từng giá trị (ô nhiều giá trị được tách theo dấu phẩy) của cột phân loại/nhị phân, theo nguồn. Khác biệt mã hóa đã xác nhận: (a) `message_type`, `qos_level_1/2`, `requested_qos`: Normal dùng **mã số**, Attack dùng **nhãn chữ** của Wireshark → bảng ánh xạ `VALUE_MAPS` và `canonical_token` (ô bị cắt/dính chữ khớp theo tiền tố duy nhất, không ánh xạ được thì vào `OTHER`); (b) cờ nhị phân: Normal `True/False`, Attack `Set/Not set` → cùng ánh xạ về 0/1.
+5. **Cặp cột trùng** (`duplicate_pairs.csv`): `frame_length_on_wire_1/2`, `clean_session_flag_1/2` xuất từ cùng một trường TShark. Nếu `_1` bằng `_2` ở mọi dòng Attack và Normal để trống `_1` thì **bỏ `_1`, giữ `_2`**.
+6. **Ô nhiều giá trị:** so tỉ lệ ô nhiều giá trị giữa hai nguồn. Normal được xuất bằng TShark `-E occurrence=f` (chỉ phần tử đầu) nên có 0% ô nhiều giá trị, Attack có khoảng 0,4% đến 1,6% tùy cột. Vì vậy `multi_policy: first_only` cho mọi cột và **không dùng `n_mqtt_msgs`** (luôn ≤ 1 ở Normal).
+7. Sinh `configs/feature_decisions.yaml` với luật mặc định (mỗi cột có `action: drop|numeric|binary|categorical`, kèm lý do):
+   - `drop`: `no`, `epoch_time`, `time_since_reference_or_first_frame`, `stream_index` (bỏ khỏi đặc trưng nhưng **giữ làm metadata** `stream_id = (group_id, stream_index)`), `source`, `info`, `label`, `capture_id`, bản `_1` của cột trùng (bước 5), mọi cột trống ≥ 99,9% ở mọi lớp. (`requested_qos` KHÔNG tự bỏ: quy tắc trống > 99,9% không đúng với dữ liệu thật.)
+   - `numeric`: `frame_length_on_wire_2`, `time_delta_from_previous_displayed_frame`, `irtt`, `time_since_first_frame_in_this_tcp_stream`, `tcp_segment_len`, `calculated_window_size`, `keep_alive`, `user_name_length`, `password_length`, `will_message_length`, `will_topic_length`, `topic_length`, `msg_len`.
+   - `binary`: `syn`, `reset`, `acknowledgment`, `clean_session_flag_2`, `retain`, `will_retain`, `will_flag`. `categorical`: `protocol`, `message_type`, `qos_level_1`, `qos_level_2`, `requested_qos`.
+   - **SUSPECT (cờ sinh từ số liệu, mặc định drop, người dùng quyết):** (a) cột trống ở một nguồn nhưng có ở nguồn kia — trừ khi *sự kiện cha* có mặt ở Normal (`will_*` phụ thuộc `will_flag`, `requested_qos` phụ thuộc SUBSCRIBE; khi đó Normal trống vì không dùng chức năng, không phải lỗi trích xuất); (b) tỉ lệ trống chênh > 0,95 giữa Normal và một lớp Attack; (c) giá trị **chỉ có ở Normal** (chiếm ≥ `token_min_share` và ≥ `token_min_count`; ví dụ STP, LOOP, SSDP trong `protocol`); (d) cột thời gian lệch mạnh (bước 8). Giá trị chỉ có ở Attack (ví dụ `will_flag` = Set) là hành vi tấn công, KHÔNG bị cờ.
+   - Quyết định của người dùng không bị ghi đè khi chạy lại: `harmonize.user_overrides`, `row_filters`, `g1_log`, `g2_log` trong `default.yaml`. Bộ lọc dòng được lưu trong yaml (`_row_filters`) và Phase 3 đọc từ đó.
+8. **Kiểm tra tính so sánh được của đặc trưng thời gian** (`time_delta_from_previous_displayed_frame`, `irtt`, `time_since_first_frame_in_this_tcp_stream`): so các phân vị (1, 25, 50, 75, 99%) giữa hai nguồn trên **cùng loại packet** (TCP không có MQTT) → `time_feature_audit.csv`. Cột có tỉ lệ max/min của p25, p50, p75 hoặc p99 > `time_ratio_suspect` → SUSPECT. Ghi vào hạn chế: CVAE sinh từng packet độc lập nên không giữ chuỗi thời gian giữa các packet.
 
-5. **Kiểm tra tính so sánh được của đặc trưng thời gian** (`time_delta_from_previous_displayed_frame`, `irtt`, `time_since_first_frame_in_this_tcp_stream`). Giá trị "previous displayed frame" phụ thuộc bộ lọc hiển thị lúc xuất; nếu Normal (TShark do người dùng chạy) và Attack (CSV có sẵn) xuất với bộ lọc khác nhau thì giá trị không so sánh được. So sánh các phân vị (1, 25, 50, 75, 99%) của từng cột thời gian giữa hai nguồn trên **cùng loại packet** (ví dụ chỉ packet TCP không có MQTT), xuất `time_feature_audit.csv`. Cột lệch bất thường → SUSPECT. Ghi vào hạn chế: CVAE sinh từng packet độc lập nên không giữ được chuỗi thời gian giữa các packet.
-
-**Test:** `test_harmonize.py` (mapping tên cột, cột `.1`; cột thời gian không âm); test regex định dạng trên ví dụ `"Publish Message,Publish Message"`, `"40,41"`, `""`.
-**Gate 🛑 G1:** agent nộp `presence_matrix.csv`, `format_audit.csv`, `feature_decisions.yaml` kèm danh sách SUSPECT. **Người dùng duyệt bộ đặc trưng** trước khi sang Phase 3.
+**Test:** `test_harmonize.py` (mapping tên cột, cột `.1`; regex định dạng trên `"Publish Message,Publish Message"`, `"40,41"`, `""`; `canonical_token` cho nhãn chữ, mã số, ô cắt cụt; luật sự kiện cha, ngưỡng đếm, cặp trùng, `user_overrides`; kiểm tra header).
+**Gate 🛑 G1:** nộp `presence_matrix.csv`, `format_audit.csv`, `token_audit.csv`, `feature_decisions.yaml` kèm danh sách SUSPECT (`results/reports/g1_feature_review.md`, sinh tự động). Người dùng duyệt bộ đặc trưng.
+**Quyết định G1 đã chốt (2026-10-03):** giữ `will_message_length`, `will_topic_length`, `requested_qos`; giữ `protocol` và lọc dòng (cả Normal lẫn Attack) về `protocol ∈ {TCP, MQTT}`; `first_only` và bỏ `n_mqtt_msgs`; `time_since_first_frame_in_this_tcp_stream` tạm là cột `diagnostic`.
 
 ---
 
 ## Phase 3 — Chia theo nhóm và lấy mẫu streaming (`split_sample.py`)
 
 **Việc:**
-1. Với mỗi lớp con (kịch bản × attack_type), gán nhóm cho split theo seed: `test_groups_per_subclass` nhóm cho test, `val_groups_per_subclass` cho validation, phần còn lại cho train. Normal dùng `Capture_ID`. Đảm bảo mỗi nhóm được chọn đủ dòng cho quota; nếu không, chọn nhóm khác và ghi lại.
-2. Lớp con có < 3 nhóm: dùng **block-split**: chia thành `n_blocks` khối liên tiếp theo thứ tự dòng, gán khối cho split, bỏ `gap_rows` dòng đệm giữa các khối.
-3. Lấy mẫu bằng **reservoir sampling** theo (lớp, split) đến đúng quota; với chế độ 6 lớp, mỗi kịch bản chia đều quota giữa DoS và DDoS. Train lấy đều qua các nhóm train.
-4. **Chế độ nhãn** (`label_mode`):
-   - `6class` (mặc định): dùng `quota`; mỗi kịch bản chia đều giữa DoS và DDoS.
-   - `11class`: dùng `quota_11class` (bảng ở mục 3, mỗi lớp con bằng một nửa quota kịch bản).
-   - Nhị phân Normal/Attack **không phải mode riêng** (train pool nhị phân không còn bài toán mất cân bằng đáng kể); chỉ báo cáo như bảng phụ bằng cách gộp dự đoán đa lớp.
-   - Nếu một nhóm không đủ dòng cho quota: giảm quota của lớp đó, ghi cảnh báo; nếu val hoặc test của một lớp xuống dưới 1000 dòng thì **dừng và hỏi người dùng** (không tự hạ tiếp).
-4b. (Tuỳ chọn, `train_sampling.max_rows_per_stream`) Giới hạn số packet lấy từ mỗi `stream_id` trong train pool để giảm tương quan nội-stream (lý do: xem Phase 9, mục "Đơn vị bảo vệ"). Mặc định tắt; chạy như độ nhạy A5.
-5. Xuất `data/interim/{train,val,test}.parquet` (dữ liệu thô đã harmonize + `label`, `group_id`, `stream_id`, `split`) và `split_manifest.json` (nhóm nào ở split nào, số dòng, seed).
+1. **Lượt quét (pass A):** mỗi file đọc một lần, chỉ lấy cột lọc dòng, `Stream index` và (Normal) `Capture_ID` → mặt nạ hợp lệ theo `_row_filters` + chỉ số stream; kiểm tra số dòng khớp inventory và `Capture_ID` khớp `group_id`. Có cache trên đĩa.
+2. **Chia:** mỗi lớp con (kịch bản × attack_type) có `test_groups_per_subclass` nhóm cho test, `val_groups_per_subclass` cho val, còn lại train; chọn theo `split_seed`, bỏ nhóm không đủ dòng cho quota (ghi lại). Normal dùng `Capture_ID`.
+3. **Block-split** cho lớp con có < `min_groups_for_group_split` nhóm: chia thành `n_blocks` khối liên tiếp, bỏ `gap_rows` dòng đệm giữa các khối; mỗi khối là một "nhóm" với `group_id = <file>#blkNN`. Vì khoảng đệm không tách được TCP stream sống suốt capture, **bỏ mọi stream có dòng hợp lệ ở nhiều hơn một khối** (`drop_cross_block_streams`; ghi số stream và số dòng bị bỏ vào manifest).
+4. **Lấy mẫu:** số dòng từng file đã biết nên chọn trước chỉ số dòng ngẫu nhiên không hoàn lại cho từng nhóm/khối (tương đương reservoir, một lượt đọc, tất định theo seed). Train lấy đều qua các nhóm train (chia đều, nhóm thiếu dòng thì phần dư chuyển cho nhóm khác). Chế độ nhãn (`label_mode`):
+   - `6class` (mặc định): dùng `quota`; mỗi kịch bản chia đều giữa DoS và DDoS (DoS nhận dòng lẻ).
+   - `11class`: dùng `quota_11class`. Cùng `split_seed` thì hai chế độ dùng **cùng nhóm/khối** test và val.
+   - Nhị phân Normal/Attack không phải mode riêng; chỉ báo cáo như bảng phụ bằng cách gộp dự đoán đa lớp.
+   - Nếu không đủ dòng cho quota: giảm quota, ghi cảnh báo; nếu val hoặc test của một lớp xuống dưới `min_eval_rows` thì **dừng và hỏi người dùng**.
+4b. (Tuỳ chọn, `train_sampling.max_rows_per_stream`) Giới hạn số packet mỗi `stream_id` trong train pool (lý do: Phase 9, mục "Đơn vị bảo vệ"). Mặc định tắt; chạy như độ nhạy A5.
+5. Xuất `data/interim/<label_mode>/{train,val,test}.parquet` (cột thô đã harmonize, dạng chuỗi, kèm `label`, `class6`, `class11`, `split`, `data_source`, `group_id`, `stream_id`, `source_file`, `row_idx`; lưu ý cột thô `source` là địa chỉ gửi) và `split_manifest.json` (nhóm/khối ở split nào, số dòng đủ điều kiện và số dòng lấy, seed, `config_hash`, `git_commit`, `git_dirty`, phiên bản python/numpy/pandas/pyarrow, sha256 từng Parquet, bộ nhớ đỉnh). Bản sao manifest được ghi vào `results/manifests/split_manifest_<mode>.json` để commit; **chỉ chạy lại để tạo manifest khi cây git sạch** (`git_dirty: false`).
 
 **Test/Gate:**
-- **Không nhóm nào xuất hiện ở hơn một split** (assert).
+- **Không nhóm (hoặc khối) nào và không TCP stream nào xuất hiện ở hơn một split** (assert); không dòng thô nào bị lấy hai lần; bộ lọc dòng thỏa.
 - Số dòng đúng quota (hoặc có ghi chú rõ nếu giảm vì thiếu dữ liệu).
-- Chạy lại với cùng seed cho file Parquet cùng hash.
-- Bộ nhớ đỉnh (psutil) < 4 GB.
+- Chạy lại với cùng seed và cùng phiên bản thư viện cho file Parquet cùng hash.
+- Bộ nhớ đỉnh (psutil) < `max_peak_gb` (4 GB).
+- Từ chối chạy nếu thiếu `feature_decisions.yaml` (không được âm thầm bỏ bộ lọc dòng).
 
 ---
 
 ## Phase 4 — Tiền xử lý (`parse_multi.py`, `preprocess.py`)
 
 **Việc:**
-1. `parse_multi(cell) -> list[str]`: tách ô nhiều giá trị, xử lý rỗng/`nan`/khoảng trắng. Cột `message_type`: sinh `message_type_first` (categorical) và `n_mqtt_msgs` (số phần tử). Cột số dạng multi: lấy **tổng** (độ dài) hoặc phần tử đầu, theo `feature_decisions.yaml`.
-2. Lớp `Preprocessor` (fit chỉ trên **train**, lưu bằng joblib):
-   - Cột số: điền 0 cho giá trị không áp dụng và thêm cờ `<col>_is_na` khi tỉ lệ trống trong train nằm trong (0,5%; 99,5%); `log1p` nếu skew > ngưỡng và không âm; chuẩn hóa mean/std; cắt ±`clip_sigma`.
-   - Cột nhị phân: 0/1 (parse `True/False`, `Set/Not set`, `0/1`), trống → 0 + cờ `_is_na`.
-   - Cột phân loại: top-K theo tần suất train + `OTHER` + `NONE`; one-hot.
-3. Xuất `feature_schema.json`: danh sách khối cột (numeric/binary/categorical-group/na-flag) kèm chỉ số, tham số chuẩn hóa, danh sách hạng mục. `Preprocessor.inverse_transform_block` phục vụ sinh dữ liệu.
-4. Xuất `data/processed/{train,val,test}.npz` (float32 X, int y, group_id) và ánh xạ nhãn.
+1. `parse_multi(cell) -> list[str]`: tách ô nhiều giá trị, xử lý rỗng/`nan`/khoảng trắng. Theo `multi_policy: first_only` mọi cột dùng **phần tử đầu** (`first_values`); không sinh `n_mqtt_msgs`.
+2. Lớp `Preprocessor` (fit chỉ trên **train**, lưu bằng joblib; `transform` không đổi trạng thái đã fit):
+   - Cột số: điền 0 cho giá trị không áp dụng, thêm cờ `<col>_is_na` khi tỉ lệ trống trong train nằm trong (`na_flag_range`); `log1p` nếu skew > ngưỡng và không âm (tính trên cột đã điền); chuẩn hóa mean/std (std = 0 thì scale = 1); cắt ±`clip_sigma`. Cột thời gian được cắt về ≥ 0 trước `log1p` (có giá trị âm cỡ -1e-6) và đếm số dòng bị cắt. `preprocess.numeric_scale` nhân một cột với hằng số trước `log1p` (mặc định chỉ `time_delta_from_previous_displayed_frame` × 1000, vì `log1p` của giá trị < 1 s gần như là hàm đồng nhất và đuôi bị cắt ở 5σ); khoảng giá trị gốc trong schema và `inverse_transform` vẫn tính bằng đơn vị gốc.
+   - **Cột siêu thưa** (trống ≥ cận trên của `na_flag_range` nhưng không phải 100%, `ultra_sparse_fix: true`): thống kê tính trên dòng áp dụng, dòng trống nằm ở 0 sau chuẩn hóa, và **có cờ**. Quy tắc v1.1 (điền 0 rồi chuẩn hóa trên cả cột) làm mọi dòng áp dụng bị cắt ở +5σ và gộp các giá trị khác nhau (`will_message_length` = 2 và 3164).
+   - Cột nhị phân: 0/1 (`True/False`, `Set/Not set`, `0/1`), trống → 0 + cờ `_is_na` theo cùng quy tắc.
+   - Cột phân loại: chuẩn hóa token bằng `canonical_token` (mã số và nhãn chữ như nhau), top-K theo tần suất train + `OTHER` (ngoài top-K hoặc không ánh xạ được) + `NONE` (ô rỗng); one-hot.
+   - **Cột `diagnostic`** (trong `feature_decisions.yaml`): xử lý như cột số nhưng xuất riêng (`X_diag`), không nằm trong `D`, để Phase 5 đo. Cấu hình hiện tại không còn cột diagnostic (xem G2).
+3. Xuất `feature_schema.json`: bố cục cột liền khối `[numeric][binary][na_flag][categorical groups]`, mỗi khối có `name`, `type`, `column`, `start`, `width`; tham số chuẩn hóa, danh sách hạng mục, thống kê audit (số dòng bị cắt 5σ, số ô không parse được). `Preprocessor.inverse_transform_block` và `inverse_transform` phục vụ sinh dữ liệu (NaN khi cờ = 1 hoặc loại `NONE`; cột không có cờ giữ giá trị lấp 0 = "không áp dụng").
+4. Xuất `data/processed/<label_mode>/{train,val,test}.npz` (float32 `X`, `X_diag`, int `y`, `group_id`, `stream_id`, `class11`), `label_map.json` (thứ tự theo config), `preprocessor.joblib`.
 
 **Test:**
 - `parse_multi`: các ví dụ thật, ô rỗng, ô có 3 phần tử.
-- Không có `NaN/inf` trong X; số chiều khớp schema; one-hot mỗi nhóm cộng đúng 1.
-- Round-trip số: `inverse(transform(x))` sai lệch < 1e-4 (trừ phần bị clip).
-- Test **chống rò rỉ**: đổi dữ liệu val/test không làm thay đổi tham số của Preprocessor đã fit.
-**Gate:** in ra `D` (số chiều đầu vào), số cờ `_is_na`, và phân bố lớp của từng split.
+- Không có `NaN/inf` trong X; số chiều khớp schema; one-hot mỗi nhóm cộng đúng 1; bố cục liền khối.
+- Round-trip số: `inverse(transform(x))` sai lệch tương đối < 1e-4 (trừ phần bị clip).
+- Chống rò rỉ: `transform`/`audit` trên val/test không đổi tham số đã fit; fit trên train+val thì tham số đổi (nhóm đối chứng).
+- Cột hằng (std = 0), giá trị âm ở cột thời gian, cột siêu thưa giữ phân biệt được các giá trị.
+**Gate:** in ra `D`, số cờ `_is_na`, phân bố lớp từng split. Kết quả thực tế (6 lớp): D = 60, 12 cờ, sai lệch tương đối round-trip tối đa 1,2e-5, 0 giá trị không parse được.
 
 ---
 
 ## Phase 5 — Kiểm tra rò rỉ và độ tin cậy nhãn (`checks/leakage.py`)
 
-Dùng Random Forest nhỏ (100 cây), seed cố định, đánh giá macro-F1 trên **val** (nhóm khác train). 🔶 Mọi ngưỡng trong bảng là heuristic khởi điểm (xem `thresholds` trong config): agent chỉ **báo cáo và đánh dấu**, người dùng quyết định ở G2. Với C3, đặc biệt soi các cột thời gian đã bị đánh dấu ở Phase 2 (mục 5).
+Dùng Random Forest 100 cây, seed {0,1,2}, đánh giá macro-F1 trên **val** (nhóm khác train). 🔶 Mọi ngưỡng là heuristic khởi điểm (`thresholds` trong config): agent chỉ **báo cáo và đánh dấu**, người dùng quyết định ở G2. Train rất mất cân bằng còn val cân bằng, nên bản báo cáo luôn đưa cả RF không trọng số và RF cân bằng lớp.
 
 | Mã | Phép kiểm tra | Cách đọc kết quả (heuristic, người dùng quyết định) |
 |---|---|---|
-| C1 | Ma trận hiện diện theo lớp (từ Phase 2) | Cột trống hoàn toàn ở nhóm này mà đầy đủ ở nhóm kia → nghi artifact |
-| C2 | RF chỉ dùng các cờ `_is_na` | macro-F1 cao hơn xa mức ngẫu nhiên (1/số lớp) → mô hình đang học "cách trích xuất"; liệt kê cột góp nhiều nhất |
-| C3 | RF/stump trên **từng đặc trưng riêng lẻ** | Đặc trưng đơn lẻ có macro-F1 > 0,9 → soi ngữ nghĩa |
-| C4 | Chia theo nhóm vs chia ngẫu nhiên theo dòng (cùng train pool) | Chênh macro-F1 = mức rò rỉ; báo cáo con số này (kết quả đáng đưa vào báo cáo) |
-| C5 | Phân biệt DoS vs DDoS trong cùng kịch bản (chạy ở mode 11 lớp) | Nếu F1 phân biệt DoS/DDoS thấp (≈ đoán ngẫu nhiên) → khuyến nghị dùng 6 lớp |
+| C1 | Ma trận hiện diện theo lớp (từ Phase 2) | Cột trống ở lớp này mà đầy ở lớp kia → nghi artifact; đối chiếu với sự kiện cha |
+| C2 | RF chỉ dùng các cờ `_is_na` | macro-F1 > `na_only_f1_flag` (xa mức ngẫu nhiên 1/số lớp) → mô hình đang học "cách trích xuất"; liệt kê cột góp nhiều nhất |
+| C3 | RF **cân bằng lớp** (`min_samples_leaf=5`) trên **từng cột thô** (giá trị + cờ + one-hot của cột đó) | macro-F1 **hoặc F1 tốt nhất theo lớp** > `single_feature_f1_flag` → soi ngữ nghĩa. (RF không trọng số sụp về lớp đa số nên che mất tín hiệu.) Kèm bỏ-từng-cột khỏi mô hình đầy đủ |
+| C4 | Chia train pool theo dòng ngẫu nhiên, theo **stream**, theo **nhóm** (CV có phân tầng) | Cờ khi (ngẫu nhiên − nhóm) hoặc (ngẫu nhiên − stream) > `leakage_gap_flag`. (ngẫu nhiên − val) chỉ để tham khảo: fold CV giữ phân phối lớp mất cân bằng còn val cân bằng nên hai macro-F1 không so trực tiếp được |
+| C5 | Phân biệt DoS vs DDoS trong cùng kịch bản (dữ liệu 11 lớp) | F1 < `dos_ddos_f1_flag` (≈ đoán ngẫu nhiên 0,5) → khuyến nghị dùng 6 lớp |
 
-**Deliverables:** `results/reports/leakage_report.md` (bảng, hình, khuyến nghị) và cập nhật `feature_decisions.yaml` nếu cần bỏ thêm cột.
-**Gate 🛑 G2:** người dùng chốt (a) danh sách cột cuối cùng, (b) `label_mode` (6 hay 11 lớp). Sau đó **chạy lại Phase 3–4** với quyết định mới.
+Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và cân bằng lớp), ablation `+ cột diagnostic` và `bỏ các cột thời gian` (kèm F1 theo lớp).
+
+**Deliverables:** `results/reports/leakage_report.md` (bảng, hình, các cờ) + `results/reports/leakage/*.csv`, `leakage_results.json`. Cập nhật `feature_decisions.yaml` chỉ khi người dùng quyết định ở G2.
+**Gate 🛑 G2:** người dùng chốt (a) danh sách cột cuối, (b) `label_mode` (6 hay 11 lớp). Sau đó chạy lại Phase 4 (và Phase 3 nếu đổi bộ lọc dòng hoặc `label_mode`).
+**Quyết định G2 đã chốt (2026-10-03):** (a) `time_since_first_frame_in_this_tcp_stream` được đưa vào bộ đặc trưng chính (thêm vào làm macro-F1 cân bằng lớp từ 0,442 lên 0,499, mức tăng chủ yếu ở lớp tấn công: BCF +0,10, DELAYED +0,11, NORMAL +0,013, nên không phải artifact Normal-vs-Attack); giữ `irtt`, `time_delta...`, `will_*`, `requested_qos`, `keep_alive`. (b) `label_mode = 6class`. (c) 3 ngưỡng mới được xác nhận.
+**Kết quả sau G2 (6 lớp, D = 60, sau `numeric_scale`):** macro-F1 val 0,453 (không trọng số) và 0,498 (cân bằng lớp); C2 0,103 (dưới mức ngẫu nhiên 0,167); C3 không cột nào bị cờ (macro-F1 cao nhất 0,31, F1 theo lớp cao nhất 0,61); C4 chênh ngẫu nhiên−nhóm +0,007, ngẫu nhiên−stream +0,002; C5: BCF 0,593 (bị cờ), DELAYED 0,614, WILL 0,690, INVALID 0,788, SYN 0,962. **Kết luận quan trọng:** không thấy rò rỉ, nhưng các lớp tấn công khó phân biệt ở mức từng packet (chia ngẫu nhiên theo dòng trong chính train pool cũng chỉ 0,53), nên B0 thấp không phải dấu hiệu lỗi.
 
 ---
 
@@ -275,7 +307,7 @@ Dùng Random Forest nhỏ (100 cây), seed cố định, đánh giá macro-F1 tr
 - **Thống kê** (`stats.py`): bootstrap phân tầng trên tập test (1000 lần) cho CI của macro-F1 và **CI của hiệu số ghép cặp** giữa hai cấu hình.
 
 **Test:** metric trên dữ liệu giả có đáp án biết trước (dự đoán hoàn hảo → F1 = 1; dự đoán ngẫu nhiên → xấp xỉ 1/số lớp); `Preprocessor` không bị dùng lại giữa các split; kết quả lặp lại được với cùng seed.
-**Gate 🛑 G3 (sanity baseline):** B0 và B1 chạy đủ 3 seed; std macro-F1 giữa các seed < 0,02; macro-F1 B0 không ≈ 1,000 ở mọi lớp (nếu có: quay lại Phase 5, nghi rò rỉ). Người dùng xem bảng B0/B1 trước khi tiếp tục.
+**Gate 🛑 G3 (sanity baseline):** B0 và B1 chạy đủ 3 seed; std macro-F1 giữa các seed < 0,02; macro-F1 B0 không ≈ 1,000 ở mọi lớp (nếu có: quay lại Phase 5, nghi rò rỉ). Người dùng xem bảng B0/B1 trước khi tiếp tục. Kỳ vọng thực tế đã đo ở Phase 5 (RF 100 cây, val): macro-F1 ≈ 0,45 (không trọng số) và ≈ 0,50 (cân bằng lớp); B0 thấp là đặc tính của dữ liệu mức packet, không phải lỗi.
 
 ---
 
@@ -429,7 +461,7 @@ Dùng Random Forest nhỏ (100 cây), seed cố định, đánh giá macro-F1 tr
 - [ ] ε thực đạt của DP được báo cáo và khớp mục tiêu; T-SA1 đạt; MIA có đối chứng dương.
 - [ ] `final_report.md` sinh tự động, mọi số có nguồn trong `results/`.
 - [ ] `compute_budget.md` có số đo thực và ghi lại mọi cắt giảm (nếu có).
-- [ ] Danh sách hạn chế nêu đủ: dữ liệu ở mức packet; **ε ở mức bản ghi, các packet trong stream tương quan**; đặc trưng thời gian phụ thuộc cách xuất và CVAE sinh packet độc lập; tuning không riêng tư; mô phỏng một máy (không đo độ trễ mạng); chuẩn hóa dùng thống kê tập trung; nhãn không được bảo vệ bởi DP; tập test lấy từ ít nhóm (xem A4 nếu đã chạy); các ngưỡng đánh giá là heuristic do người dùng chốt; kết quả trên một dataset.
+- [ ] Danh sách hạn chế nêu đủ: dữ liệu ở mức packet; **ε ở mức bản ghi, các packet trong stream tương quan**; đặc trưng thời gian phụ thuộc cách xuất và CVAE sinh packet độc lập; tuning không riêng tư; mô phỏng một máy (không đo độ trễ mạng); chuẩn hóa dùng thống kê tập trung; nhãn không được bảo vệ bởi DP; tập test lấy từ ít nhóm (xem A4 nếu đã chạy); các ngưỡng đánh giá là heuristic do người dùng chốt; kết quả trên một dataset; các lớp tấn công khó phân biệt ở mức từng packet (B0 ≈ 0,45-0,50) nên CVAE sinh packet độc lập không thể tạo thêm độ phân biệt không có sẵn trong đặc trưng; 8/11 lớp con chỉ có một file capture nên val/test của chúng là các khối liên tiếp trong cùng một capture, và việc bỏ stream vắt qua nhiều khối loại 1,2% đến 9,9% dòng đủ điều kiện mỗi lớp con (lệch về phía kết nối ngắn); lọc `protocol ∈ {TCP, MQTT}` bỏ 0,50% dòng Normal và 128 dòng RIPv2 của Attack; chỉ dùng phần tử đầu của ô nhiều giá trị (mất thông tin gộp nhiều bản tin trong một packet, phần nào còn trong `tcp_segment_len`); đuôi `time_delta...` vẫn bị cắt ở 5σ ở mức 0,08% dòng train sau khi nhân 1000 (1,04% nếu không); cột siêu thưa xử lý khác v1.1; thông tin nhãn lớp con DoS/DDoS bị gộp ở chế độ 6 lớp.
 - [ ] README đủ để người khác chạy lại từ đầu.
 
 ---
@@ -442,5 +474,6 @@ Dùng Random Forest nhỏ (100 cây), seed cố định, đánh giá macro-F1 tr
 
 ## Lịch sử thay đổi
 
+- **v1.2 (2026-10-03):** gộp các thay đổi rút ra khi làm Phase 0-5 (chi tiết và bằng chứng: `SPEC_DEVIATIONS.md`). Phase 2: kiểm toán token, cặp cột trùng, header; ánh xạ nhãn chữ↔mã số; luật SUSPECT sinh từ số liệu (sự kiện cha, ngưỡng đếm); `first_only` thay cho first+count/sum và bỏ `n_mqtt_msgs`; lọc `protocol`; quyết định người dùng lưu ở config (`user_overrides`, `g1_log`, `g2_log`). Phase 3: chọn trước chỉ số dòng thay cho reservoir, `interim/<mode>/`, nhóm `#blkNN`, bỏ stream vắt qua nhiều khối, manifest có phiên bản và bản sao commit được. Phase 4: cột siêu thưa, bố cục khối, cột `diagnostic`, `processed/<mode>/`. Phase 5: C3 cân bằng lớp + F1 theo lớp, C4 thêm chia theo stream và chỉ cờ theo nhóm/stream, ablation; 3 ngưỡng mới; quyết định G1, G2; `configs/local.yaml` và `config_hash` bỏ `paths`; hạn chế bổ sung. Sau G2: `numeric_scale` cho `time_delta`, `requirements.txt` bỏ ràng buộc `numpy<2.0` (kiểm tra bằng dry-run cài `torch`, `flwr`, `opacus`: không xung đột), cho phép commit báo cáo `.md` và hình `.png` trong `results/`.
 - **v1.1:** thêm mục 1.1 (Colab/Drive, chống mất phiên) và 1.2 (ngân sách tính toán); thêm bước 7.4 benchmark; bảng quota 11 lớp và bỏ mode `binary` riêng; kiểm tra đặc trưng thời gian (Phase 2); giữ `stream_id` và tuỳ chọn `max_rows_per_stream`; quy tắc báo cáo ε theo từng client (max_i); checkpoint/resume cho FL và DP; nhãn 🔶 và khối `thresholds` trong config; độ nhạy A4 (đổi nhóm test) và A5; cập nhật Definition of Done.
 - **v1.0:** bản đầu tiên.

@@ -86,6 +86,9 @@ class Preprocessor:
         lo, hi = pcfg.get("na_flag_range", [0.005, 0.995])
         self.na_lo, self.na_hi = float(lo), float(hi)
         self.ultra_fix = bool(pcfg.get("ultra_sparse_fix", True))
+        # Per-column multiplier applied before log1p (e.g. seconds -> milliseconds for gaps below 1 s, where
+        # log1p is almost the identity and the 5-sigma clip would merge the tail). Raw units are restored on inverse.
+        self.scales = {k: float(v) for k, v in (pcfg.get("numeric_scale") or {}).items()}
         self.params: dict[str, dict[str, Any]] = {}
         self.core_blocks: list[dict[str, Any]] = []
         self.diag_blocks: list[dict[str, Any]] = []
@@ -119,7 +122,8 @@ class Preprocessor:
             na_rate = float(raw.isna().mean())
             return {"type": "binary", "na_rate": na_rate, "has_flag": self.na_lo < na_rate < self.na_hi,
                     "p_one": float(raw.dropna().mean()) if raw.notna().any() else 0.0}
-        raw = parse_numeric(s)
+        scale = self.scales.get(col, 1.0)
+        raw = parse_numeric(s) * scale
         na = raw.isna()
         na_rate = float(na.mean())
         nonneg_clip = col in TIME_COLS
@@ -138,14 +142,14 @@ class Preprocessor:
         t = np.log1p(basis) if use_log else basis
         std = float(np.std(t))
         applicable = v[~na.to_numpy()]
-        return {"type": "numeric", "na_rate": na_rate,
+        return {"type": "numeric", "na_rate": na_rate, "scale": scale,
                 "has_flag": bool(self.na_lo < na_rate < self.na_hi or ultra), "ultra_sparse": ultra,
                 "log1p": use_log, "skew": sk, "mean": float(np.mean(t)),
                 "std": std if std > _STD_FLOOR else 1.0, "constant": bool(std <= _STD_FLOOR),
                 "nonneg_clip": nonneg_clip, "n_negative_in_train": n_neg,
-                "raw_min": float(applicable.min()) if len(applicable) else 0.0,
-                "raw_max": float(applicable.max()) if len(applicable) else 0.0,
-                "is_integer": bool(len(applicable) and np.all(applicable == np.round(applicable)))}
+                "raw_min": float(applicable.min() / scale) if len(applicable) else 0.0,
+                "raw_max": float(applicable.max() / scale) if len(applicable) else 0.0,
+                "is_integer": bool(len(applicable) and np.all(applicable / scale == np.round(applicable / scale)))}
 
     def _layout(self, columns: list[str]) -> list[dict[str, Any]]:
         blocks: list[dict[str, Any]] = []
@@ -191,7 +195,7 @@ class Preprocessor:
         for b in blocks:
             col, p = b["column"], self.params[b["column"]]
             if b["type"] == "numeric":
-                cache[col] = parse_numeric(df[col])
+                cache[col] = parse_numeric(df[col]) * p["scale"]
                 out[:, b["start"]] = self._numeric_z(p, cache[col])
             elif b["type"] == "binary":
                 cache[col] = parse_binary(df[col])
@@ -220,7 +224,7 @@ class Preprocessor:
         p = self.params[block["column"]]
         if block["type"] == "numeric":
             t = values[:, 0].astype("float64") * p["std"] + p["mean"]
-            return np.expm1(t) if p["log1p"] else t
+            return (np.expm1(t) if p["log1p"] else t) / p["scale"]
         if block["type"] in ("binary", "na_flag"):
             return (values[:, 0] >= 0.5).astype("float64")
         cats = np.array(p["categories"], dtype=object)
@@ -259,7 +263,7 @@ class Preprocessor:
                 rep["unparsed"][col] = n_unp
             if action == "numeric":
                 p = self.params[col]
-                raw = parse_numeric(df[col])
+                raw = parse_numeric(df[col]) * p["scale"]
                 v = raw.fillna(0.0).to_numpy()
                 if p["nonneg_clip"] or p["log1p"]:
                     n_neg = int((v < 0).sum())
@@ -282,7 +286,7 @@ class Preprocessor:
             "n_na_flags": int(n_flags),
             "settings": {"categorical_top_k": self.top_k, "log1p_skew_threshold": self.skew_thr,
                          "clip_sigma": self.clip, "na_flag_range": [self.na_lo, self.na_hi],
-                         "ultra_sparse_fix": self.ultra_fix,
+                         "ultra_sparse_fix": self.ultra_fix, "numeric_scale": self.scales,
                          "multi_policy": "first_only"},
             "blocks": self.core_blocks,
             "diagnostic": {"n_features": int(sum(b["width"] for b in self.diag_blocks)),

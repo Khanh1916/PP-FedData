@@ -10,10 +10,12 @@ data/partitions/
 # Artifacts
 artifacts/*/
 
-# Results (generated)
+# Results (generated). Aggregate reports (md) and figures (png) are tracked; CSV/JSON intermediates are not.
 results/*.csv
-results/figures/
-results/reports/
+results/figures/*
+!results/figures/*.png
+results/reports/*
+!results/reports/*.md
 
 # Python
 __pycache__/

@@ -592,6 +592,8 @@ def generate_feature_decisions(
                                "note": "Applied in Phase 3 sampling to Normal and Attack rows (keeps only listed values)."}
     if hcfg.get("g1_log"):
         dec["_g1"] = hcfg["g1_log"]
+    if hcfg.get("g2_log"):
+        dec["_g2"] = hcfg["g2_log"]
     return dec
 
 
