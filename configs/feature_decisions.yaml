@@ -1,0 +1,326 @@
+'no':
+  action: drop
+  reason: Row number, not a feature
+epoch_time:
+  action: drop
+  reason: Absolute timestamp, not a feature
+time_since_reference_or_first_frame:
+  action: drop
+  reason: Depends on capture start
+stream_index:
+  action: drop
+  reason: Not a feature; kept as metadata stream_id = (group_id, stream_index)
+source:
+  action: drop
+  reason: Address of the sender, would identify the host
+info:
+  action: drop
+  reason: Free-text description, not structured
+label:
+  action: drop
+  reason: Target label (Normal-only column), not a feature
+capture_id:
+  action: drop
+  reason: Grouping metadata (Normal-only column), not a feature
+frame_length_on_wire_2:
+  action: numeric
+  reason: frame length on wire 2
+  multi: false
+time_delta_from_previous_displayed_frame:
+  action: numeric
+  reason: time delta from previous displayed frame
+  multi: false
+  time_ratios:
+    p25: 3.43
+    p50: 2.19
+    p75: 1.52
+    p99: 2.54
+irtt:
+  action: numeric
+  reason: irtt
+  multi: false
+  time_ratios:
+    p25: 1.21
+    p50: 1.39
+    p75: 1.29
+    p99: 4.01
+time_since_first_frame_in_this_tcp_stream:
+  action: drop
+  reason: time since first frame in this tcp stream
+  multi: false
+  time_ratios:
+    p25: 26.14
+    p50: 1.19
+    p75: 10.14
+    p99: 9883.29
+  suspect: false
+  suspect_reasons_resolved:
+  - Normal vs Attack on TCP-only packets differ x9883.3 at p99 (Normal 9989.31, Attack
+    1.01073).
+  diagnostic: true
+  g1_decision: Excluded from the core feature set; Phase 4 exports it as a diagnostic
+    column so Phase 5 C3 can measure it. Final call at G2.
+tcp_segment_len:
+  action: numeric
+  reason: tcp segment len
+  multi: false
+calculated_window_size:
+  action: numeric
+  reason: calculated window size
+  multi: false
+keep_alive:
+  action: numeric
+  reason: keep alive
+  multi: false
+user_name_length:
+  action: numeric
+  reason: user name length
+  multi: false
+password_length:
+  action: numeric
+  reason: password length
+  multi: false
+will_message_length:
+  action: numeric
+  reason: will message length
+  multi: false
+  genuine_absence: Empty in Normal because Normal rarely/never triggers the parent
+    event (parent column will_flag is present in 0.075 of Normal rows); not treated
+    as an extraction artifact.
+will_topic_length:
+  action: numeric
+  reason: will topic length
+  multi: false
+  genuine_absence: Empty in Normal because Normal rarely/never triggers the parent
+    event (parent column will_flag is present in 0.075 of Normal rows); not treated
+    as an extraction artifact.
+topic_length:
+  action: numeric
+  reason: topic length
+  multi: true
+  multi_artifact: 'multi-value cells: Normal 0.0000% vs Attack 1.2612%. The Normal
+    export keeps the first occurrence only, so counts/sums over multi-value cells
+    are not comparable.'
+  multi_policy: first_only
+msg_len:
+  action: numeric
+  reason: msg len
+  multi: true
+  multi_artifact: 'multi-value cells: Normal 0.0000% vs Attack 1.5769%. The Normal
+    export keeps the first occurrence only, so counts/sums over multi-value cells
+    are not comparable.'
+  multi_policy: first_only
+syn:
+  action: binary
+  reason: syn
+  multi: false
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+reset:
+  action: binary
+  reason: reset
+  multi: false
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+acknowledgment:
+  action: binary
+  reason: acknowledgment
+  multi: false
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+clean_session_flag_2:
+  action: binary
+  reason: clean session flag 2
+  multi: false
+  category_mismatch:
+    normal_only: {}
+    attack_only:
+      '0': 50372
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+retain:
+  action: binary
+  reason: retain
+  multi: true
+  multi_artifact: 'multi-value cells: Normal 0.0000% vs Attack 0.9012%. The Normal
+    export keeps the first occurrence only, so counts/sums over multi-value cells
+    are not comparable.'
+  multi_policy: first_only
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+will_retain:
+  action: binary
+  reason: will retain
+  multi: false
+  category_mismatch:
+    normal_only: {}
+    attack_only:
+      '1': 25414
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+will_flag:
+  action: binary
+  reason: will flag
+  multi: false
+  category_mismatch:
+    normal_only: {}
+    attack_only:
+      '1': 25414
+  format_note: Normal uses True/False, Attack uses Set/Not set; parser maps both to
+    0/1.
+protocol:
+  action: categorical
+  reason: protocol
+  multi: false
+  category_mismatch:
+    normal_only:
+      ARP: 73
+      CDP: 5642
+      DHCPv6: 44
+      DNS: 80
+      ICMP: 80
+      ICMPv6: 22
+      IGMPv3: 16
+      LLDP: 362
+      LLMNR: 54
+      LOOP: 33855
+      MDNS: 88
+      NBNS: 120
+      SSDP: 7546
+      STP: 168958
+    attack_only: {}
+  suspect: false
+  suspect_reasons_resolved:
+  - '0.476% of Normal tokens have values never seen in Attack: {''ARP'': 73, ''CDP'':
+    5642, ''DHCPv6'': 44, ''DNS'': 80, ''ICMP'': 80, ''ICMPv6'': 22, ''IGMPv3'': 16,
+    ''LLDP'': 362, ''LLMNR'': 54, ''LOOP'': 33855, ''MDNS'': 88, ''NBNS'': 120, ''SSDP'':
+    7546, ''STP'': 168958}.'
+  g1_decision: Keep. Normal rows are filtered to row_filters.protocol in Phase 3 (STP/LOOP/SSDP/...
+    occur in every Normal capture, never in Attack).
+message_type:
+  action: categorical
+  reason: message type
+  multi: true
+  multi_artifact: 'multi-value cells: Normal 0.0000% vs Attack 1.5769%. The Normal
+    export keeps the first occurrence only, so counts/sums over multi-value cells
+    are not comparable.'
+  multi_policy: first_only
+  unmapped_tokens:
+    count: 27
+    share: 1.19e-06
+    examples:
+    - Reserved
+    - Publish Re
+    - Publi
+    - P
+    - Publish R
+  category_mismatch:
+    normal_only:
+      '0': 125
+      '10': 14
+      '14': 19
+      '15': 56
+      '9': 26
+    attack_only: {}
+  value_map:
+    Connect Command: '1'
+    Connect Ack: '2'
+    Publish Message: '3'
+    Publish Ack: '4'
+    Publish Received: '5'
+    Publish Release: '6'
+    Publish Complete: '7'
+    Subscribe Request: '8'
+    Subscribe Ack: '9'
+    Unsubscribe Request: '10'
+    Unsubscribe Ack: '11'
+    Ping Request: '12'
+    Ping Response: '13'
+    Disconnect Req: '14'
+  format_note: Normal uses numeric codes, Attack uses text; parser maps text to code.
+qos_level_1:
+  action: categorical
+  reason: qos level 1
+  multi: true
+  multi_artifact: 'multi-value cells: Normal 0.0000% vs Attack 0.9012%. The Normal
+    export keeps the first occurrence only, so counts/sums over multi-value cells
+    are not comparable.'
+  multi_policy: first_only
+  value_map:
+    At most once delivery (Fire and Forget): '0'
+    At least once delivery (Acknowledged deliver): '1'
+    Exactly once delivery (Assured Delivery): '2'
+    Reserved: '3'
+  format_note: Normal uses numeric codes, Attack uses text; parser maps text to code.
+qos_level_2:
+  action: categorical
+  reason: qos level 2
+  multi: false
+  category_mismatch:
+    normal_only: {}
+    attack_only:
+      '2': 25414
+  value_map:
+    At most once delivery (Fire and Forget): '0'
+    At least once delivery (Acknowledged deliver): '1'
+    Exactly once delivery (Assured Delivery): '2'
+    Reserved: '3'
+  format_note: Normal uses numeric codes, Attack uses text; parser maps text to code.
+requested_qos:
+  action: categorical
+  reason: requested qos
+  multi: false
+  note: 'Spec auto-drop rule (empty >99.9% in every class) does not hold: max presence
+    0.166'
+  genuine_absence: Empty in Normal because Normal rarely/never triggers the parent
+    event (Normal has 40 packets with message_type=8); not treated as an extraction
+    artifact.
+  multi_artifact: 'multi-value cells: Normal 0.0000% vs Attack 0.3601%. The Normal
+    export keeps the first occurrence only, so counts/sums over multi-value cells
+    are not comparable.'
+  multi_policy: first_only
+  category_mismatch:
+    normal_only:
+      '0': 3
+      '2': 3
+    attack_only: {}
+  value_map:
+    At most once delivery (Fire and Forget): '0'
+    At least once delivery (Acknowledged deliver): '1'
+    Exactly once delivery (Assured Delivery): '2'
+    Reserved: '3'
+  format_note: Normal uses numeric codes, Attack uses text; parser maps text to code.
+frame_length_on_wire_1:
+  action: drop
+  reason: 'Duplicate of frame_length_on_wire_2: equal in 14044724/14044724 Attack
+    rows where both are present, never present without it; empty in Normal.'
+  duplicate_of: frame_length_on_wire_2
+clean_session_flag_1:
+  action: drop
+  reason: 'Duplicate of clean_session_flag_2: equal in 2028233/2028233 Attack rows
+    where both are present, never present without it; empty in Normal.'
+  duplicate_of: clean_session_flag_2
+n_mqtt_msgs:
+  action: drop
+  suspect: false
+  derived_from: message_type
+  reason: 'Number of MQTT messages per packet (spec: first+count).'
+  suspect_reasons_resolved:
+  - Multi-value cells exist only in Attack, so the count is <= 1 in Normal by construction.
+  g1_decision: Drop. Multi-value cells exist only in Attack (Normal export used occurrence=f);
+    policy for message_type etc. is first_only.
+_row_filters:
+  normal_only:
+    protocol:
+    - TCP
+    - MQTT
+  note: Applied in Phase 3 sampling to Normal rows only.
+_g1:
+  approved_on: '2026-10-03'
+  decisions:
+  - 'will_message_length, will_topic_length: keep (genuine protocol semantics; Normal
+    exports will_flag for all CONNECT packets and never sets it).'
+  - 'protocol: keep and filter Normal rows to {TCP, MQTT} in Phase 3.'
+  - 'multi-value cells: first_only; drop n_mqtt_msgs.'
+  - 'time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2.'
+  - 'requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE).'

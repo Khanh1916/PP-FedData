@@ -30,7 +30,7 @@ quota_11class:
 train_sampling:
   max_rows_per_stream: null
 preprocess:
-  multi_value: {message_type: first+count, numeric_multi: sum}
+  multi_value: {message_type: first, numeric_multi: first}   # G1: Normal export keeps first occurrence only (spec default was first+count / sum)
   categorical_top_k: 10
   log1p_skew_threshold: 2.0
   clip_sigma: 5
@@ -57,3 +57,35 @@ compute:
   artifacts_dir: "./artifacts"
   checkpoint_every_rounds: 5
   budget_hours: null
+harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT flags (user decides at G1)
+  decisions_path: "./configs/feature_decisions.yaml"
+  figures_dir: "./results/figures"
+  reports_dir: "./results/reports"
+  suspect_presence_diff: 0.95   # |presence(NORMAL) - presence(attack class)| above this -> SUSPECT
+  absent_presence_max: 0.001    # a column is "absent" in a source if presence <= this in every class
+  present_presence_min: 0.01    # ... and "present" in the other source if presence >= this in some class
+  time_ratio_suspect: 10.0      # max(p25,p50,p75,p99) ratio between sources above this -> SUSPECT
+  token_min_share: 0.001        # Normal-only category values are flagged if their share >= this ...
+  token_min_count: 100          # ... and their absolute count >= this
+  # --- Human decisions at G1 (approved 2026-10-03), applied on top of the data-derived flags ---
+  user_overrides:
+    protocol:
+      action: categorical
+      g1_decision: "Keep. Normal rows are filtered to row_filters.protocol in Phase 3 (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack)."
+    time_since_first_frame_in_this_tcp_stream:
+      action: drop
+      diagnostic: true
+      g1_decision: "Excluded from the core feature set; Phase 4 exports it as a diagnostic column so Phase 5 C3 can measure it. Final call at G2."
+    n_mqtt_msgs:
+      action: drop
+      g1_decision: "Drop. Multi-value cells exist only in Attack (Normal export used occurrence=f); policy for message_type etc. is first_only."
+  row_filters:
+    protocol: ["TCP", "MQTT"]
+  g1_log:
+    approved_on: "2026-10-03"
+    decisions:
+      - "will_message_length, will_topic_length: keep (genuine protocol semantics; Normal exports will_flag for all CONNECT packets and never sets it)."
+      - "protocol: keep and filter Normal rows to {TCP, MQTT} in Phase 3."
+      - "multi-value cells: first_only; drop n_mqtt_msgs."
+      - "time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2."
+      - "requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE)."
