@@ -1,0 +1,1687 @@
+{
+  "label_mode": "6class",
+  "split_seed": 0,
+  "config_hash": "f1e109b1e1a4",
+  "git_commit": "5c62fdacb3c3becdd8dcf701037714582ce4db9d",
+  "git_dirty": false,
+  "versions": {
+    "python": "3.13.5",
+    "numpy": "2.3.2",
+    "pandas": "2.3.1",
+    "pyarrow": "25.0.1"
+  },
+  "row_filters": {
+    "protocol": [
+      "TCP",
+      "MQTT"
+    ]
+  },
+  "max_rows_per_stream": null,
+  "quota_requested": {
+    "NORMAL": {
+      "train": 60000,
+      "val": 2000,
+      "test": 5000
+    },
+    "BCF_DoS": {
+      "train": 10000,
+      "val": 1000,
+      "test": 2500
+    },
+    "BCF_DDoS": {
+      "train": 10000,
+      "val": 1000,
+      "test": 2500
+    },
+    "DELAYED_DoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "DELAYED_DDoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "SYN_DoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "SYN_DDoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "INVALID_DoS": {
+      "train": 750,
+      "val": 1000,
+      "test": 2500
+    },
+    "INVALID_DDoS": {
+      "train": 750,
+      "val": 1000,
+      "test": 2500
+    },
+    "WILL_DoS": {
+      "train": 500,
+      "val": 1000,
+      "test": 2500
+    },
+    "WILL_DDoS": {
+      "train": 500,
+      "val": 1000,
+      "test": 2500
+    }
+  },
+  "quota_actual": {
+    "NORMAL": {
+      "train": 60000,
+      "val": 2000,
+      "test": 5000
+    },
+    "BCF_DoS": {
+      "train": 10000,
+      "val": 1000,
+      "test": 2500
+    },
+    "BCF_DDoS": {
+      "train": 10000,
+      "val": 1000,
+      "test": 2500
+    },
+    "DELAYED_DoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "DELAYED_DDoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "SYN_DoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "SYN_DDoS": {
+      "train": 1500,
+      "val": 1000,
+      "test": 2500
+    },
+    "INVALID_DoS": {
+      "train": 750,
+      "val": 1000,
+      "test": 2500
+    },
+    "INVALID_DDoS": {
+      "train": 750,
+      "val": 1000,
+      "test": 2500
+    },
+    "WILL_DoS": {
+      "train": 500,
+      "val": 1000,
+      "test": 2500
+    },
+    "WILL_DDoS": {
+      "train": 500,
+      "val": 1000,
+      "test": 2500
+    }
+  },
+  "rows": {
+    "train": 88500,
+    "val": 12000,
+    "test": 30000
+  },
+  "parquet_sha256": {
+    "train": "656848c6df2528e2d3b8ef45c2ed85d87d28c9f85c882c56b0890be0040c7e23",
+    "val": "d8d6681565b78c4dc4e4cfbd233710b1f40459515f0f81d98184a8e7ceee2dea",
+    "test": "d8ea064794e84f45140f543e598b81af847d432389313347df18a5f586d166e6"
+  },
+  "peak_rss_gb": 0.663,
+  "warnings": [],
+  "subclasses": {
+    "NORMAL": {
+      "split_kind": "group",
+      "n_units": 49,
+      "units": {
+        "train": [
+          {
+            "unit_id": "NormalData1",
+            "group": "NormalData1",
+            "eligible_rows": 1947822,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData10",
+            "group": "NormalData10",
+            "eligible_rows": 1950821,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData11",
+            "group": "NormalData11",
+            "eligible_rows": 1953017,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData12",
+            "group": "NormalData12",
+            "eligible_rows": 1953053,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData13",
+            "group": "NormalData13",
+            "eligible_rows": 825998,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData14",
+            "group": "NormalData14",
+            "eligible_rows": 1950130,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData15",
+            "group": "NormalData15",
+            "eligible_rows": 1681136,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData16",
+            "group": "NormalData16",
+            "eligible_rows": 1674785,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData17",
+            "group": "NormalData17",
+            "eligible_rows": 1681120,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData18",
+            "group": "NormalData18",
+            "eligible_rows": 1106461,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData19",
+            "group": "NormalData19",
+            "eligible_rows": 525890,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData2",
+            "group": "NormalData2",
+            "eligible_rows": 1949078,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData21",
+            "group": "NormalData21",
+            "eligible_rows": 573362,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData22",
+            "group": "NormalData22",
+            "eligible_rows": 577804,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData23",
+            "group": "NormalData23",
+            "eligible_rows": 587829,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData24",
+            "group": "NormalData24",
+            "eligible_rows": 584928,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData25",
+            "group": "NormalData25",
+            "eligible_rows": 596658,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData26",
+            "group": "NormalData26",
+            "eligible_rows": 586259,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData27",
+            "group": "NormalData27",
+            "eligible_rows": 607770,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData28",
+            "group": "NormalData28",
+            "eligible_rows": 608590,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData29",
+            "group": "NormalData29",
+            "eligible_rows": 619942,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData3",
+            "group": "NormalData3",
+            "eligible_rows": 1950060,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData30",
+            "group": "NormalData30",
+            "eligible_rows": 644782,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData31",
+            "group": "NormalData31",
+            "eligible_rows": 485841,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData32",
+            "group": "NormalData32",
+            "eligible_rows": 487884,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData33",
+            "group": "NormalData33",
+            "eligible_rows": 486573,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData34",
+            "group": "NormalData34",
+            "eligible_rows": 486227,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData35",
+            "group": "NormalData35",
+            "eligible_rows": 488481,
+            "sampled": 1277
+          },
+          {
+            "unit_id": "NormalData36",
+            "group": "NormalData36",
+            "eligible_rows": 487503,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData37",
+            "group": "NormalData37",
+            "eligible_rows": 488049,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData38",
+            "group": "NormalData38",
+            "eligible_rows": 486829,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData39",
+            "group": "NormalData39",
+            "eligible_rows": 487726,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData4",
+            "group": "NormalData4",
+            "eligible_rows": 1948500,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData41",
+            "group": "NormalData41",
+            "eligible_rows": 144946,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData42",
+            "group": "NormalData42",
+            "eligible_rows": 139107,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData43",
+            "group": "NormalData43",
+            "eligible_rows": 151378,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData44",
+            "group": "NormalData44",
+            "eligible_rows": 138039,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData45",
+            "group": "NormalData45",
+            "eligible_rows": 155498,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData46",
+            "group": "NormalData46",
+            "eligible_rows": 137307,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData47",
+            "group": "NormalData47",
+            "eligible_rows": 140797,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData48",
+            "group": "NormalData48",
+            "eligible_rows": 143834,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData49",
+            "group": "NormalData49",
+            "eligible_rows": 158546,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData50",
+            "group": "NormalData50",
+            "eligible_rows": 256765,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData6",
+            "group": "NormalData6",
+            "eligible_rows": 1945172,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData7",
+            "group": "NormalData7",
+            "eligible_rows": 1948211,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData8",
+            "group": "NormalData8",
+            "eligible_rows": 1949934,
+            "sampled": 1276
+          },
+          {
+            "unit_id": "NormalData9",
+            "group": "NormalData9",
+            "eligible_rows": 1950972,
+            "sampled": 1276
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "NormalData5",
+            "group": "NormalData5",
+            "eligible_rows": 1947756,
+            "sampled": 2000
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "NormalData20",
+            "group": "NormalData20",
+            "eligible_rows": 571786,
+            "sampled": 5000
+          }
+        ]
+      }
+    },
+    "BCF_DoS": {
+      "split_kind": "group",
+      "n_units": 19,
+      "units": {
+        "train": [
+          {
+            "unit_id": "BF1_DoS_AD_12",
+            "group": "BF1_DoS_AD_12",
+            "eligible_rows": 306918,
+            "sampled": 589
+          },
+          {
+            "unit_id": "BF1_DoS_AD_13",
+            "group": "BF1_DoS_AD_13",
+            "eligible_rows": 305473,
+            "sampled": 589
+          },
+          {
+            "unit_id": "BF1_DoS_AD_14",
+            "group": "BF1_DoS_AD_14",
+            "eligible_rows": 306918,
+            "sampled": 589
+          },
+          {
+            "unit_id": "BF1_DoS_AD_15",
+            "group": "BF1_DoS_AD_15",
+            "eligible_rows": 307233,
+            "sampled": 589
+          },
+          {
+            "unit_id": "BF1_DoS_AD_16",
+            "group": "BF1_DoS_AD_16",
+            "eligible_rows": 305800,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_17",
+            "group": "BF1_DoS_AD_17",
+            "eligible_rows": 306149,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_18",
+            "group": "BF1_DoS_AD_18",
+            "eligible_rows": 306966,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_19",
+            "group": "BF1_DoS_AD_19",
+            "eligible_rows": 306633,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_20",
+            "group": "BF1_DoS_AD_20",
+            "eligible_rows": 305958,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_22",
+            "group": "BF1_DoS_AD_22",
+            "eligible_rows": 306959,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_23",
+            "group": "BF1_DoS_AD_23",
+            "eligible_rows": 306790,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_24",
+            "group": "BF1_DoS_AD_24",
+            "eligible_rows": 306211,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_26",
+            "group": "BF1_DoS_AD_26",
+            "eligible_rows": 305439,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_27",
+            "group": "BF1_DoS_AD_27",
+            "eligible_rows": 306020,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_28",
+            "group": "BF1_DoS_AD_28",
+            "eligible_rows": 306941,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_29",
+            "group": "BF1_DoS_AD_29",
+            "eligible_rows": 305482,
+            "sampled": 588
+          },
+          {
+            "unit_id": "BF1_DoS_AD_30",
+            "group": "BF1_DoS_AD_30",
+            "eligible_rows": 308739,
+            "sampled": 588
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "BF1_DoS_AD_25",
+            "group": "BF1_DoS_AD_25",
+            "eligible_rows": 307152,
+            "sampled": 1000
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "BF1_DoS_AD_21",
+            "group": "BF1_DoS_AD_21",
+            "eligible_rows": 307245,
+            "sampled": 2500
+          }
+        ]
+      }
+    },
+    "BCF_DDoS": {
+      "split_kind": "group",
+      "n_units": 21,
+      "units": {
+        "train": [
+          {
+            "unit_id": "BF1_DDoS_AD_1",
+            "group": "BF1_DDoS_AD_1",
+            "eligible_rows": 314979,
+            "sampled": 527
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_10",
+            "group": "BF1_DDoS_AD_10",
+            "eligible_rows": 311383,
+            "sampled": 527
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_11",
+            "group": "BF1_DDoS_AD_11",
+            "eligible_rows": 290899,
+            "sampled": 527
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_12",
+            "group": "BF1_DDoS_AD_12",
+            "eligible_rows": 310992,
+            "sampled": 527
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_13",
+            "group": "BF1_DDoS_AD_13",
+            "eligible_rows": 311026,
+            "sampled": 527
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_14",
+            "group": "BF1_DDoS_AD_14",
+            "eligible_rows": 311617,
+            "sampled": 527
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_16",
+            "group": "BF1_DDoS_AD_16",
+            "eligible_rows": 311670,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_17",
+            "group": "BF1_DDoS_AD_17",
+            "eligible_rows": 311531,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_18",
+            "group": "BF1_DDoS_AD_18",
+            "eligible_rows": 311174,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_19",
+            "group": "BF1_DDoS_AD_19",
+            "eligible_rows": 311657,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_2",
+            "group": "BF1_DDoS_AD_2",
+            "eligible_rows": 312393,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_3",
+            "group": "BF1_DDoS_AD_3",
+            "eligible_rows": 312377,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_31",
+            "group": "BF1_DDoS_AD_31",
+            "eligible_rows": 235971,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_4",
+            "group": "BF1_DDoS_AD_4",
+            "eligible_rows": 312459,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_5",
+            "group": "BF1_DDoS_AD_5",
+            "eligible_rows": 312926,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_6",
+            "group": "BF1_DDoS_AD_6",
+            "eligible_rows": 313265,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_7",
+            "group": "BF1_DDoS_AD_7",
+            "eligible_rows": 312751,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_8",
+            "group": "BF1_DDoS_AD_8",
+            "eligible_rows": 311981,
+            "sampled": 526
+          },
+          {
+            "unit_id": "BF1_DDoS_AD_9",
+            "group": "BF1_DDoS_AD_9",
+            "eligible_rows": 311846,
+            "sampled": 526
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "BF1_DDoS_AD_15",
+            "group": "BF1_DDoS_AD_15",
+            "eligible_rows": 311615,
+            "sampled": 1000
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "BF1_DDoS_AD_20",
+            "group": "BF1_DDoS_AD_20",
+            "eligible_rows": 311336,
+            "sampled": 2500
+          }
+        ]
+      }
+    },
+    "DELAYED_DoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 8,
+        "rows_removed": 12908,
+        "eligible_before": 291988
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "Delay_DoS_AD_11#blk00",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26784,
+            "sampled": 188,
+            "row_range": [
+              0,
+              28198
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk01",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26879,
+            "sampled": 188,
+            "row_range": [
+              29198,
+              57396
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk02",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26901,
+            "sampled": 188,
+            "row_range": [
+              58396,
+              86594
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk04",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26978,
+            "sampled": 188,
+            "row_range": [
+              116792,
+              144990
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk05",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26880,
+            "sampled": 187,
+            "row_range": [
+              145990,
+              174188
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk07",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26934,
+            "sampled": 187,
+            "row_range": [
+              204386,
+              232584
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk08",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26946,
+            "sampled": 187,
+            "row_range": [
+              233584,
+              261782
+            ]
+          },
+          {
+            "unit_id": "Delay_DoS_AD_11#blk09",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 27894,
+            "sampled": 187,
+            "row_range": [
+              262782,
+              291988
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "Delay_DoS_AD_11#blk06",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 27064,
+            "sampled": 1000,
+            "row_range": [
+              175188,
+              203386
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "Delay_DoS_AD_11#blk03",
+            "group": "Delay_DoS_AD_11",
+            "eligible_rows": 26820,
+            "sampled": 2500,
+            "row_range": [
+              87594,
+              115792
+            ]
+          }
+        ]
+      }
+    },
+    "DELAYED_DDoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 15,
+        "rows_removed": 8136,
+        "eligible_before": 309554
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk00",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 28954,
+            "sampled": 188,
+            "row_range": [
+              0,
+              29955
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk02",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29158,
+            "sampled": 188,
+            "row_range": [
+              61910,
+              91865
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk03",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29168,
+            "sampled": 188,
+            "row_range": [
+              92865,
+              122820
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk04",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29119,
+            "sampled": 188,
+            "row_range": [
+              123820,
+              153775
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk05",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29126,
+            "sampled": 187,
+            "row_range": [
+              154775,
+              184730
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk07",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29240,
+            "sampled": 187,
+            "row_range": [
+              216685,
+              246640
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk08",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29204,
+            "sampled": 187,
+            "row_range": [
+              247640,
+              277595
+            ]
+          },
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk09",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 30078,
+            "sampled": 187,
+            "row_range": [
+              278595,
+              309554
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk06",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29196,
+            "sampled": 1000,
+            "row_range": [
+              185730,
+              215685
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "Delay_DDoS_AD_1#blk01",
+            "group": "Delay_DDoS_AD_1",
+            "eligible_rows": 29175,
+            "sampled": 2500,
+            "row_range": [
+              30955,
+              60910
+            ]
+          }
+        ]
+      }
+    },
+    "SYN_DoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 31,
+        "rows_removed": 2666,
+        "eligible_before": 103828
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "SYN_DoS_AD_1#blk00",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9105,
+            "sampled": 188,
+            "row_range": [
+              0,
+              9382
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk01",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9074,
+            "sampled": 188,
+            "row_range": [
+              10382,
+              19764
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk02",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9092,
+            "sampled": 188,
+            "row_range": [
+              20764,
+              30146
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk04",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9180,
+            "sampled": 188,
+            "row_range": [
+              41528,
+              50910
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk05",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9242,
+            "sampled": 187,
+            "row_range": [
+              51910,
+              61292
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk07",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 8884,
+            "sampled": 187,
+            "row_range": [
+              72674,
+              82056
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk08",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9214,
+            "sampled": 187,
+            "row_range": [
+              83056,
+              92438
+            ]
+          },
+          {
+            "unit_id": "SYN_DoS_AD_1#blk09",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 10261,
+            "sampled": 187,
+            "row_range": [
+              93438,
+              103828
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "SYN_DoS_AD_1#blk06",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 9261,
+            "sampled": 1000,
+            "row_range": [
+              62292,
+              71674
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "SYN_DoS_AD_1#blk03",
+            "group": "SYN_DoS_AD_1",
+            "eligible_rows": 8849,
+            "sampled": 2500,
+            "row_range": [
+              31146,
+              40528
+            ]
+          }
+        ]
+      }
+    },
+    "SYN_DDoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 14,
+        "rows_removed": 49375,
+        "eligible_before": 497483
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk01",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43848,
+            "sampled": 188,
+            "row_range": [
+              49761,
+              98522
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk02",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 44005,
+            "sampled": 188,
+            "row_range": [
+              99522,
+              148283
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk03",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43936,
+            "sampled": 188,
+            "row_range": [
+              149283,
+              198044
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk04",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43993,
+            "sampled": 188,
+            "row_range": [
+              199044,
+              247805
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk06",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43666,
+            "sampled": 187,
+            "row_range": [
+              298566,
+              347327
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk07",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 44018,
+            "sampled": 187,
+            "row_range": [
+              348327,
+              397088
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk08",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43782,
+            "sampled": 187,
+            "row_range": [
+              398088,
+              446849
+            ]
+          },
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk09",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 44741,
+            "sampled": 187,
+            "row_range": [
+              447849,
+              497611
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk00",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43494,
+            "sampled": 1000,
+            "row_range": [
+              0,
+              48761
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "SYN_DDoS-AD_1#blk05",
+            "group": "SYN_DDoS-AD_1",
+            "eligible_rows": 43628,
+            "sampled": 2500,
+            "row_range": [
+              248805,
+              297566
+            ]
+          }
+        ]
+      }
+    },
+    "INVALID_DoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 44,
+        "rows_removed": 1294,
+        "eligible_before": 109150
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "Sub_DoS_AD_11#blk00",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9774,
+            "sampled": 94,
+            "row_range": [
+              0,
+              9915
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk01",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9843,
+            "sampled": 94,
+            "row_range": [
+              10915,
+              20830
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk03",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9770,
+            "sampled": 94,
+            "row_range": [
+              32745,
+              42660
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk04",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9856,
+            "sampled": 94,
+            "row_range": [
+              43660,
+              53575
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk05",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9543,
+            "sampled": 94,
+            "row_range": [
+              54575,
+              64490
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk06",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9787,
+            "sampled": 94,
+            "row_range": [
+              65490,
+              75405
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk07",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9822,
+            "sampled": 93,
+            "row_range": [
+              76405,
+              86320
+            ]
+          },
+          {
+            "unit_id": "Sub_DoS_AD_11#blk09",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 10836,
+            "sampled": 93,
+            "row_range": [
+              98235,
+              109150
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "Sub_DoS_AD_11#blk02",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9833,
+            "sampled": 1000,
+            "row_range": [
+              21830,
+              31745
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "Sub_DoS_AD_11#blk08",
+            "group": "Sub_DoS_AD_11",
+            "eligible_rows": 9792,
+            "sampled": 2500,
+            "row_range": [
+              87320,
+              97235
+            ]
+          }
+        ]
+      }
+    },
+    "INVALID_DDoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 15,
+        "rows_removed": 8859,
+        "eligible_before": 181190
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk01",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16165,
+            "sampled": 94,
+            "row_range": [
+              18119,
+              35238
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk02",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16280,
+            "sampled": 94,
+            "row_range": [
+              36238,
+              53357
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk03",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16229,
+            "sampled": 94,
+            "row_range": [
+              54357,
+              71476
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk04",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16200,
+            "sampled": 94,
+            "row_range": [
+              72476,
+              89595
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk05",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16039,
+            "sampled": 94,
+            "row_range": [
+              90595,
+              107714
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk06",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16102,
+            "sampled": 94,
+            "row_range": [
+              108714,
+              125833
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk08",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16493,
+            "sampled": 93,
+            "row_range": [
+              144952,
+              162071
+            ]
+          },
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk09",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 17345,
+            "sampled": 93,
+            "row_range": [
+              163071,
+              181190
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk07",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16317,
+            "sampled": 1000,
+            "row_range": [
+              126833,
+              143952
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "Sub_DDoS_AD_1#blk00",
+            "group": "Sub_DDoS_AD_1",
+            "eligible_rows": 16161,
+            "sampled": 2500,
+            "row_range": [
+              0,
+              17119
+            ]
+          }
+        ]
+      }
+    },
+    "WILL_DoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 10,
+        "rows_removed": 1535,
+        "eligible_before": 114474
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "WILL_DoS_AD_11#blk00",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10258,
+            "sampled": 63,
+            "row_range": [
+              0,
+              10447
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk01",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10303,
+            "sampled": 63,
+            "row_range": [
+              11447,
+              21894
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk02",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10264,
+            "sampled": 63,
+            "row_range": [
+              22894,
+              33341
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk03",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10282,
+            "sampled": 63,
+            "row_range": [
+              34341,
+              44788
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk04",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10301,
+            "sampled": 62,
+            "row_range": [
+              45788,
+              56235
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk05",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10291,
+            "sampled": 62,
+            "row_range": [
+              57235,
+              67682
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk06",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10345,
+            "sampled": 62,
+            "row_range": [
+              68682,
+              79129
+            ]
+          },
+          {
+            "unit_id": "WILL_DoS_AD_11#blk09",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 11279,
+            "sampled": 62,
+            "row_range": [
+              103023,
+              114474
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "WILL_DoS_AD_11#blk08",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10290,
+            "sampled": 1000,
+            "row_range": [
+              91576,
+              102023
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "WILL_DoS_AD_11#blk07",
+            "group": "WILL_DoS_AD_11",
+            "eligible_rows": 10326,
+            "sampled": 2500,
+            "row_range": [
+              80129,
+              90576
+            ]
+          }
+        ]
+      }
+    },
+    "WILL_DDoS": {
+      "split_kind": "block",
+      "n_units": 10,
+      "cross_block": {
+        "cross_block_streams": 9,
+        "rows_removed": 2535,
+        "eligible_before": 156055
+      },
+      "units": {
+        "train": [
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk00",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14243,
+            "sampled": 63,
+            "row_range": [
+              0,
+              14605
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk01",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14314,
+            "sampled": 63,
+            "row_range": [
+              15605,
+              30210
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk02",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14376,
+            "sampled": 63,
+            "row_range": [
+              31210,
+              45815
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk04",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14382,
+            "sampled": 63,
+            "row_range": [
+              62420,
+              77025
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk05",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14383,
+            "sampled": 62,
+            "row_range": [
+              78025,
+              92630
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk06",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14373,
+            "sampled": 62,
+            "row_range": [
+              93630,
+              108235
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk07",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14314,
+            "sampled": 62,
+            "row_range": [
+              109235,
+              123840
+            ]
+          },
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk09",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 15343,
+            "sampled": 62,
+            "row_range": [
+              140445,
+              156055
+            ]
+          }
+        ],
+        "val": [
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk08",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14389,
+            "sampled": 1000,
+            "row_range": [
+              124840,
+              139445
+            ]
+          }
+        ],
+        "test": [
+          {
+            "unit_id": "WILL_DDoS_AD_1#blk03",
+            "group": "WILL_DDoS_AD_1",
+            "eligible_rows": 14403,
+            "sampled": 2500,
+            "row_range": [
+              46815,
+              61420
+            ]
+          }
+        ]
+      }
+    }
+  },
+  "label_counts": {
+    "BCF": {
+      "test": 5000,
+      "train": 20000,
+      "val": 2000
+    },
+    "DELAYED": {
+      "test": 5000,
+      "train": 3000,
+      "val": 2000
+    },
+    "INVALID": {
+      "test": 5000,
+      "train": 1500,
+      "val": 2000
+    },
+    "NORMAL": {
+      "test": 5000,
+      "train": 60000,
+      "val": 2000
+    },
+    "SYN": {
+      "test": 5000,
+      "train": 3000,
+      "val": 2000
+    },
+    "WILL": {
+      "test": 5000,
+      "train": 1000,
+      "val": 2000
+    }
+  },
+  "streams_in_multiple_splits": {}
+}
