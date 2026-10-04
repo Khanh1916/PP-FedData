@@ -64,7 +64,23 @@ def build_parser() -> argparse.ArgumentParser:
     p_b3.add_argument("--seeds", nargs="+", type=int, default=None)
     p_b3.add_argument("--no-resume", action="store_true")
     p_b3.add_argument("--skip-sanity", action="store_true", help="skip the single-client / IID / resume sanity runs")
-    # Phase 9-10
+    # Phase 9
+    p_m1 = sub.add_parser("m1", help="CVAE + FedAvg + client-side DP-SGD (M1): runs, sanity checks and report")
+    p_m1.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_m1.add_argument("--eps", nargs="+", type=float, default=None, help="target epsilons (default dp.epsilons)")
+    p_m1.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_m1.add_argument("--no-resume", action="store_true")
+    p_m1.add_argument("--skip-sanity", action="store_true")
+    p_m1.add_argument("--tuned", action="store_true", help="use the DP-specific hyper-parameters selected in configs/best_cvae_dp.yaml")
+    p_td = sub.add_parser("tune-dp", help="Optuna search of the CVAE hyper-parameters under client-side DP-SGD (single-client proxy)")
+    p_td.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_td.add_argument("--eps", type=float, default=5.0)
+    p_td.add_argument("--n-trials", type=int, default=24, help="target total number of trials")
+    p_vd = sub.add_parser("verify-dp", help="Real FL runs (one seed) of the best DP-search trials; selects the winner on validation")
+    p_vd.add_argument("--trials", nargs="+", type=int, required=True)
+    p_vd.add_argument("--eps", type=float, default=5.0)
+    p_vd.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    # Phase 10
     sub.add_parser("run", help="Run experiment configurations")
     # Phase 11
     sub.add_parser("aggregate", help="Aggregate results and generate figures")
@@ -177,6 +193,31 @@ def main(argv: list[str] | None = None) -> None:
             run_sanity(c, resume=not a.no_resume)
         logger.info("B3 gate: %s", write_b3_report(c))
 
+    def cmd_m1(a):
+        from ppfeddata.fl.m1 import run_dp_sanity, run_m1, write_m1_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_m1(c, a.eps, a.seeds, resume=not a.no_resume, tuned=a.tuned)
+        if not a.skip_sanity and not a.tuned:
+            run_dp_sanity(c, resume=not a.no_resume)
+        logger.info("M1 gate: %s", write_m1_report(c, tuned=a.tuned))
+
+    def cmd_tune_dp(a):
+        from ppfeddata.tune_dp import run_tune_dp
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_tune_dp(c, a.eps, a.n_trials)
+
+    def cmd_verify_dp(a):
+        from ppfeddata.fl.m1 import choose_dp_candidate, verify_dp_candidates
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        verify_dp_candidates(c, a.trials, a.eps)
+        logger.info("selected: %s", choose_dp_candidate(c, a.trials, a.eps))
+
     def cmd_benchmark(a):
         from ppfeddata.models.benchmark import run_benchmark
         c = load_config(a.config)
@@ -195,6 +236,9 @@ def main(argv: list[str] | None = None) -> None:
         "tune": cmd_tune,
         "b2": cmd_b2,
         "b3": cmd_b3,
+        "m1": cmd_m1,
+        "tune-dp": cmd_tune_dp,
+        "verify-dp": cmd_verify_dp,
         "benchmark": cmd_benchmark,
     }
     handler = dispatch.get(args.command)

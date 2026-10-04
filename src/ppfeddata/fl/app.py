@@ -70,7 +70,12 @@ def train(msg: Message, context: Context) -> Message:
     layout, k = _layout_and_k(sp["data_dir"])
     state = msg.content["arrays"].to_torch_state_dict()
     rnd = int(msg.content["config"]["round"])
-    out = core.local_train(state, X[idx], y[idx], layout, k, sp["hp"], int(sp["local_epochs"]), rnd, int(sp["seed"]), pid)
+    dp = sp.get("dp")
+    if dp:
+        out = core.local_train_dp(state, X[idx], y[idx], layout, k, sp["hp"], int(sp["local_epochs"]), rnd, int(sp["seed"]), pid,
+                                  float(dp["sigmas"][pid]), float(dp["max_grad_norm"]))
+    else:
+        out = core.local_train(state, X[idx], y[idx], layout, k, sp["hp"], int(sp["local_epochs"]), rnd, int(sp["seed"]), pid)
     metrics = MetricRecord({"num-examples": out["n"], "train_loss": out["loss"], "steps": out["steps"],
                             "train_seconds": out["seconds"], "partition-id": pid})
     return Message(content=RecordDict({"arrays": ArrayRecord(out["state"]), "metrics": metrics}), reply_to=msg)
@@ -79,15 +84,25 @@ def train(msg: Message, context: Context) -> Message:
 # --------------------------------------------------------------------------------------------------
 # ServerApp
 # --------------------------------------------------------------------------------------------------
+def require_all_replies(replies: list, expected: int, server_round: int) -> None:
+    """Flower carries on with whatever replies arrive. For this study a round with a missing or failed client is not the
+    experiment that was planned (and would silently change the DP accounting), so stop; `run_fl` resumes from the checkpoint."""
+    ok = [m for m in replies if not m.has_error()]
+    if len(ok) != expected:
+        raise RuntimeError(f"round {server_round}: {len(ok)} of {expected} clients replied; aborting so the run can be resumed")
+
+
 class RoundStrategy(FedAvg):
     """FedAvg weighted by the number of local rows, with the absolute round number added to the train config and the
     per-client step counters / timings kept for the round log and the checkpoint."""
 
-    def __init__(self, offset: int, num_clients: int, steps0: dict[int, int] | None = None):
+    def __init__(self, offset: int, num_clients: int, steps0: dict[int, int] | None = None, dp: bool = False):
         super().__init__(fraction_train=1.0, fraction_evaluate=0.0, min_train_nodes=num_clients,
                          min_evaluate_nodes=0, min_available_nodes=num_clients)
         self.offset = offset
+        self.num_clients = num_clients
         self.steps = {int(k): int(v) for k, v in (steps0 or {}).items()}
+        self.dp = dp
         self.round_t0 = time.perf_counter()
         self.last: dict[str, Any] = {}
 
@@ -97,8 +112,10 @@ class RoundStrategy(FedAvg):
         return super().configure_train(server_round, arrays, cfg, grid)
 
     def aggregate_train(self, server_round, replies):
+        replies = list(replies)
+        require_all_replies(replies, self.num_clients, self.offset + server_round)
         # replies arrive in completion order; summing in a fixed (client-id) order makes the float32 average reproducible
-        replies = sorted(replies, key=lambda m: -1 if m.has_error() else int(m.content["metrics"]["partition-id"]))
+        replies = sorted(replies, key=lambda m: int(m.content["metrics"]["partition-id"]))
         secs, losses, ns = [], [], []
         for m in replies:
             if m.has_error():
@@ -135,12 +152,14 @@ def make_evaluate_fn(sp: dict[str, Any], strategy: RoundStrategy, rdir: Path):
                "client_seconds": strategy.last.get("client_seconds", []), "train_loss": strategy.last.get("train_loss"),
                "bytes": bytes_per_round(size, int(sp["num_clients"])), "peak_rss_gb": peak_rss_gb(),
                "client_steps": dict(strategy.steps)}
+        if sp.get("dp"):
+            row["client_dp_steps"] = dict(strategy.steps)          # every counted step of a DP client is a DP step
         if val is not None:
             row.update({"val_loss": val["loss"], "val_recon_num": val["recon_num"], "val_recon_bin": val["recon_bin"],
                         "val_recon_cat": val["recon_cat"], "val_kl": val["kl"]})
         core.append_round_log(rdir, row)
         if rnd % ck_every == 0 or rnd == total:
-            core.save_checkpoint(rdir, state, rnd, strategy.steps)
+            core.save_checkpoint(rdir, state, rnd, strategy.steps, dp_steps=strategy.steps if sp.get("dp") else None)
         return MetricRecord({"val_loss": val["loss"]} if val is not None else {"evaluated": 0.0})
 
     return evaluate
@@ -164,8 +183,9 @@ def main(grid: Grid, context: Context) -> None:
         offset, steps0 = 0, {}
         state = core.init_state(layout, k, sp["hp"], int(sp["seed"]))
         (rdir / "rounds.jsonl").unlink(missing_ok=True)
-    strategy = RoundStrategy(offset, int(sp["num_clients"]), steps0)
-    result = strategy.start(grid=grid, initial_arrays=ArrayRecord(state), num_rounds=int(sp["rounds"]) - offset,
+    strategy = RoundStrategy(offset, int(sp["num_clients"]), steps0, bool(sp.get("dp")))
+    last = int(sp["stop_after"]) if sp.get("stop_after") else int(sp["rounds"])    # stop_after = simulated interruption
+    result = strategy.start(grid=grid, initial_arrays=ArrayRecord(state), num_rounds=max(last - offset, 0),
                             train_config=ConfigRecord({"lr": float(sp["hp"]["lr"])}),
                             evaluate_fn=make_evaluate_fn(sp, strategy, rdir))
     rdir.mkdir(parents=True, exist_ok=True)

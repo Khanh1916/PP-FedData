@@ -19,7 +19,7 @@ import numpy as np
 
 from ppfeddata.data.preprocess import processed_dir
 from ppfeddata.eval.runs import run_id
-from ppfeddata.fl import core
+from ppfeddata.fl import core, dp_utils
 from ppfeddata.partition import make_partition, partition_path
 from ppfeddata.tune import load_best_cvae
 
@@ -29,7 +29,8 @@ logger = logging.getLogger("ppfeddata.fl.run")
 def build_spec(cfg: dict[str, Any], seed: int, name: str = "B3", alpha: float | None = None, num_clients: int | None = None,
                rounds: int | None = None, local_epochs: int | None = None, resume: bool = True,
                data_dir: str | Path | None = None, hp: dict[str, Any] | None = None,
-               torch_threads: int = 2) -> dict[str, Any]:
+               torch_threads: int = 2, target_eps: float | None = None, sigma: float | None = None,
+               max_grad_norm: float | None = None, delta: float | None = None, stop_after: int | None = None) -> dict[str, Any]:
     """Partition the train pool (stored on disk) and describe the run."""
     fl = cfg["fl"]
     ddir = Path(data_dir) if data_dir is not None else processed_dir(cfg)
@@ -43,10 +44,20 @@ def build_spec(cfg: dict[str, Any], seed: int, name: str = "B3", alpha: float | 
     if k != int(fl["num_clients"]):
         pp = pp.with_name(pp.stem + f"_k{k}.json")
     rid = run_id(name, seed, cfg["label_mode"])
-    return {"run_id": rid, "name": name, "seed": int(seed), "num_clients": k, "alpha": alpha,
-            "rounds": int(fl["rounds"] if rounds is None else rounds),
-            "local_epochs": int(fl["local_epochs"] if local_epochs is None else local_epochs),
-            "hp": dict(hp if hp is not None else load_best_cvae(cfg)), "data_dir": str(ddir), "partition_path": str(pp),
+    rounds_, le_ = int(fl["rounds"] if rounds is None else rounds), int(fl["local_epochs"] if local_epochs is None else local_epochs)
+    hp_ = dict(hp if hp is not None else load_best_cvae(cfg))
+    dp = None
+    if target_eps is not None or sigma is not None:
+        dcfg = cfg["dp"]
+        delta_ = float(dcfg["delta"] if delta is None else delta)
+        clip = float(dcfg["max_grad_norm"] if max_grad_norm is None else max_grad_norm)
+        if sigma is not None:                                   # explicit noise (sanity runs, e.g. sigma = 0)
+            sigmas = [float(sigma)] * k
+        else:
+            sigmas = dp_utils.calibrate_clients(meta["sizes"], target_eps, delta_, int(hp_["batch_size"]), rounds_, le_)
+        dp = {"target_eps": None if target_eps is None else float(target_eps), "delta": delta_, "max_grad_norm": clip, "sigmas": sigmas}
+    return {"run_id": rid, "dp": dp, "stop_after": None if stop_after is None else int(stop_after), "name": name, "seed": int(seed), "num_clients": k, "alpha": alpha,
+            "rounds": rounds_, "local_epochs": le_, "hp": hp_, "data_dir": str(ddir), "partition_path": str(pp),
             "artifacts_dir": str(cfg["compute"]["artifacts_dir"]), "checkpoint_every": int(cfg["compute"]["checkpoint_every_rounds"]),
             "eval_every": 5, "torch_threads": int(torch_threads), "resume": bool(resume), "label_mode": cfg["label_mode"],
             "partition_sizes": meta["sizes"]}
@@ -79,18 +90,29 @@ def summarize(spec: dict[str, Any], wall_s: float | None = None) -> dict[str, An
     rows = [r for r in core.read_round_log(rdir) if r["round"] > 0]
     vals = [r for r in rows if r.get("val_loss") is not None]
     secs = [r["round_seconds"] for r in rows]
-    return {"rounds_done": len(rows), "fl_total_s": float(sum(secs)), "mean_round_s": float(np.mean(secs)) if secs else float("nan"),
+    dp_info = None
+    if spec.get("dp") and rows:
+        dp = spec["dp"]
+        dp_info = dp_utils.epsilon_table(spec["partition_sizes"], dp["sigmas"], rows[-1].get("client_dp_steps", {}),
+                                         int(spec["hp"]["batch_size"]), dp["delta"], dp["target_eps"])
+    return {"dp": dp_info, "rounds_done": len(rows), "fl_total_s": float(sum(secs)), "mean_round_s": float(np.mean(secs)) if secs else float("nan"),
             "bytes_per_round": int(rows[-1]["bytes"]) if rows else 0, "server_peak_rss_gb": max([r["peak_rss_gb"] for r in rows], default=0.0),
             "final_val_loss": float(vals[-1]["val_loss"]) if vals else float("nan"),
             "client_seconds_mean": float(np.mean([s for r in rows for s in r["client_seconds"]])) if rows else float("nan"),
             "wall_s": wall_s, "client_steps": rows[-1]["client_steps"] if rows else {}}
 
 
-def run_fl(cfg: dict[str, Any], seed: int, name: str = "B3", in_process: bool = False, **kw) -> dict[str, Any]:
+def run_fl(cfg: dict[str, Any], seed: int, name: str = "B3", in_process: bool = False, max_retries: int = 2, **kw) -> dict[str, Any]:
     """Run (or resume) one FL run; returns the spec plus the summary. Skips a run whose final state already exists."""
     spec = build_spec(cfg, seed, name, **kw)
-    path = write_spec(spec)
     rdir = Path(spec["artifacts_dir"]) / spec["run_id"]
+    old = rdir / "spec.json"
+    if spec["resume"] and spec["dp"] and old.exists() and core.load_checkpoint(rdir) is not None:
+        prev = json.loads(old.read_text(encoding="utf-8")).get("dp")
+        if prev and not np.allclose(prev["sigmas"], spec["dp"]["sigmas"]):
+            raise RuntimeError(f"{spec['run_id']}: sigma was calibrated for a different plan (rounds/epsilon/delta changed); "
+                               "resuming would break the privacy accounting. Use stop_after to cut a run short instead.")
+    path = write_spec(spec)
     t0 = time.perf_counter()
     ck = core.load_checkpoint(rdir) if spec["resume"] else None
     if not ((rdir / "final_state.pt").exists() and ck is not None and int(ck["round"]) >= spec["rounds"]):
@@ -98,11 +120,19 @@ def run_fl(cfg: dict[str, Any], seed: int, name: str = "B3", in_process: bool = 
             run_simulation_from_spec(path)
         else:
             env = {**os.environ, "PYTHONUTF8": "1"}
-            with open(rdir / "fl.log", "a", encoding="utf-8") as log:
-                r = subprocess.run([sys.executable, "-m", "ppfeddata.fl.run", "--spec", str(path)], stdout=log,
-                                   stderr=subprocess.STDOUT, env=env)
+            for attempt in range(max_retries + 1):
+                # a retry resumes from the last checkpoint (exact: seeds depend only on run seed, round and client)
+                if attempt:
+                    spec["resume"] = True
+                    path = write_spec(spec)
+                    logger.warning("%s: attempt %d failed, resuming from the checkpoint", spec["run_id"], attempt)
+                with open(rdir / "fl.log", "a", encoding="utf-8") as log:
+                    r = subprocess.run([sys.executable, "-m", "ppfeddata.fl.run", "--spec", str(path)], stdout=log,
+                                       stderr=subprocess.STDOUT, env=env)
+                if r.returncode == 0:
+                    break
             if r.returncode != 0:
-                raise RuntimeError(f"FL run {spec['run_id']} failed (exit {r.returncode}); see {rdir / 'fl.log'}")
+                raise RuntimeError(f"FL run {spec['run_id']} failed (exit {r.returncode}) after {max_retries + 1} attempts; see {rdir / 'fl.log'}")
     if not (rdir / "final_state.pt").exists():
         raise RuntimeError(f"FL run {spec['run_id']} did not produce final_state.pt; see {rdir}")
     return {**spec, "summary": summarize(spec, time.perf_counter() - t0)}

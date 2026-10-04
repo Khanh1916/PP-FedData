@@ -1,0 +1,62 @@
+tuning:
+  label_mode: 6class
+  tuned_at_epsilon: 5.0
+  n_trials: 24
+  baseline_proxy_val_tstr_macro_f1: 0.2075092322283576
+  fitness: val macro-F1 of RF(100) trained on plain-decoder samples; proxy = one client,
+    20% stratified subsample, FL schedule
+  limitation: tuned on real non-private validation data, one seed per trial, single-client
+    proxy, one epsilon
+candidates:
+- trial: 18
+  proxy_val_tstr_macro_f1: 0.2652041236009956
+  proxy_val_elbo: 4.865865740458171
+  max_grad_norm: 8.045779557003268
+  cvae:
+    latent_dim: 16
+    hidden:
+    - 128
+    - 64
+    beta: 0.28480783353640604
+    lr: 0.004507272627314837
+    batch_size: 512
+- trial: 21
+  proxy_val_tstr_macro_f1: 0.26346090830801977
+  proxy_val_elbo: 5.293339912414551
+  max_grad_norm: 5.8730989295790765
+  cvae:
+    latent_dim: 16
+    hidden:
+    - 128
+    - 64
+    beta: 0.3306813438422919
+    lr: 0.0038752725892509626
+    batch_size: 512
+- trial: 17
+  proxy_val_tstr_macro_f1: 0.2516730795527215
+  proxy_val_elbo: 5.468308577219645
+  max_grad_norm: 14.486518044470683
+  cvae:
+    latent_dim: 16
+    hidden:
+    - 128
+    - 64
+    beta: 0.4024621326672572
+    lr: 0.0025536929479792725
+    batch_size: 512
+verification:
+  seed: 0
+  eps: 5.0
+  rule: max val TSTR-rf macro-F1, ties within 0.01 -> lower val ELBO
+  runs:
+  - trial: 18
+    val_f1: 0.2341190648409799
+    val_elbo: 4.9544174677530926
+  - &id001
+    trial: 21
+    val_f1: 0.2423223644707599
+    val_elbo: 4.90045472462972
+  - trial: 17
+    val_f1: 0.223195211201655
+    val_elbo: 5.367061884562174
+selected: *id001

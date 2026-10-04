@@ -58,6 +58,53 @@ def local_train(state: dict[str, torch.Tensor], X: np.ndarray, y: np.ndarray, la
             "loss": float(last.get("loss", float("nan"))), "steps": int(steps), "seconds": time.perf_counter() - t0}
 
 
+def local_train_dp(state: dict[str, torch.Tensor], X: np.ndarray, y: np.ndarray, layout: Layout, n_classes: int,
+                   hp: dict[str, Any], local_epochs: int, round_idx: int, seed: int, client_id: int, sigma: float,
+                   max_grad_norm: float) -> dict[str, Any]:
+    """DP-SGD version of `local_train` (Opacus, Poisson sampling, flat per-sample clipping to `max_grad_norm`, Gaussian
+    noise `sigma * max_grad_norm`, then the usual Adam update). A new PrivacyEngine is built every round (its accountant is
+    NOT used; epsilon is recomputed from the step counter in dp_utils). `steps` counts every batch the loader yielded,
+    including empty Poisson batches, which is what the accountant assumes."""
+    import warnings
+
+    from opacus import PrivacyEngine
+    from torch.utils.data import DataLoader, TensorDataset
+
+    from ppfeddata.models.cvae import loss_terms, one_hot
+
+    s = client_seed(seed, round_idx, client_id)
+    seed_torch(s)
+    model = make_model(layout, n_classes, hp)
+    model.load_state_dict(state)
+    opt = torch.optim.Adam(model.parameters(), lr=float(hp["lr"]))
+    bs, beta, warm = int(hp["batch_size"]), float(hp["beta"]), int(hp["beta_warmup_epochs"])
+    g_sample, g_noise = torch.Generator().manual_seed(s), torch.Generator().manual_seed(s + 1)
+    loader = DataLoader(TensorDataset(numpy_to_tensor(X), torch.as_tensor(y, dtype=torch.long)), batch_size=bs, shuffle=True,
+                        generator=g_sample)
+    t0 = time.perf_counter()
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")           # "Secure RNG turned off" and the full-backward-hook notice
+        gs, dopt, dl = PrivacyEngine().make_private(module=model, optimizer=opt, data_loader=loader, noise_multiplier=float(sigma),
+                                                    max_grad_norm=float(max_grad_norm), poisson_sampling=True,
+                                                    noise_generator=g_noise)
+        steps, last = 0, float("nan")
+        for e in range(local_epochs):
+            gs.train()
+            b = beta_at((round_idx - 1) * local_epochs + e, beta, warm)
+            for xb, yb in dl:
+                steps += 1
+                if len(xb) == 0:
+                    continue
+                out, mu, logvar = gs(xb, one_hot(yb, n_classes))
+                loss = loss_terms(out, xb, mu, logvar, b, layout)["loss"]
+                dopt.zero_grad(set_to_none=True)
+                loss.backward()
+                dopt.step()
+                last = float(loss.detach())
+    return {"state": OrderedDict((k, v.detach().clone()) for k, v in gs._module.state_dict().items()), "n": int(len(X)),
+            "loss": last, "steps": int(steps), "seconds": time.perf_counter() - t0}
+
+
 def fedavg_numpy(states: list[dict[str, Any]], weights: list[float]) -> dict[str, np.ndarray]:
     """sum_i w_i * theta_i / sum_i w_i in float64, per tensor."""
     w = np.asarray(weights, dtype=np.float64)
@@ -84,13 +131,15 @@ def run_dir(artifacts_dir: str | Path, rid: str) -> Path:
     return Path(artifacts_dir) / rid
 
 
-def save_checkpoint(rdir: Path, state: dict[str, torch.Tensor], round_idx: int, steps: dict[int, int], extra: dict[str, Any] | None = None) -> Path:
+def save_checkpoint(rdir: Path, state: dict[str, torch.Tensor], round_idx: int, steps: dict[int, int],
+                    extra: dict[str, Any] | None = None, dp_steps: dict[int, int] | None = None) -> Path:
     """Atomic write of `ckpt/round_{r}.pt` and of the pointer `ckpt/latest.json`; keeps the two newest checkpoints."""
     d = rdir / "ckpt"
     d.mkdir(parents=True, exist_ok=True)
     f = d / f"round_{round_idx:04d}.pt"
     payload = {"state": dict(state), "round": int(round_idx), "client_steps": {int(k): int(v) for k, v in steps.items()},
-               "torch_rng": torch.get_rng_state(), "numpy_rng": np.random.get_state(), "dp_steps": {}, **(extra or {})}
+               "torch_rng": torch.get_rng_state(), "numpy_rng": np.random.get_state(),
+               "dp_steps": {int(k): int(v) for k, v in (dp_steps or {}).items()}, **(extra or {})}
     torch.save(payload, f.with_suffix(".tmp"))
     os.replace(f.with_suffix(".tmp"), f)
     (d / "latest.json").write_text(json.dumps({"file": f.name, "round": int(round_idx)}), encoding="utf-8")

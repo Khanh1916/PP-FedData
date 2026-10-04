@@ -65,15 +65,16 @@ def method_name(prefix: str, protocol: str, clf: str) -> str:
 
 
 def evaluate_generator(cfg: dict[str, Any], model, prefix: str, seed: int, data, schema, ledger: RunLedger,
-                       extra: dict[str, Any] | None = None, gen_seconds_out: dict[str, float] | None = None) -> dict[str, Any]:
+                       extra: dict[str, Any] | None = None, use_stats: bool = True) -> dict[str, Any]:
     """Generate from `model`, then run the Phase 6 evaluation: fidelity + privacy of the synthetic set and TSTR / TAug with
-    RF and MLP on the real test split. One ledger row per (protocol, classifier). Shared by B2 (centralised) and B3 (FL)."""
+    RF and MLP on the real test split. One ledger row per (protocol, classifier). Shared by B2 (centralised), B3 (FL) and M1.
+    `use_stats=False` samples the plain decoder (no residual noise): every number then depends only on the trained weights."""
     mode, k = cfg["label_mode"], len(schema["label_map"])
     Xtr, ytr = data["train"]["X"], data["train"]["y"]
     classes = _classes(schema)
     target, spc = int(cfg["generate"]["target_per_class"]), int(cfg["tune"]["syn_per_class"])
     with Timer() as t_gen:
-        stats = gen_stats_from_cfg(model, Xtr, ytr, schema, cfg["generate"])
+        stats = gen_stats_from_cfg(model, Xtr, ytr, schema, cfg["generate"]) if use_stats else None
         Xs, ys = generate(model, schema, [target] * k, seed, stats=stats)
     base = artifacts_dir(cfg) / run_id(prefix, seed, mode)
     base.mkdir(parents=True, exist_ok=True)
@@ -84,7 +85,7 @@ def evaluate_generator(cfg: dict[str, Any], model, prefix: str, seed: int, data,
         fid = fidelity_report(Xtr, ytr, Xf, yf, schema, classes, seed=seed)
         pri = privacy_report(Xf, yf, Xtr, ytr, data["val"]["X"], data["val"]["y"], classes, seed=seed)
     (base / "fidelity_privacy.json").write_text(json.dumps({"fidelity": fid, "privacy": pri}, indent=2), encoding="utf-8")
-    common = {**_summ(fid, pri), "cvae_gen_s": t_gen.seconds, "fidpriv_s": t_fp.seconds, "cvae_params": n_params(model),
+    common = {**_summ(fid, pri), "residual_noise": bool(use_stats and stats is not None), "cvae_gen_s": t_gen.seconds, "fidpriv_s": t_fp.seconds, "cvae_params": n_params(model),
               **(extra or {})}
     out = {}
     for protocol, clf_name in PROTOCOLS:
