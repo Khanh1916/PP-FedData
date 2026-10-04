@@ -200,13 +200,32 @@ def run_benchmark(cfg: dict[str, Any], config_path: str = "configs/default.yaml"
         env["opacus"] = opacus.__version__
     except ImportError:
         pass
-    raw = {"env": env, "measurements": res, "extrapolation": {k: v for k, v in ex.items()}, "optuna_trial_s": trial_s,
+    b3_check = _b3_check(cfg, ex)
+    raw = {"env": env, "b3_check": b3_check, "measurements": res, "extrapolation": {k: v for k, v in ex.items()}, "optuna_trial_s": trial_s,
            "optuna_trials_done": n_done, "b2": b2, "baselines_fit_s_total": base_s}
     out = Path(cfg["compute"]["artifacts_dir"]) / f"compute_benchmark_{mode}.json"
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(raw, indent=2, default=str), encoding="utf-8")
     write_report(cfg, raw)
     return raw
+
+
+def _b3_check(cfg: dict[str, Any], ex: dict[str, Any]) -> dict[str, Any] | None:
+    from ppfeddata.eval.runs import run_id
+    from ppfeddata.fl.core import read_round_log
+
+    rows, seeds = [], []
+    for sd in cfg["seeds"]:
+        rl = [r for r in read_round_log(Path(cfg["compute"]["artifacts_dir"]) / run_id("B3", sd, cfg["label_mode"])) if r["round"] > 0]
+        if len(rl) > 1:
+            rows.append(rl)
+            seeds.append(sd)
+    if not rows:
+        return None
+    return {"seeds": seeds, "first_round_s": float(np.mean([r[0]["round_seconds"] for r in rows])),
+            "median_round_s": float(np.median([x["round_seconds"] for r in rows for x in r[1:]])),
+            "sum_client_s": float(np.median([sum(x["client_seconds"]) for r in rows for x in r[1:]])),
+            "pred_round_s": float(cfg["fl"]["local_epochs"] * ex["per_row_plain_s"] * ex["n_train"])}
 
 
 def _h(s: float) -> str:
@@ -255,6 +274,16 @@ def write_report(cfg: dict[str, Any], raw: dict[str, Any], out: str | Path = REP
           f"up to {_h(ex['secagg_worst_extra_s'])}; "
           "(2) time per epoch is taken as linear in the number of rows (see the linearity check above for how close this is); (3) the single-machine simulation measures compute, "
           "not network latency.", ""]
+    v = raw.get("b3_check")
+    if v:
+        L += ["## Check against the measured B3 runs (Phase 8)", "",
+              f"B3 (no DP) on the real data, seeds {v['seeds']}: median over rounds 2+ of the summed client training time per round = "
+              f"{v['sum_client_s']:.2f} s (predicted sequential cost per round = local_epochs x s/row x n_train = {v['pred_round_s']:.2f} s); "
+              f"median wall time per round = {v['median_round_s']:.2f} s because the simulation runs the {fl['num_clients']} clients in parallel "
+              f"(Ray actors, 2 torch threads each); round 1 = {v['first_round_s']:.1f} s because it includes starting Ray. "
+              f"The measured sequential client time is {v['sum_client_s'] / v['pred_round_s'] * 100 - 100:+.0f} % against the formula (so the formula is about right for a "
+              "client-by-client run, with per-round overheads it does not model), while the parallel wall time per round is lower; "
+              "each FL run also pays a fixed start-up of about half a minute (round 1).", ""]
     L += ["## Budget decision", ""]
     if budget is None:
         L += ["`compute.budget_hours` is not set (null), so no cut is applied. The spec says to cut in this order if the total "

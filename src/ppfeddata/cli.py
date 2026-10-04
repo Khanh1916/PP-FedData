@@ -58,7 +58,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_b2.add_argument("--no-resume", action="store_true")
     p_bench = sub.add_parser("benchmark", help="7.4 compute benchmark (plain vs DP-SGD epoch time, RAM) -> compute_budget.md")
     p_bench.add_argument("--label-mode", choices=["6class", "11class"], default=None)
-    # Phase 8-10
+    # Phase 8
+    p_b3 = sub.add_parser("b3", help="CVAE + FedAvg over non-IID clients (B3): runs, sanity checks and report")
+    p_b3.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_b3.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_b3.add_argument("--no-resume", action="store_true")
+    p_b3.add_argument("--skip-sanity", action="store_true", help="skip the single-client / IID / resume sanity runs")
+    # Phase 9-10
     sub.add_parser("run", help="Run experiment configurations")
     # Phase 11
     sub.add_parser("aggregate", help="Aggregate results and generate figures")
@@ -161,6 +167,16 @@ def main(argv: list[str] | None = None) -> None:
         run_b2(c, a.seeds, resume=not a.no_resume)
         logger.info("B2 gate: %s", write_b2_report(c))
 
+    def cmd_b3(a):
+        from ppfeddata.fl.b3 import run_b3, run_sanity, write_b3_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_b3(c, a.seeds, resume=not a.no_resume)
+        if not a.skip_sanity:
+            run_sanity(c, resume=not a.no_resume)
+        logger.info("B3 gate: %s", write_b3_report(c))
+
     def cmd_benchmark(a):
         from ppfeddata.models.benchmark import run_benchmark
         c = load_config(a.config)
@@ -178,6 +194,7 @@ def main(argv: list[str] | None = None) -> None:
         "baseline": cmd_baseline,
         "tune": cmd_tune,
         "b2": cmd_b2,
+        "b3": cmd_b3,
         "benchmark": cmd_benchmark,
     }
     handler = dispatch.get(args.command)

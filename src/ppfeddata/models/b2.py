@@ -60,27 +60,23 @@ def _summ(fid: dict[str, Any], pri: dict[str, Any]) -> dict[str, float]:
             "dcr_ratio_mean": pri["dcr_ratio_mean"], "mia_auc_mean": pri["mia_auc_mean"]}
 
 
-def run_b2_seed(cfg: dict[str, Any], seed: int, data, schema, ledger: RunLedger, resume: bool = True) -> None:
+def method_name(prefix: str, protocol: str, clf: str) -> str:
+    return f"{prefix}-{protocol}-{clf}"
+
+
+def evaluate_generator(cfg: dict[str, Any], model, prefix: str, seed: int, data, schema, ledger: RunLedger,
+                       extra: dict[str, Any] | None = None, gen_seconds_out: dict[str, float] | None = None) -> dict[str, Any]:
+    """Generate from `model`, then run the Phase 6 evaluation: fidelity + privacy of the synthetic set and TSTR / TAug with
+    RF and MLP on the real test split. One ledger row per (protocol, classifier). Shared by B2 (centralised) and B3 (FL)."""
     mode, k = cfg["label_mode"], len(schema["label_map"])
-    names = [(p, c, b2_name(p, c)) for p, c in PROTOCOLS]
-    if resume and all(ledger.done(run_id(n, seed, mode)) for _, _, n in names):
-        logger.info("skip B2 seed %d (all runs in the ledger)", seed)
-        return
-    hp = load_best_cvae(cfg)
     Xtr, ytr = data["train"]["X"], data["train"]["y"]
     classes = _classes(schema)
     target, spc = int(cfg["generate"]["target_per_class"]), int(cfg["tune"]["syn_per_class"])
-
-    with Timer() as t_train:
-        model, hist = train_cvae(Xtr, ytr, data["val"]["X"], data["val"]["y"], k, build_layout(schema), hp, seed,
-                                 patience=hp.get("patience"))
-    peak = peak_rss_gb()
     with Timer() as t_gen:
         stats = gen_stats_from_cfg(model, Xtr, ytr, schema, cfg["generate"])
         Xs, ys = generate(model, schema, [target] * k, seed, stats=stats)
-    base = artifacts_dir(cfg) / run_id("B2", seed, mode)
+    base = artifacts_dir(cfg) / run_id(prefix, seed, mode)
     base.mkdir(parents=True, exist_ok=True)
-    torch.save({"state_dict": model.state_dict(), "config": model.config(), "hp": hp, "history": hist}, base / "model.pt")
     np.savez_compressed(base / "synthetic.npz", X=Xs, y=ys.astype(np.int16))
 
     Xf, yf = head(Xs, ys, spc, k)
@@ -88,10 +84,11 @@ def run_b2_seed(cfg: dict[str, Any], seed: int, data, schema, ledger: RunLedger,
         fid = fidelity_report(Xtr, ytr, Xf, yf, schema, classes, seed=seed)
         pri = privacy_report(Xf, yf, Xtr, ytr, data["val"]["X"], data["val"]["y"], classes, seed=seed)
     (base / "fidelity_privacy.json").write_text(json.dumps({"fidelity": fid, "privacy": pri}, indent=2), encoding="utf-8")
-    extra = {**_summ(fid, pri), "cvae_train_s": t_train.seconds, "cvae_gen_s": t_gen.seconds, "fidpriv_s": t_fp.seconds, "cvae_params": n_params(model),
-             "cvae_epochs": len(hist), "cvae_peak_rss_gb": peak, "cvae_val_loss": hist[-1].get("val_loss", float("nan"))}
-
-    for protocol, clf_name, name in names:
+    common = {**_summ(fid, pri), "cvae_gen_s": t_gen.seconds, "fidpriv_s": t_fp.seconds, "cvae_params": n_params(model),
+              **(extra or {})}
+    out = {}
+    for protocol, clf_name in PROTOCOLS:
+        name = method_name(prefix, protocol, clf_name)
         Xa, ya, info = build_train_set(protocol, Xtr, ytr, Xs, ys, k, spc, target, seed)
         clf = make_classifier(clf_name, cfg, seed)
         with warnings.catch_warnings(), Timer() as t_fit:
@@ -109,9 +106,29 @@ def run_b2_seed(cfg: dict[str, Any], seed: int, data, schema, ledger: RunLedger,
                "label_mode": mode, "config_hash": config_hash(cfg), "git_commit": git_commit(), "n_train": int(len(ya)),
                "n_synthetic": int(sum(info["n_synthetic"].values())), "fit_time_s": t_fit.seconds,
                "n_iter": int(getattr(clf, "n_iter_", 0)) if clf_name == "mlp" else 0,
-               **extra, **_flat_metrics(res["test"]), **_flat_metrics(res["val"], "val_")}
+               **common, **_flat_metrics(res["test"]), **_flat_metrics(res["val"], "val_")}
         ledger.append(row)
+        out[name] = row
         logger.info("%s: test macro-F1 %.4f (val %.4f)", rid, row["macro_f1"], row["val_macro_f1"])
+    return out
+
+
+def run_b2_seed(cfg: dict[str, Any], seed: int, data, schema, ledger: RunLedger, resume: bool = True) -> None:
+    mode, k = cfg["label_mode"], len(schema["label_map"])
+    names = [b2_name(p, c) for p, c in PROTOCOLS]
+    if resume and all(ledger.done(run_id(n, seed, mode)) for n in names):
+        logger.info("skip B2 seed %d (all runs in the ledger)", seed)
+        return
+    hp = load_best_cvae(cfg)
+    with Timer() as t_train:
+        model, hist = train_cvae(data["train"]["X"], data["train"]["y"], data["val"]["X"], data["val"]["y"], k,
+                                 build_layout(schema), hp, seed, patience=hp.get("patience"))
+    base = artifacts_dir(cfg) / run_id("B2", seed, mode)
+    base.mkdir(parents=True, exist_ok=True)
+    torch.save({"state_dict": model.state_dict(), "config": model.config(), "hp": hp, "history": hist}, base / "model.pt")
+    extra = {"cvae_train_s": t_train.seconds, "cvae_epochs": len(hist), "cvae_peak_rss_gb": peak_rss_gb(),
+             "cvae_val_loss": hist[-1].get("val_loss", float("nan"))}
+    evaluate_generator(cfg, model, "B2", seed, data, schema, ledger, extra)
 
 
 def copier_sensitivity(cfg: dict[str, Any], data, schema, noises=(0.0, 0.05, 0.2, 0.5), seed: int = 0,
