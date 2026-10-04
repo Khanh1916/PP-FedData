@@ -44,17 +44,20 @@ preprocess:
   ultra_sparse_fix: true          # NA rate >= upper bound (not all NA): stats on applicable rows + flag (spec rule would clip them all to +5 sigma)
   numeric_scale: {time_delta_from_previous_displayed_frame: 1000}   # seconds -> ms before log1p: clipped rows 1.04% -> 0.08%; RF val macro-F1 unchanged
 cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
-       lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false}
+       lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false,
+       patience: 5}              # early stopping on val loss (counted after the beta warm-up)
 fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
 dp: {epsilons: [1, 5, 10], delta: 1.0e-5, max_grad_norm: 1.0}
 secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 8.0}
-generate: {target_per_class: 20000}
+generate: {target_per_class: 20000, residual_noise: true, snap_support: false, snap_max_unique: 256}
+# residual_noise: add Gaussian noise (train residual std per class) to the decoder means: val TSTR macro-F1 0.377 -> 0.415 on the seed-0 model
+# snap_support: snap low-cardinality numeric columns to values seen in train: val TSTR 0.377 -> 0.353, C2ST unchanged, so off
 eval:
   rf: {n_estimators: 200}
   smote: {k_neighbors: 5}
   mlp: {hidden: [128, 64], max_iter: 100, early_stopping: true}
   bootstrap: 1000
-tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100}
+tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100, epochs: 30}   # epochs fixed per trial (spec 7.3)
 thresholds:
   c2st_auc_max: 0.95
   dup_rate_max: 0.01

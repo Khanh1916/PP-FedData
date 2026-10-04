@@ -14,7 +14,9 @@ import numpy as np
 def peak_rss_gb(previous: float = 0.0) -> float:
     try:
         import psutil
-        return max(previous, psutil.Process().memory_info().rss / 1e9)
+        mi = psutil.Process().memory_info()
+        # Windows reports the true peak (peak_wset); elsewhere fall back to the current RSS
+        return max(previous, max(mi.rss, getattr(mi, "peak_wset", 0)) / 1e9)
     except ImportError:
         return previous
 

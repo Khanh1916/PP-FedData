@@ -70,7 +70,8 @@ def privacy_report(Xs, ys, Xtr, ytr, Xva, yva, class_names: list[str], seed: int
 
 
 def positive_control(generator: Callable[[np.ndarray, np.ndarray, int], tuple[np.ndarray, np.ndarray]],
-                     Xtr, ytr, Xva, yva, n_classes: int, n_members: int = 500, seed: int = 0) -> dict[str, Any]:
+                     Xtr, ytr, Xva, yva, n_classes: int, n_members: int = 500, seed: int = 0,
+                     stratified: bool = False) -> dict[str, Any]:
     """MIA against a generator that is trained on only `n_members` rows (so it can memorise them).
 
     `generator(X_members, y_members, seed) -> (X_syn, y_syn)`. Members are the rows the generator saw; non-members
@@ -78,8 +79,13 @@ def positive_control(generator: Callable[[np.ndarray, np.ndarray, int], tuple[np
     Phase 7 supplies the deliberately over-fitted CVAE; tests here use a copy-with-noise generator.
     """
     rng = np.random.default_rng(seed)
-    m = rng.choice(len(Xtr), min(n_members, len(Xtr)), replace=False)
+    if stratified:      # equal number of members per class, so rare classes are testable too
+        per = max(1, n_members // n_classes)
+        m = np.concatenate([rng.choice(np.flatnonzero(ytr == c), min(per, int((ytr == c).sum())), replace=False)
+                            for c in range(n_classes) if (ytr == c).any()])
+    else:
+        m = rng.choice(len(Xtr), min(n_members, len(Xtr)), replace=False)
     Xm, ym = Xtr[m], ytr[m]
     Xs, ys = generator(Xm, ym, seed)
-    res = mia_per_class(Xs, ys, Xm, ym, Xva, yva, n_classes, cap=n_members, seed=seed)
+    res = mia_per_class(Xs, ys, Xm, ym, Xva, yva, n_classes, cap=len(Xm), seed=seed)
     return {"mia_auc_mean": res["mean"], "per_class": res["per_class"], "n_members": int(len(Xm))}

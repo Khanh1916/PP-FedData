@@ -49,7 +49,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_b.add_argument("--seeds", nargs="+", type=int, default=None)
     p_b.add_argument("--no-resume", action="store_true", help="re-run runs that are already in results/runs.csv")
     # Phase 7
-    sub.add_parser("tune", help="Optuna hyperparameter tuning for CVAE")
+    p_t = sub.add_parser("tune", help="Optuna hyperparameter tuning for CVAE (resumes from artifacts/optuna_cvae_*.db)")
+    p_t.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_t.add_argument("--n-trials", type=int, default=None, help="target total number of trials (default tune.n_trials)")
+    p_b2 = sub.add_parser("b2", help="Centralised CVAE (B2): train, generate, evaluate TSTR/TAug, fidelity, privacy")
+    p_b2.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_b2.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_b2.add_argument("--no-resume", action="store_true")
+    p_bench = sub.add_parser("benchmark", help="7.4 compute benchmark (plain vs DP-SGD epoch time, RAM) -> compute_budget.md")
+    p_bench.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     # Phase 8-10
     sub.add_parser("run", help="Run experiment configurations")
     # Phase 11
@@ -137,6 +145,29 @@ def main(argv: list[str] | None = None) -> None:
         gate = write_g3_report(c)
         logger.info("G3 checks: %s", gate)
 
+    def cmd_tune(a):
+        from ppfeddata.tune import run_tune
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        r = run_tune(c, a.n_trials)
+        logger.info("best: %s", r)
+
+    def cmd_b2(a):
+        from ppfeddata.models.b2 import run_b2, write_b2_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_b2(c, a.seeds, resume=not a.no_resume)
+        logger.info("B2 gate: %s", write_b2_report(c))
+
+    def cmd_benchmark(a):
+        from ppfeddata.models.benchmark import run_benchmark
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_benchmark(c)
+
     # Dispatch to subcommands
     dispatch = {
         "inventory": cmd_inventory,
@@ -145,6 +176,9 @@ def main(argv: list[str] | None = None) -> None:
         "preprocess": cmd_preprocess,
         "check": cmd_check,
         "baseline": cmd_baseline,
+        "tune": cmd_tune,
+        "b2": cmd_b2,
+        "benchmark": cmd_benchmark,
     }
     handler = dispatch.get(args.command)
     if handler is None:
