@@ -12,6 +12,7 @@ artifacts/*/
 artifacts/*.db
 artifacts/*.json
 artifacts/*.yaml
+artifacts/*.csv
 
 # Results (generated). Aggregate reports (md) and figures (png) are tracked; CSV/JSON intermediates are not.
 results/*.csv

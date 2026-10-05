@@ -48,7 +48,10 @@ cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
        patience: 5}              # early stopping on val loss (counted after the beta warm-up)
 fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
 dp: {epsilons: [1, 5, 10], delta: 1.0e-5, max_grad_norm: 1.0}
-secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 8.0}
+secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 16.0, max_weight: 100000}
+# clipping_range: Flower's default 8 was tried first; the check found weights up to 11.4 (out.weight, seed 1), so by the spec rule it was raised to 16 (SPEC_DEVIATIONS 10.3).
+# max_weight: public upper bound on a client's row count (Flower default 1000 is below the client sizes 500..~70,000; with it the FedAvg weights are clipped, 10.2).
+# quantization_range 2**22 and modulus_range 2**32 stay at Flower's defaults
 generate: {target_per_class: 20000, residual_noise: true, snap_support: false, snap_max_unique: 256}
 # residual_noise: add Gaussian noise (train residual std per class) to the decoder means: val TSTR macro-F1 0.377 -> 0.415 on the seed-0 model
 # snap_support: snap low-cardinality numeric columns to values seen in train: val TSTR 0.377 -> 0.353, C2ST unchanged, so off

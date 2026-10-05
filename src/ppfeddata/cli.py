@@ -81,8 +81,27 @@ def build_parser() -> argparse.ArgumentParser:
     p_vd.add_argument("--eps", type=float, default=5.0)
     p_vd.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     # Phase 10
-    sub.add_parser("run", help="Run experiment configurations")
+    p_m2 = sub.add_parser("m2", help="CVAE + FedAvg + secure aggregation (M2): runs and ledger rows")
+    p_m2.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_m2.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_m2.add_argument("--no-resume", action="store_true")
+    p_m3 = sub.add_parser("m3", help="CVAE + FedAvg + client-side DP + secure aggregation (M3): runs and ledger rows")
+    p_m3.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_m3.add_argument("--eps", type=float, default=5.0)
+    p_m3.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_m3.add_argument("--no-resume", action="store_true")
+    p_m3.add_argument("--untuned", action="store_true", help="use the Phase 7 hyper-parameters instead of the DP-specific ones")
+    p_sc = sub.add_parser("secagg-check", help="T-SA1/T-SA2/T-SA3 on real data (seed 0): secure vs plain per round, masked vectors, a dropping client")
+    p_sc.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_sc.add_argument("--seed", type=int, default=0)
+    p_sc.add_argument("--rounds", type=int, default=None)
+    p_sc.add_argument("--no-resume", action="store_true")
+    p_sr = sub.add_parser("secagg-report", help="Write results/reports/m2_m3_secagg.md from the ledger and the check results")
+    p_sr.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_sr.add_argument("--eps", type=float, default=5.0)
+    p_sr.add_argument("--untuned", action="store_true")
     # Phase 11
+    sub.add_parser("run", help="Run experiment configurations")
     sub.add_parser("aggregate", help="Aggregate results and generate figures")
     # Phase 13
     sub.add_parser("demo", help="Launch Streamlit demo")
@@ -218,6 +237,36 @@ def main(argv: list[str] | None = None) -> None:
         verify_dp_candidates(c, a.trials, a.eps)
         logger.info("selected: %s", choose_dp_candidate(c, a.trials, a.eps))
 
+    def cmd_m2(a):
+        from ppfeddata.fl.m2 import run_m2
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_m2(c, a.seeds, resume=not a.no_resume)
+
+    def cmd_m3(a):
+        from ppfeddata.fl.m2 import run_m3
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        run_m3(c, a.eps, a.seeds, resume=not a.no_resume, tuned=not a.untuned)
+
+    def cmd_secagg_check(a):
+        from ppfeddata.fl.m2 import run_checks
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        r = run_checks(c, a.seed, resume=not a.no_resume, rounds=a.rounds)
+        logger.info("T-SA1 largest aggregation error %.2e (bound %.2e); T-SA2 largest |rho| %.4f; T-SA3 clients per round %s", r["tsa1"]["agg_err_max"],
+                    r["tsa1"]["error_bound"], max(abs(x["rho"]) for x in r["tsa2"]), r["tsa3"]["n_clients_per_round"])
+
+    def cmd_secagg_report(a):
+        from ppfeddata.fl.m2 import write_secagg_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        logger.info("Phase 10 gate: %s", write_secagg_report(c, eps=a.eps, tuned=not a.untuned))
+
     def cmd_benchmark(a):
         from ppfeddata.models.benchmark import run_benchmark
         c = load_config(a.config)
@@ -239,6 +288,10 @@ def main(argv: list[str] | None = None) -> None:
         "m1": cmd_m1,
         "tune-dp": cmd_tune_dp,
         "verify-dp": cmd_verify_dp,
+        "m2": cmd_m2,
+        "m3": cmd_m3,
+        "secagg-check": cmd_secagg_check,
+        "secagg-report": cmd_secagg_report,
         "benchmark": cmd_benchmark,
     }
     handler = dispatch.get(args.command)

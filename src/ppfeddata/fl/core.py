@@ -112,6 +112,14 @@ def fedavg_numpy(states: list[dict[str, Any]], weights: list[float]) -> dict[str
     return {k: sum(wi * np.asarray(s[k], dtype=np.float64) for wi, s in zip(w, states)) for k in states[0]}
 
 
+def add_aggregate_noise(state: dict[str, torch.Tensor], std: float, seed: int, round_idx: int) -> OrderedDict:
+    """CONTROL for the secure-aggregation checks: plain FedAvg plus Gaussian noise of the size of SecAgg's quantisation error, drawn
+    from a generator that depends only on (noise seed, absolute round) so a resumed run reproduces it. `std` = 0 returns a copy."""
+    g = torch.Generator().manual_seed((int(seed) * 1_000_003 + int(round_idx)) % (2 ** 31 - 1))
+    return OrderedDict((k, v.detach().clone() + (float(std) * torch.randn(v.shape, generator=g, dtype=v.dtype) if std else 0.0))
+                       for k, v in state.items())
+
+
 def val_loss(state: dict[str, torch.Tensor], Xv: np.ndarray, yv: np.ndarray, layout: Layout, n_classes: int,
              hp: dict[str, Any]) -> dict[str, float]:
     """ELBO of the global model on the validation split at the final beta (server-side simulation diagnostic)."""

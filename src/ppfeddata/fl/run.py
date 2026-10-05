@@ -30,7 +30,9 @@ def build_spec(cfg: dict[str, Any], seed: int, name: str = "B3", alpha: float | 
                rounds: int | None = None, local_epochs: int | None = None, resume: bool = True,
                data_dir: str | Path | None = None, hp: dict[str, Any] | None = None,
                torch_threads: int = 2, target_eps: float | None = None, sigma: float | None = None,
-               max_grad_norm: float | None = None, delta: float | None = None, stop_after: int | None = None) -> dict[str, Any]:
+               max_grad_norm: float | None = None, delta: float | None = None, stop_after: int | None = None,
+               secagg: dict[str, Any] | None = None, save_states: bool = False, agg_noise: float = 0.0,
+               agg_noise_seed: int = 0) -> dict[str, Any]:
     """Partition the train pool (stored on disk) and describe the run."""
     fl = cfg["fl"]
     ddir = Path(data_dir) if data_dir is not None else processed_dir(cfg)
@@ -56,7 +58,9 @@ def build_spec(cfg: dict[str, Any], seed: int, name: str = "B3", alpha: float | 
         else:
             sigmas = dp_utils.calibrate_clients(meta["sizes"], target_eps, delta_, int(hp_["batch_size"]), rounds_, le_)
         dp = {"target_eps": None if target_eps is None else float(target_eps), "delta": delta_, "max_grad_norm": clip, "sigmas": sigmas}
-    return {"run_id": rid, "dp": dp, "stop_after": None if stop_after is None else int(stop_after), "name": name, "seed": int(seed), "num_clients": k, "alpha": alpha,
+    return {"run_id": rid, "dp": dp, "secagg": secagg, "save_states": bool(save_states), "agg_noise": float(agg_noise),
+            "agg_noise_seed": int(agg_noise_seed),
+            "stop_after": None if stop_after is None else int(stop_after), "name": name, "seed": int(seed), "num_clients": k, "alpha": alpha,
             "rounds": rounds_, "local_epochs": le_, "hp": hp_, "data_dir": str(ddir), "partition_path": str(pp),
             "artifacts_dir": str(cfg["compute"]["artifacts_dir"]), "checkpoint_every": int(cfg["compute"]["checkpoint_every_rounds"]),
             "eval_every": 5, "torch_threads": int(torch_threads), "resume": bool(resume), "label_mode": cfg["label_mode"],
@@ -79,7 +83,8 @@ def run_simulation_from_spec(spec_path: str | Path) -> None:
     os.environ[app.SPEC_ENV] = str(Path(spec_path).resolve())
     os.environ.setdefault("RAY_DEDUP_LOGS", "0")
     sp = json.loads(Path(spec_path).read_text(encoding="utf-8"))
-    run_simulation(server_app=app.server_app, client_app=app.client_app, num_supernodes=int(sp["num_clients"]),
+    run_simulation(server_app=app.server_app, client_app=app.secagg_client_app if sp.get("secagg") else app.client_app,
+                   num_supernodes=int(sp["num_clients"]),
                    backend_config={"client_resources": {"num_cpus": 1, "num_gpus": 0.0},
                                    "init_args": {"include_dashboard": False, "logging_level": "ERROR"}})
 
@@ -95,7 +100,11 @@ def summarize(spec: dict[str, Any], wall_s: float | None = None) -> dict[str, An
         dp = spec["dp"]
         dp_info = dp_utils.epsilon_table(spec["partition_sizes"], dp["sigmas"], rows[-1].get("client_dp_steps", {}),
                                          int(spec["hp"]["batch_size"]), dp["delta"], dp["target_eps"])
-    return {"dp": dp_info, "rounds_done": len(rows), "fl_total_s": float(sum(secs)), "mean_round_s": float(np.mean(secs)) if secs else float("nan"),
+    sa_info = None
+    if spec.get("secagg") and rows:
+        from ppfeddata.fl import secagg
+        sa_info = secagg.summarize(spec, rdir)
+    return {"dp": dp_info, "secagg": sa_info, "rounds_done": len(rows), "fl_total_s": float(sum(secs)), "mean_round_s": float(np.mean(secs)) if secs else float("nan"),
             "bytes_per_round": int(rows[-1]["bytes"]) if rows else 0, "server_peak_rss_gb": max([r["peak_rss_gb"] for r in rows], default=0.0),
             "final_val_loss": float(vals[-1]["val_loss"]) if vals else float("nan"),
             "client_seconds_mean": float(np.mean([s for r in rows for s in r["client_seconds"]])) if rows else float("nan"),
@@ -112,10 +121,11 @@ def run_fl(cfg: dict[str, Any], seed: int, name: str = "B3", in_process: bool = 
         if prev and not np.allclose(prev["sigmas"], spec["dp"]["sigmas"]):
             raise RuntimeError(f"{spec['run_id']}: sigma was calibrated for a different plan (rounds/epsilon/delta changed); "
                                "resuming would break the privacy accounting. Use stop_after to cut a run short instead.")
-    path = write_spec(spec)
     t0 = time.perf_counter()
     ck = core.load_checkpoint(rdir) if spec["resume"] else None
-    if not ((rdir / "final_state.pt").exists() and ck is not None and int(ck["round"]) >= spec["rounds"]):
+    finished = (rdir / "final_state.pt").exists() and ck is not None and int(ck["round"]) >= spec["rounds"]
+    path = old if finished and old.exists() else write_spec(spec)      # a finished run keeps the spec it was run with
+    if not finished:
         if in_process:
             run_simulation_from_spec(path)
         else:

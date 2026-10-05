@@ -163,3 +163,6 @@ def test_flower_run_checkpoint_and_resume_equals_uninterrupted(tmp_path):
     assert all(r["bytes"] > 0 and r["round_seconds"] > 0 for r in rows[1:])
     done = run_fl(cfg, 0, "full", rounds=6, **kw)                        # already finished: nothing is re-run
     assert done["summary"]["rounds_done"] == 6
+    again = run_fl(cfg, 0, "full", rounds=6, agg_noise=1.0, **kw)        # a finished run keeps the spec it was run with
+    assert again["summary"]["rounds_done"] == 6
+    assert json.loads((art / full["run_id"] / "spec.json").read_text())["agg_noise"] == 0.0
