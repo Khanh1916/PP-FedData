@@ -52,7 +52,7 @@ def make_ledger(tmp_path, with_dp=True, with_secagg=True, hashes=("h1", "h1", "h
                 for suf in ("-plain", ""):
                     add(f"M1d-t21-eps{e}{suf}-{p}-{c}", p, c, f"M1d-t21-eps{e}", eps=e, plain=bool(suf), bytes_=1_400_000, params=36_000, hash_=hashes[1],
                         base=(0.2 + 0.01 * e) if p == "TSTR" else 0.445)
-                    add(f"M1-eps{e}-plain-{p}-{c}", p, c, f"M1-eps{e}", eps=e, plain=True, hash_=hashes[1], base=0.19)
+                add(f"M1-eps{e}-plain-{p}-{c}", p, c, f"M1-eps{e}", eps=e, plain=True, hash_=hashes[1], base=0.19)
         # candidate trials of the DP search: one seed, must not be taken as the headline family
         add("M1d-t17-eps5-plain-TSTR-rf", "TSTR", "rf", "M1d-t17-eps5", eps=5, plain=True, hash_=hashes[1], base=0.2)
     if with_secagg:
@@ -141,7 +141,7 @@ def test_single_seed_configuration_shows_no_std(tmp_path):
 def test_aggregate_writes_summary_six_figures_and_the_report(tmp_path):
     df = make_ledger(tmp_path, hashes=("h0", "h1", "h2"))
     cfg = make_cfg(tmp_path, df)
-    out = ag.aggregate(cfg, out_dir=tmp_path / "res")
+    out = ag.aggregate(cfg, out_dir=tmp_path / "res", with_interpretation=False)
     res = tmp_path / "res"
     assert (res / "summary.csv").exists() and len(pd.read_csv(res / "summary.csv")) == df["config"].nunique()
     names = {"f1_by_config.png", "recall_rare_classes.png", "utility_privacy.png", "fidelity_vs_eps.png", "overhead.png", "pareto.png"}
@@ -165,7 +165,7 @@ def test_aggregate_writes_summary_six_figures_and_the_report(tmp_path):
 def test_aggregate_degrades_gracefully_without_dp_and_secagg(tmp_path):
     df = make_ledger(tmp_path, with_dp=False, with_secagg=False)
     cfg = make_cfg(tmp_path, df)
-    out = ag.aggregate(cfg, out_dir=tmp_path / "res")
+    out = ag.aggregate(cfg, out_dir=tmp_path / "res", with_interpretation=False)
     text = (tmp_path / "res" / "reports" / "final_report.md").read_text(encoding="utf-8")
     assert len(out["figures"]) == 6 and "M1-eps5" not in text.split("## 2a.")[1].split("## 3.")[0] and "B3" in text
 
@@ -173,7 +173,7 @@ def test_aggregate_degrades_gracefully_without_dp_and_secagg(tmp_path):
 def test_report_has_the_a1_section_with_utility_and_partition_columns(tmp_path):
     df = make_ledger(tmp_path, with_a1=True)
     cfg = make_cfg(tmp_path, df)
-    out = ag.aggregate(cfg, out_dir=tmp_path / "res")
+    out = ag.aggregate(cfg, out_dir=tmp_path / "res", with_interpretation=False)
     text = (tmp_path / "res" / "reports" / "final_report.md").read_text(encoding="utf-8")
     sec = text.split("## 8b.")[1].split("## 9.")[0]
     assert sec.index("| 0.1 |") < sec.index("| 0.5 (B3) |") < sec.index("| 10 |")                      # alphas in increasing order, B3 is the alpha of the config
@@ -189,4 +189,4 @@ def test_aggregate_rejects_an_empty_ledger(tmp_path):
     cfg = make_cfg(tmp_path, make_ledger(tmp_path))
     pd.DataFrame(columns=["run_id", "label_mode"]).to_csv(cfg["compute"]["runs_csv"], index=False)
     with pytest.raises(FileNotFoundError):
-        ag.aggregate(cfg, out_dir=tmp_path / "res")
+        ag.aggregate(cfg, out_dir=tmp_path / "res", with_interpretation=False)

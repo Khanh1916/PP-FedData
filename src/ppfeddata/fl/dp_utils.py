@@ -1,8 +1,11 @@
 """Phase 9: privacy accounting for client-side DP-SGD (Opacus 1.6.0, RDP accountant).
 
-Per client i with n_i rows and batch size B: Opacus' Poisson loader uses q_i = 1 / ceil(n_i / B) and ceil(n_i / B) steps per
-epoch (checked in the tests against a real `DPDataLoader`). sigma_i is calibrated ONCE for the whole run from
-(target epsilon, delta, q_i, planned steps T_i = rounds x local_epochs x ceil(n_i / B)). A fresh PrivacyEngine is built every
+Per client i with n_i rows and batch size B: Opacus' Poisson loader uses q_i = 1 / ceil(n_i / B) and int(1 / q_i) steps per
+epoch (checked in the tests against a real `DPDataLoader`). int(1 / q_i) is ceil(n_i / B) except when the float division lands
+just below the integer (1 / (1 / 99) = 98.99999999999999, so n_i = 50501, B = 512 runs 98 steps per epoch, not 99; 141 values of
+ceil(n_i / B) below 2000 are affected, see `eval/dp_check.py`). sigma_i is calibrated ONCE for the whole run from
+(target epsilon, delta, q_i, planned steps T_i = rounds x local_epochs x ceil(n_i / B)), so for such a client it is calibrated for
+one step per epoch more than is taken (slightly conservative); epsilon never uses the plan, only the counted steps. A fresh PrivacyEngine is built every
 round, which resets Opacus' own accountant, so Opacus' per-round `get_epsilon` is never used: the final epsilon is
 recomputed here from the step counters (sigma_i, q_i, total steps), which are stored in the checkpoint, so a resumed run
 reports exactly the epsilon of an uninterrupted one.

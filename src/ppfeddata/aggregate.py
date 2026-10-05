@@ -444,7 +444,8 @@ def provenance_rows(summ: pd.DataFrame) -> list[dict[str, Any]]:
     return rows
 
 
-def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame, figs: dict[str, Path], out: Path, fig_rel: str = "../figures") -> Path:
+def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame, figs: dict[str, Path], out: Path, fig_rel: str = "../figures",
+                       interp: dict[str, Any] | None = None) -> Path:
     from ppfeddata.run_experiment import compare_workspaces, load_matrix, plan, workspace_cfg
 
     mode = cfg["label_mode"]
@@ -459,7 +460,8 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
          "DP configurations are shown with the **plain decoder**, the variant that depends only on the DP-trained weights and is covered by epsilon "
          "(epsilon = worst client, record level, delta " + f"{cfg['dp']['delta']:g}" + "); B3 at epsilon = infinity is B3-plain. The headline DP family "
          f"is {fam.get('M1', 'n/a')} / {fam.get('M3', 'n/a')} (hyper-parameters searched under DP-SGD, SPEC_DEVIATIONS 9.11-9.14). "
-         "This version contains tables and figures only; the interpretation rules of Phase 12 (answers R1-R6, red flags, recommendation) are **not applied yet**.", ""]
+         + ("Section 9 applies the interpretation rules of Phase 12 (answers R1-R6, red flags, recommendation)." if interp is not None else
+            "This version contains tables and figures only; the interpretation rules of Phase 12 (answers R1-R6, red flags, recommendation) are **not applied yet**."), ""]
 
     # ---- provenance and completeness
     exps = load_matrix()
@@ -603,26 +605,33 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
               "Generator and training side of the same runs. alpha changes more than the label mix: with a skewed split the clients also differ in size, and a larger client "
               "takes more optimiser steps and carries more FedAvg weight (SPEC_DEVIATIONS 8.6), so the effective number of steps per round differs between rows.", "", _table(rows2), ""]
 
-    L += ["## 9. Interpretation (Phase 12)", "",
-          "Not generated yet: the answers R1-R6, the red-flag checks and the recommended configuration are the job of Phase 12 and will be added here from the same tables.", "",
-          "## 10. Limitations that apply to every number above", "",
+    if interp is not None:
+        from ppfeddata.interpret_report import render
+        L += render(interp, cfg)
+    else:
+        L += ["## 9. Interpretation (Phase 12)", "",
+              "Not generated: the answers R1-R6, the red-flag checks and the recommended configuration need the test-set predictions of the runs (`ppfeddata aggregate` without `--no-interpret`).", ""]
+    L += ["## 10. Limitations that apply to every number above", "",
           "- Packet-level data: epsilon is per record; packets of one TCP stream are strongly correlated, so protection of a whole attack session is much weaker (group privacy). Labels are not protected by DP-SGD.",
           "- The hyper-parameters of the CVAE (and of the DP variant) were tuned on real, non-private validation data; tuning is not covered by epsilon.",
           "- The test split comes from few capture groups per sub-class (leakage_report.md, SPEC_DEVIATIONS 3.3-3.5); A4 (other split seeds) has not been run unless listed above.",
           "- Single-machine simulation: no network latency is measured; Ray on Windows was unstable (SPEC_DEVIATIONS 9.8).",
           "- C2ST is close to 1 for every generator and the MIA is a weak attack; neither shows privacy by itself.",
           "- Seed-to-seed spread includes the sensitivity of FL training to tiny perturbations (SPEC_DEVIATIONS 10.4): two runs that differ only by noise of 1e-5 differ by about 0.03 macro-F1 in TSTR.",
+          "- The intervals and verdicts of section 9 reflect the sampling of test rows (or streams) and three seeds only; the test split comes from a fixed set of capture groups (sensitivity A4 was not run) and a std over three seeds is a rough estimate.",
           "- One dataset (MQTT-IoT-IDS DoS/DDoS capture); attack classes that are hard to tell apart packet by packet cannot gain separability from independent synthetic packets.", "",
           "## 11. Sources", "",
-          "`results/runs.csv` (ledger), `results/summary.csv`, `artifacts/<run>/rounds.jsonl` (round logs), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, "
+          "`results/runs.csv` (ledger), `results/summary.csv`, `results/interpretation.json` (section 9), `artifacts/<run>/preds/test.npz` (test predictions), `artifacts/<run>/rounds.jsonl` (round logs), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, "
           "and the phase reports in `results/reports/` (g3_baseline, b2_cvae, b3_fl, m1_dp, m1_dp_tuned, m2_m3_secagg, g4_trial).", ""]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L), encoding="utf-8")
     return out
 
 
-def aggregate(cfg: dict[str, Any], out_dir: str | Path | None = None, dp_families_override: dict[str, str] | None = None) -> dict[str, Any]:
-    """Write summary.csv, the six figures and final_report.md. `out_dir` replaces `results/` (e.g. for a preview of a trial ledger)."""
+def aggregate(cfg: dict[str, Any], out_dir: str | Path | None = None, dp_families_override: dict[str, str] | None = None,
+              with_interpretation: bool = True, n_boot: int | None = None) -> dict[str, Any]:
+    """Write summary.csv, the six figures, interpretation.json and final_report.md. `out_dir` replaces `results/` (e.g. for a preview of a trial ledger).
+    The interpretation (Phase 12) re-reads the test predictions of every run and runs a bootstrap, about half a minute; `with_interpretation=False` skips it."""
     root = Path(out_dir) if out_dir else Path("./results")
     df = annotate(load_ledger(cfg), cfg)
     summ = build_summary(df, cfg)
@@ -634,5 +643,13 @@ def aggregate(cfg: dict[str, Any], out_dir: str | Path | None = None, dp_familie
     figs = {"f1": fig_f1_by_config(summ, ents, fd / "f1_by_config.png"), "recall": fig_recall_rare(cfg, summ, ents, fd / "recall_rare_classes.png"),
             "up": fig_utility_privacy(summ, fam, fd / "utility_privacy.png"), "fid": fig_fidelity(summ, fam, fd / "fidelity_vs_eps.png"),
             "cost": fig_overhead(summ, ents, fd / "overhead.png"), "pareto": fig_pareto(summ, ents, fd / "pareto.png")}
-    report = write_final_report(cfg, summ, df, figs, root / "reports" / "final_report.md")
-    return {"summary": str(root / "summary.csv"), "rows": int(len(summ)), "figures": [str(p) for p in figs.values()], "report": str(report)}
+    interp, interp_path = None, None
+    if with_interpretation:
+        from ppfeddata import interpret
+        try:
+            interp = interpret.interpret(cfg, summ, df, n_boot=n_boot)
+            interp_path = str(interpret.write_json(interp, root / "interpretation.json"))
+        except FileNotFoundError as e:                                  # no saved predictions / test split: the tables are still written
+            logger.warning("interpretation skipped: %s", e)
+    report = write_final_report(cfg, summ, df, figs, root / "reports" / "final_report.md", interp=interp)
+    return {"summary": str(root / "summary.csv"), "rows": int(len(summ)), "figures": [str(p) for p in figs.values()], "report": str(report), "interpretation": interp_path}

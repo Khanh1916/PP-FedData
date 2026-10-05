@@ -118,6 +118,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_ag.add_argument("--runs-csv", default=None, help="ledger to summarise (default compute.runs_csv)")
     p_ag.add_argument("--artifacts-dir", default=None, help="artifacts of that ledger (default compute.artifacts_dir)")
     p_ag.add_argument("--out-dir", default=None, help="write summary.csv, figures/ and reports/ here instead of results/ (e.g. for a preview)")
+    p_ag.add_argument("--no-interpret", action="store_true", help="skip the Phase 12 interpretation (R1-R6, red flags, recommendation); it re-reads every prediction file and bootstraps, ~30 s")
+    p_ag.add_argument("--n-boot", type=int, default=None, help="bootstrap resamples of the interpretation (default eval.bootstrap)")
     # Phase 13
     sub.add_parser("demo", help="Launch Streamlit demo")
 
@@ -315,7 +317,7 @@ def main(argv: list[str] | None = None) -> None:
             c["compute"]["runs_csv"] = a.runs_csv
         if a.artifacts_dir:
             c["compute"]["artifacts_dir"] = a.artifacts_dir
-        out = aggregate(c, out_dir=a.out_dir)
+        out = aggregate(c, out_dir=a.out_dir, with_interpretation=not a.no_interpret, n_boot=a.n_boot)
         logger.info("aggregate: %s", out)
 
     def cmd_benchmark(a):

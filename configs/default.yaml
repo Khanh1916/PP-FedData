@@ -72,6 +72,10 @@ thresholds:
   single_feature_f1_flag: 0.9   # C3: one raw column alone gives macro-F1 above this -> inspect its meaning
   na_only_f1_flag: 0.5          # C2: RF on is_na flags only above this -> model learns the extraction pattern
   dos_ddos_f1_flag: 0.6         # C5: DoS vs DDoS binary macro-F1 below this -> not separable (chance = 0.5)
+  eps_max_recommend: 5.0        # Phase 12 R6: a DP configuration is recommended only if its epsilon (max over clients, worst seed) is at most this
+  seed_std_redflag: 0.05        # Phase 12 red flag: std of macro-F1 over seeds above this -> more seeds or a stability check (seed_std_max is the softer 'note' level)
+  f1_near_one: 0.95             # Phase 12 red flag: macro-F1 of B0 at or above this -> suspect leakage / artefact (back to Phase 5)
+  eps_recompute_rtol: 0.10      # Phase 12 red flag: reported epsilon differs from the independent recomputation (own RDP code) by more than this fraction
 leakage:
   rf_trees: 100
   cv_folds: 5                   # C4
