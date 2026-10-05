@@ -1,0 +1,9 @@
+# Phases 9 and 9b. FedAvg + client-side DP-SGD, target epsilon 5. Headline family = the DP-specific
+# hyper-parameters selected in configs/best_cvae_dp.yaml (M1d-t<trial>); both the plain decoder (covered by epsilon,
+# the headline) and the residual-noise variant (not covered) are evaluated.
+id: M1-eps5
+title: FedAvg + DP-SGD, epsilon 5 (DP-tuned hyper-parameters)
+group: matrix
+kind: m1
+params: {eps: 5, family: tuned}
+est_minutes: 10

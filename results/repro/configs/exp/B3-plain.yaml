@@ -1,0 +1,7 @@
+# Phase 9. The B3 model sampled WITHOUT the residual noise: the epsilon = infinity point of the utility-privacy curve.
+id: B3-plain
+title: B3 plain decoder (epsilon = infinity reference)
+group: reference
+kind: b3plain
+params: {}
+est_minutes: 3

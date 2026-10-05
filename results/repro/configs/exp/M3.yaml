@@ -1,0 +1,7 @@
+# Phase 10. Client-side DP-SGD (epsilon 5, DP-tuned hyper-parameters) + SecAgg+.
+id: M3
+title: FedAvg + DP-SGD (epsilon 5) + SecAgg+
+group: matrix
+kind: m3
+params: {eps: 5, family: tuned}
+est_minutes: 10

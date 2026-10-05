@@ -282,7 +282,7 @@ def make_world(tmp_path, n_per_class=120, per_stream=6, n_boot=40):
         mask = df["config"].map(lambda n, fl=fl: ag.parse_config(n)["fl_run"] == fl)
         df.loc[mask, "dp_eps_max"] = e_max
     df.to_csv(tmp_path / "art" / "runs.csv", index=False)
-    cfg.update(paths={"work_dir": str(tmp_path / "work")}, eval={"bootstrap": n_boot}, tune={"syn_per_class": 5000})
+    cfg.update(paths={"work_dir": str(tmp_path / "work"), "shared_manifest_dir": str(tmp_path / "manifests")}, eval={"bootstrap": n_boot}, tune={"syn_per_class": 5000})
     cfg["thresholds"].update(seed_std_max=0.02, eps_max_recommend=5.0, seed_std_redflag=0.05, f1_near_one=0.95, eps_recompute_rtol=0.10)
     (tmp_path / "art" / "B2_positive_control_6class.json").write_text(json.dumps({"mia_auc_mean": 0.52, "copier_sensitivity": {"0.0": 0.97, "0.05": 0.66, "0.5": 0.50}}), encoding="utf-8")
     return cfg, df

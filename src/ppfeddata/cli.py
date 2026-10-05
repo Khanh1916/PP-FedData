@@ -121,7 +121,16 @@ def build_parser() -> argparse.ArgumentParser:
     p_ag.add_argument("--no-interpret", action="store_true", help="skip the Phase 12 interpretation (R1-R6, red flags, recommendation); it re-reads every prediction file and bootstraps, ~30 s")
     p_ag.add_argument("--n-boot", type=int, default=None, help="bootstrap resamples of the interpretation (default eval.bootstrap)")
     # Phase 13
-    sub.add_parser("demo", help="Launch Streamlit demo")
+    p_demo = sub.add_parser("demo", help="Launch the Streamlit demo (demo/app.py); needs results/ and artifacts/ from the experiments")
+    p_demo.add_argument("--port", type=int, default=None, help="server port (default: Streamlit's, 8501)")
+    p_demo.add_argument("--headless", action="store_true", help="do not open a browser window")
+    p_ac = sub.add_parser("accept", help="Check the Definition of Done of the spec against the files of the repository -> results/reports/dod_checklist.md (exit 1 if a row FAILS)")
+    p_ac.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_ac.add_argument("--no-regenerate", action="store_true", help="do not re-run `aggregate` into a scratch folder to compare the final report with what the code produces (about 40 s)")
+    p_pk = sub.add_parser("package", help="Reproducibility bundle: results/repro/ (pip freeze, configs, environment, checksums), the feature schema next to the split manifests, requirements-lock.txt")
+    p_pk.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_pk.add_argument("--out-dir", default=None, help="default results/repro")
+    p_pk.add_argument("--no-update-lock", action="store_true", help="do not rewrite requirements-lock.txt")
 
     return parser
 
@@ -320,6 +329,48 @@ def main(argv: list[str] | None = None) -> None:
         out = aggregate(c, out_dir=a.out_dir, with_interpretation=not a.no_interpret, n_boot=a.n_boot)
         logger.info("aggregate: %s", out)
 
+    def cmd_demo(a):
+        import subprocess
+        from pathlib import Path
+
+        try:
+            import streamlit  # noqa: F401
+        except ImportError:
+            logger.error("streamlit is not installed: pip install -r requirements.txt")
+            raise SystemExit(2)
+        root = Path(__file__).resolve().parents[2]
+        cmd = [sys.executable, "-m", "streamlit", "run", str(root / "demo" / "app.py")]
+        if a.port:
+            cmd += ["--server.port", str(a.port)]
+        if a.headless:
+            cmd += ["--server.headless", "true"]
+        if a.config:
+            cmd += ["--", "--config", str(Path(a.config).resolve())]
+        logger.info("launching: %s", " ".join(cmd))
+        raise SystemExit(subprocess.run(cmd, cwd=root).returncode)
+
+    def cmd_accept(a):
+        from ppfeddata.acceptance import write_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        path, items = write_report(c, regenerate=not a.no_regenerate)
+        for i in items:
+            logger.info("%-4s %-8s %s", i.id, i.status, i.criterion)
+        logger.info("written: %s", path)
+        if any(i.status == "FAIL" for i in items):
+            raise SystemExit(1)
+
+    def cmd_package(a):
+        from ppfeddata.package import package
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        r = package(c, out_dir=a.out_dir, update_lock=not a.no_update_lock)
+        logger.info("package: %s", r)
+        if r["missing"]:
+            logger.warning("not found (not hashed): %s", r["missing"])
+
     def cmd_benchmark(a):
         from ppfeddata.models.benchmark import run_benchmark
         c = load_config(a.config)
@@ -348,6 +399,9 @@ def main(argv: list[str] | None = None) -> None:
         "run": cmd_run,
         "aggregate": cmd_aggregate,
         "benchmark": cmd_benchmark,
+        "demo": cmd_demo,
+        "package": cmd_package,
+        "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)
     if handler is None:

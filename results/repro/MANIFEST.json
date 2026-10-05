@@ -1,0 +1,143 @@
+{
+  "label_mode": "6class",
+  "git_commit": "5c3334cf8625be65cb78745be95dae4ce4206d13",
+  "files": {
+    "results/runs.csv": {
+      "sha256": "0339e5ceebb348f0df428d806786ff4ef0fe24a37cf1e7e69e2ae9c4a94a00e7",
+      "bytes": 350891
+    },
+    "results/summary.csv": {
+      "sha256": "5da4298c1f80668bc8d9929d3f423734307bca4e9b922d60a7e9f3a0554d45e8",
+      "bytes": 128389
+    },
+    "results/interpretation.json": {
+      "sha256": "1ca4c90193cd7a00db57a392627f066e04f742e24a0a819d901a3050fc647c08",
+      "bytes": 161127
+    },
+    "results/reports/final_report.md": {
+      "sha256": "27336351b950afaa317f0d47c46adbd5c93d69b7348b63b4365a4ecf5dd430bc",
+      "bytes": 52259
+    },
+    "results/manifests/split_manifest_6class.json": {
+      "sha256": "839a130273df0a2cb94a0ae760786be10ac77efa22153b2fdfea1b7604857a4d",
+      "bytes": 43344
+    },
+    "results/manifests/feature_schema_6class.json": {
+      "sha256": "501cde7ab89dc6a50f30b4e0ff70d4b36ca0a9f5875545ba5dba842782ce97ce",
+      "bytes": 16920
+    },
+    "requirements-lock.txt": {
+      "sha256": "9dfa758e62f6568f06936b0831cef2c1755167da53fb3f2a3cf06bdd95ffb173",
+      "bytes": 3485
+    },
+    "results/repro/pip_freeze.txt": {
+      "sha256": "9dfa758e62f6568f06936b0831cef2c1755167da53fb3f2a3cf06bdd95ffb173",
+      "bytes": 3485
+    },
+    "results/repro/environment.json": {
+      "sha256": "15fac1132613599a65ac367afdfaa8553e1cf0324e55852d315da5192960814d",
+      "bytes": 806
+    },
+    "results/repro/configs/best_cvae.yaml": {
+      "sha256": "fd52d984a0d98afd6c62fdda1d151ee8a3b2cbb5d89f43216abf313e1b05a01b",
+      "bytes": 566
+    },
+    "results/repro/configs/best_cvae_dp.yaml": {
+      "sha256": "a64fda00642d6246f0f01f92fa407711c6c6a5923aeb4c8d2f1ad8e8a3e3c95b",
+      "bytes": 1613
+    },
+    "results/repro/configs/default.yaml": {
+      "sha256": "18215730d5d7120eb2fa8c6eeea36cbe885e8607efb091c24c44383b31b50647",
+      "bytes": 8138
+    },
+    "results/repro/configs/feature_decisions.yaml": {
+      "sha256": "590e2281f12fe511e9790d6905a6c40352f2306581120db18e840b1e1f7b9975",
+      "bytes": 10898
+    },
+    "results/repro/configs/label_map.yaml": {
+      "sha256": "d0ca29cfa4ad6c706ada2df5c232f477c9b536262b76c0e1628a00a085c278b2",
+      "bytes": 1227
+    },
+    "results/repro/configs/exp/A1-a0.1.yaml": {
+      "sha256": "ca37ccbc7945f29d3d557840aac4ce1776803cb524c9f3969129abbbb23ea734",
+      "bytes": 206
+    },
+    "results/repro/configs/exp/A1-a10.yaml": {
+      "sha256": "ead5f3889e8da60710de70df6232909f686ea64f033f1da0cd6d9a62a52c0b9d",
+      "bytes": 172
+    },
+    "results/repro/configs/exp/A2.yaml": {
+      "sha256": "ac95fd8e3f0285cacd9d2bd63354d35e3adf69f4fd41cf957fa661ff489154f7",
+      "bytes": 341
+    },
+    "results/repro/configs/exp/A3.yaml": {
+      "sha256": "36e438891b14894cc47c2bf09f89bfd67f61e416ea38993d617a3fdac1aaab5b",
+      "bytes": 312
+    },
+    "results/repro/configs/exp/A4.yaml": {
+      "sha256": "480ac2e490b8f908fdeff629248cffbe416240fa01363bf733ed85df569ee3f9",
+      "bytes": 368
+    },
+    "results/repro/configs/exp/A5.yaml": {
+      "sha256": "d399ff8e0f73c4603430b76a4347ecb8a0161d0fdf7cd60cdbde4b2db1df8908",
+      "bytes": 326
+    },
+    "results/repro/configs/exp/B0.yaml": {
+      "sha256": "3a4ac70d83542162820f69e1e033f6d518e90c20e01cd941b4c2197d5e6e9287",
+      "bytes": 199
+    },
+    "results/repro/configs/exp/B1a.yaml": {
+      "sha256": "d9bec8f6d4471b95b19b3e29bca62105a84bc4e7dedb6ea4aa8d8e43b39ae00f",
+      "bytes": 167
+    },
+    "results/repro/configs/exp/B1b.yaml": {
+      "sha256": "90e6175dc3d8068351da3bd75ddebc688102551fc9eb72751837c84b9ec3eedc",
+      "bytes": 207
+    },
+    "results/repro/configs/exp/B2.yaml": {
+      "sha256": "38e899d740b933a68039f47e6662ad99ee60a69325d33c9b164af93f6a459c8a",
+      "bytes": 140
+    },
+    "results/repro/configs/exp/B3-plain.yaml": {
+      "sha256": "be6b6f7641c2c7d2886f746783a014872393d281bcc36880663599da8793bc5c",
+      "bytes": 244
+    },
+    "results/repro/configs/exp/B3.yaml": {
+      "sha256": "22458082d6e8ffb2a1187dabb4cb034e829fa2b6bf672d556a967a7ab060c9dd",
+      "bytes": 154
+    },
+    "results/repro/configs/exp/M1-eps1.yaml": {
+      "sha256": "e53e5500a3630477325d04b204b1acfae31641aaa35f0be97d133c6e58d10767",
+      "bytes": 438
+    },
+    "results/repro/configs/exp/M1-eps10.yaml": {
+      "sha256": "73c724e53e9958635dd488827c64902cccbb10297020358767294dd8b9f90286",
+      "bytes": 442
+    },
+    "results/repro/configs/exp/M1-eps5.yaml": {
+      "sha256": "7153ddec8248b67759961445809359a3ceecd612f0fbafe3b4894801d25ad446",
+      "bytes": 438
+    },
+    "results/repro/configs/exp/M1p7-eps1.yaml": {
+      "sha256": "91a683e8567c5a0bd3b2c82f645456db9ddd40f0ad2b6bce9b931cffd49d2b7b",
+      "bytes": 277
+    },
+    "results/repro/configs/exp/M1p7-eps10.yaml": {
+      "sha256": "3bb095164984b78e00fbc8483b1ebcaf6637a83439d4a6c00b0545a51b616e35",
+      "bytes": 281
+    },
+    "results/repro/configs/exp/M1p7-eps5.yaml": {
+      "sha256": "ec55371449c9340cccf600c64de2be5282cd7ccaf2310f2deb50c85b6714e48f",
+      "bytes": 277
+    },
+    "results/repro/configs/exp/M2.yaml": {
+      "sha256": "c2dcc71483cfaf6e459b921bd2b96b814301f33a61865dd23a04575bdce04c97",
+      "bytes": 149
+    },
+    "results/repro/configs/exp/M3.yaml": {
+      "sha256": "395cb87cbdbec7967092460402caf6104bd6f6f3b04cc06775f010f19e7470a1",
+      "bytes": 204
+    }
+  },
+  "missing": []
+}

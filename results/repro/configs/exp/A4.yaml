@@ -1,0 +1,8 @@
+# Extension A4. Sensitivity to WHICH groups form the val/test split: change split.split_seed (two other choices), then B0 and B3.
+id: A4
+title: Test-group sensitivity (split_seed)
+group: extension
+kind: needs_data
+params: {}
+est_minutes: null
+note: needs Phase 3 and 4 re-run for two other split_seed values (separate work_dir), then B0 and B3 on each (no runner yet)

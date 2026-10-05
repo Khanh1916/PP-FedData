@@ -1,0 +1,3 @@
+# Used when `streamlit run demo/app.py` starts from the repository root.
+[browser]
+gatherUsageStats = false          # the project is about privacy: no telemetry from the demo

@@ -1,0 +1,34 @@
+{
+  "python": "3.13.5",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "machine": "AMD64",
+  "processor": "Intel64 Family 6 Model 186 Stepping 2, GenuineIntel",
+  "libraries": {
+    "numpy": "2.3.2",
+    "pandas": "2.3.1",
+    "pyarrow": "25.0.1",
+    "scikit-learn": "1.9.1",
+    "scipy": "1.18.1",
+    "imbalanced-learn": "0.14.2",
+    "torch": "2.14.1",
+    "flwr": "1.39.0",
+    "opacus": "1.6.0",
+    "ray": "2.59.0",
+    "optuna": "5.0.0",
+    "joblib": "1.6.0",
+    "matplotlib": "3.10.5",
+    "pyyaml": "6.0.3",
+    "streamlit": "1.65.0",
+    "pytest": "9.1.1",
+    "psutil": "7.2.2"
+  },
+  "git_commit": "5c3334cf8625be65cb78745be95dae4ce4206d13",
+  "git_dirty": true,
+  "config_hash": "8c86c0b143d4",
+  "label_mode": "6class",
+  "seeds": [
+    0,
+    1,
+    2
+  ]
+}

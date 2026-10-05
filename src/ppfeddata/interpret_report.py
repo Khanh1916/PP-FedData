@@ -156,7 +156,8 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                 + ", ".join(f"{clf.upper()} {v['better']} of {v['n']}, at most {v['best']:+.3f}" + (f" against {pm['smote'][clf]:+.3f} for SMOTE" if pm["smote"].get(clf) is not None else "") for clf, v in pm["per_clf"].items()) + "). "
                 "The CVAE is the premise of the spec (a federated, label-conditional generator whose data balance the classes of the IDS), not the outcome of a comparison between generators, and this study is its test.")
         tail = (" What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give "
-                f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. See 9.9." if tstr and b0 else " See 9.9.")
+                f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
+                "federated class weights or SMOTE, other generators. See 9.9." if tstr and b0 else " See 9.9.")
         out.append(head + tail)
     bits = [f"{f['id']} ({f['title']}): {f['status']}" for f in R["flags"]]
     out.append("**Red flags** (spec Phase 12): " + "; ".join(bits) + ". Details in 9.7.")
@@ -434,6 +435,11 @@ def _premise(R: dict[str, Any]) -> dict[str, Any]:
     smote = {clf: next((r[clf]["macro_f1"]["delta"] for r in R["R1"]["rows"] if r["label"] == "B1b" and clf in r), None) for clf in CLFS}
     return {"r1_better": nb, "r1_n": len(gens), "r2_worse": nw, "r2_better": sum(r["macro_f1"]["effect"] == "better" for r in r2), "r2_n": len(r2), "per_clf": per, "smote": smote,
             "unsupported": bool(gens and r2 and nb == 0 and nw == len(r2))}
+
+
+def premise(R: dict[str, Any]) -> dict[str, Any] | None:
+    """Public view of `_premise` for the README and the demo; None when R1 or R2 has no rows."""
+    return _premise(R) if R.get("R1", {}).get("rows") and R.get("R2", {}).get("rows") else None
 
 
 def _r1_digest(R: dict[str, Any]) -> str:

@@ -1,0 +1,21 @@
+cvae:
+  latent_dim: 16
+  hidden:
+  - 256
+  - 128
+  beta: 0.3709488999964028
+  lr: 0.00207614104200153
+  epochs: 30
+  beta_warmup_epochs: 10
+  batch_size: 256
+  class_balanced_sampler: false
+  patience: 5
+tuning:
+  label_mode: 6class
+  n_trials: 30
+  best_trial: 1
+  best_val_tstr_macro_f1: 0.4140678141865683
+  default_val_tstr_macro_f1: 0.3653456109919568
+  fitness: macro-F1 of RF(100 trees) trained on syn_per_class synthetic rows per class,
+    scored on REAL val
+  limitation: tuned on centralised, non-private data with one seed per trial

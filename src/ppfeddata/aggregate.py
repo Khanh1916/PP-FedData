@@ -611,17 +611,12 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
     else:
         L += ["## 9. Interpretation (Phase 12)", "",
               "Not generated: the answers R1-R6, the red-flag checks and the recommended configuration need the test-set predictions of the runs (`ppfeddata aggregate` without `--no-interpret`).", ""]
+    from ppfeddata import limitations
     L += ["## 10. Limitations that apply to every number above", "",
-          "- Packet-level data: epsilon is per record; packets of one TCP stream are strongly correlated, so protection of a whole attack session is much weaker (group privacy). Labels are not protected by DP-SGD.",
-          "- The hyper-parameters of the CVAE (and of the DP variant) were tuned on real, non-private validation data; tuning is not covered by epsilon.",
-          "- The test split comes from few capture groups per sub-class (leakage_report.md, SPEC_DEVIATIONS 3.3-3.5); A4 (other split seeds) has not been run unless listed above.",
-          "- Single-machine simulation: no network latency is measured; Ray on Windows was unstable (SPEC_DEVIATIONS 9.8).",
-          "- C2ST is close to 1 for every generator and the MIA is a weak attack; neither shows privacy by itself.",
-          "- Seed-to-seed spread includes the sensitivity of FL training to tiny perturbations (SPEC_DEVIATIONS 10.4): two runs that differ only by noise of 1e-5 differ by about 0.03 macro-F1 in TSTR.",
-          "- The intervals and verdicts of section 9 reflect the sampling of test rows (or streams) and three seeds only; the test split comes from a fixed set of capture groups (sensitivity A4 was not run) and a std over three seeds is a rough estimate.",
-          "- One dataset (MQTT-IoT-IDS DoS/DDoS capture); attack classes that are hard to tell apart packet by packet cannot gain separability from independent synthetic packets.", "",
-          "## 11. Sources", "",
-          "`results/runs.csv` (ledger), `results/summary.csv`, `results/interpretation.json` (section 9), `artifacts/<run>/preds/test.npz` (test predictions), `artifacts/<run>/rounds.jsonl` (round logs), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, "
+          "The list is written once (`limitations.py`) and also used by the README and the demo; numbers come from the split manifest, the feature schema, the config and `interpretation.json`.", ""]
+    L += limitations.render_md(limitations.limitations(cfg, interp, summ)) + [""]
+    L += ["## 11. Sources", "",
+          "`results/runs.csv` (ledger), `results/summary.csv`, `results/interpretation.json` (section 9), `artifacts/<run>/preds/test.npz` (test predictions), `artifacts/<run>/rounds.jsonl` (round logs), `results/manifests/split_manifest_<mode>.json` and `feature_schema.json` (section 10), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, "
           "and the phase reports in `results/reports/` (g3_baseline, b2_cvae, b3_fl, m1_dp, m1_dp_tuned, m2_m3_secagg, g4_trial).", ""]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L), encoding="utf-8")
@@ -630,7 +625,8 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
 
 def aggregate(cfg: dict[str, Any], out_dir: str | Path | None = None, dp_families_override: dict[str, str] | None = None,
               with_interpretation: bool = True, n_boot: int | None = None) -> dict[str, Any]:
-    """Write summary.csv, the six figures, interpretation.json and final_report.md. `out_dir` replaces `results/` (e.g. for a preview of a trial ledger).
+    """Write summary.csv, the six figures, interpretation.json and final_report.md, and refresh the generated blocks of README.md. `out_dir` replaces `results/` (e.g. for a preview of a trial ledger;
+    the README is then left alone).
     The interpretation (Phase 12) re-reads the test predictions of every run and runs a bootstrap, about half a minute; `with_interpretation=False` skips it."""
     root = Path(out_dir) if out_dir else Path("./results")
     df = annotate(load_ledger(cfg), cfg)
@@ -652,4 +648,12 @@ def aggregate(cfg: dict[str, Any], out_dir: str | Path | None = None, dp_familie
         except FileNotFoundError as e:                                  # no saved predictions / test split: the tables are still written
             logger.warning("interpretation skipped: %s", e)
     report = write_final_report(cfg, summ, df, figs, root / "reports" / "final_report.md", interp=interp)
-    return {"summary": str(root / "summary.csv"), "rows": int(len(summ)), "figures": [str(p) for p in figs.values()], "report": str(report), "interpretation": interp_path}
+    readme: list[str] = []
+    if out_dir is None and interp is not None:                         # only the real results: a preview or a test must not rewrite the repository's README
+        from ppfeddata import interpret, readme_gen
+        try:                                                           # from the numbers as written to interpretation.json (8 decimals), so the README equals what is generated from that file
+            readme = readme_gen.update_readme(readme_gen.README, cfg, interpret.to_jsonable(interp), summ)
+        except (OSError, ValueError) as e:
+            logger.warning("README blocks not updated: %s", e)
+    return {"summary": str(root / "summary.csv"), "rows": int(len(summ)), "figures": [str(p) for p in figs.values()], "report": str(report), "interpretation": interp_path,
+            "readme_blocks": readme}

@@ -86,7 +86,8 @@ def make_cfg(tmp_path, df):
     df.to_csv(csv, index=False)
     return {"label_mode": "6class", "seeds": [0, 1, 2], "quota": QUOTA, "dp": {"delta": 1e-5}, "fl": {"num_clients": 5, "rounds": 30, "local_epochs": 2, "dirichlet_alpha": 0.5},
             "thresholds": {"dup_rate_max": 0.01, "dcr_ratio_min": 0.5, "mia_auc_max": 0.55, "c2st_auc_max": 0.95, "overhead_ratio_max": 3.0},
-            "compute": {"artifacts_dir": str(tmp_path / "art"), "runs_csv": str(csv)}}
+            "compute": {"artifacts_dir": str(tmp_path / "art"), "runs_csv": str(csv)},
+            "paths": {"work_dir": str(tmp_path / "data"), "shared_manifest_dir": str(tmp_path / "manifests")}}
 
 
 # ----------------------------------------------------------------------------- names

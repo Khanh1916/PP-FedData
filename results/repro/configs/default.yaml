@@ -1,0 +1,129 @@
+seeds: [0, 1, 2]
+paths:
+  raw_root: "./raw/DoS-DDoS-MQTT-IoT_Dataset"   # set the real location in configs/local.yaml (git-ignored) or env PPFEDDATA_RAW_ROOT
+  normal_csv_dir: "NormalData/CSV_Extracted_Split"
+  work_dir: "./data"
+  shared_manifest_dir: "./results/manifests"   # git-tracked copies of split manifests (no data rows)
+label_mode: "6class"
+split:
+  test_groups_per_subclass: 1
+  val_groups_per_subclass: 1
+  fallback_block_split: {n_blocks: 10, gap_rows: 1000}
+  split_seed: 0                 # fixes WHICH groups/blocks go to val/test and which rows are sampled (A4 changes it)
+  min_groups_for_group_split: 3 # fewer groups in a sub-class -> block split
+  min_eval_rows: 1000           # val/test class below this -> stop and ask the user
+  max_peak_gb: 4.0              # Phase 3 gate: peak RSS
+  drop_cross_block_streams: true # block-split only: drop TCP streams that span several blocks (a gap cannot separate them)
+quota:
+  NORMAL:    [60000, 2000, 5000]
+  BCF:       [20000, 2000, 5000]
+  DELAYED:   [3000,  2000, 5000]
+  SYN:       [3000,  2000, 5000]
+  INVALID:   [1500,  2000, 5000]
+  WILL:      [1000,  2000, 5000]
+quota_11class:
+  NORMAL:        [60000, 2000, 5000]
+  BCF_DoS:       [10000, 1000, 2500]
+  BCF_DDoS:      [10000, 1000, 2500]
+  DELAYED_DoS:   [1500,  1000, 2500]
+  DELAYED_DDoS:  [1500,  1000, 2500]
+  SYN_DoS:       [1500,  1000, 2500]
+  SYN_DDoS:      [1500,  1000, 2500]
+  INVALID_DoS:   [750,   1000, 2500]
+  INVALID_DDoS:  [750,   1000, 2500]
+  WILL_DoS:      [500,   1000, 2500]
+  WILL_DDoS:     [500,   1000, 2500]
+train_sampling:
+  max_rows_per_stream: null
+preprocess:
+  multi_value: {message_type: first, numeric_multi: first}   # G1: Normal export keeps first occurrence only (spec default was first+count / sum)
+  categorical_top_k: 10
+  log1p_skew_threshold: 2.0
+  clip_sigma: 5
+  na_flag_range: [0.005, 0.995]   # add <col>_is_na when the train NA rate is strictly inside this range
+  ultra_sparse_fix: true          # NA rate >= upper bound (not all NA): stats on applicable rows + flag (spec rule would clip them all to +5 sigma)
+  numeric_scale: {time_delta_from_previous_displayed_frame: 1000}   # seconds -> ms before log1p: clipped rows 1.04% -> 0.08%; RF val macro-F1 unchanged
+cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
+       lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false,
+       patience: 5}              # early stopping on val loss (counted after the beta warm-up)
+fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
+dp: {epsilons: [1, 5, 10], delta: 1.0e-5, max_grad_norm: 1.0}
+secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 16.0, max_weight: 100000}
+# clipping_range: Flower's default 8 was tried first; the check found weights up to 11.4 (out.weight, seed 1), so by the spec rule it was raised to 16 (SPEC_DEVIATIONS 10.3).
+# max_weight: public upper bound on a client's row count (Flower default 1000 is below the client sizes 500..~70,000; with it the FedAvg weights are clipped, 10.2).
+# quantization_range 2**22 and modulus_range 2**32 stay at Flower's defaults
+generate: {target_per_class: 20000, residual_noise: true, snap_support: false, snap_max_unique: 256}
+# residual_noise: add Gaussian noise (train residual std per class) to the decoder means: val TSTR macro-F1 0.377 -> 0.415 on the seed-0 model
+# snap_support: snap low-cardinality numeric columns to values seen in train: val TSTR 0.377 -> 0.353, C2ST unchanged, so off
+eval:
+  rf: {n_estimators: 200}
+  smote: {k_neighbors: 5}
+  mlp: {hidden: [128, 64], max_iter: 100, early_stopping: true}
+  bootstrap: 1000
+tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100, epochs: 30}   # epochs fixed per trial (spec 7.3)
+thresholds:
+  c2st_auc_max: 0.95
+  dup_rate_max: 0.01
+  dcr_ratio_min: 0.5
+  mia_auc_max: 0.55
+  overhead_ratio_max: 3.0
+  seed_std_max: 0.02
+  leakage_gap_flag: 0.05
+  single_feature_f1_flag: 0.9   # C3: one raw column alone gives macro-F1 above this -> inspect its meaning
+  na_only_f1_flag: 0.5          # C2: RF on is_na flags only above this -> model learns the extraction pattern
+  dos_ddos_f1_flag: 0.6         # C5: DoS vs DDoS binary macro-F1 below this -> not separable (chance = 0.5)
+  eps_max_recommend: 5.0        # Phase 12 R6: a DP configuration is recommended only if its epsilon (max over clients, worst seed) is at most this
+  seed_std_redflag: 0.05        # Phase 12 red flag: std of macro-F1 over seeds above this -> more seeds or a stability check (seed_std_max is the softer 'note' level)
+  f1_near_one: 0.95             # Phase 12 red flag: macro-F1 of B0 at or above this -> suspect leakage / artefact (back to Phase 5)
+  eps_recompute_rtol: 0.10      # Phase 12 red flag: reported epsilon differs from the independent recomputation (own RDP code) by more than this fraction
+leakage:
+  rf_trees: 100
+  cv_folds: 5                   # C4
+  reports_dir: "./results/reports/leakage"
+  report_path: "./results/reports/leakage_report.md"
+  figures_dir: "./results/figures"
+compute:
+  artifacts_dir: "./artifacts"
+  runs_csv: "./results/runs.csv"   # Colab: a path on Drive
+  checkpoint_every_rounds: 5
+  budget_hours: null
+harmonize:                      # 🔶 heuristic thresholds for Phase 2 SUSPECT flags (user decides at G1)
+  decisions_path: "./configs/feature_decisions.yaml"
+  figures_dir: "./results/figures"
+  reports_dir: "./results/reports"
+  suspect_presence_diff: 0.95   # |presence(NORMAL) - presence(attack class)| above this -> SUSPECT
+  absent_presence_max: 0.001    # a column is "absent" in a source if presence <= this in every class
+  present_presence_min: 0.01    # ... and "present" in the other source if presence >= this in some class
+  time_ratio_suspect: 10.0      # max(p25,p50,p75,p99) ratio between sources above this -> SUSPECT
+  token_min_share: 0.001        # Normal-only category values are flagged if their share >= this ...
+  token_min_count: 100          # ... and their absolute count >= this
+  # --- Human decisions at G1 (approved 2026-10-03), applied on top of the data-derived flags ---
+  user_overrides:
+    protocol:
+      action: categorical
+      g1_decision: "Keep. Rows are filtered to row_filters.protocol in Phase 3 (all sources) (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack)."
+    time_since_first_frame_in_this_tcp_stream:
+      action: numeric
+      diagnostic: false
+      g1_decision: "Was a diagnostic column (decided at G1, final call at G2)."
+      g2_decision: "Core feature. Phase 5: adding it lifts val macro-F1 0.442 -> 0.499 (class-balanced RF), mostly on attack classes (BCF +0.10, DELAYED +0.11, NORMAL +0.013), so the gain is not a Normal-vs-Attack extraction artefact."
+    n_mqtt_msgs:
+      action: drop
+      g1_decision: "Drop. Multi-value cells exist only in Attack (Normal export used occurrence=f); policy for message_type etc. is first_only."
+  row_filters:
+    protocol: ["TCP", "MQTT"]
+  g1_log:
+    approved_on: "2026-10-03"
+    decisions:
+      - "will_message_length, will_topic_length: keep (genuine protocol semantics; Normal exports will_flag for all CONNECT packets and never sets it)."
+      - "protocol: keep and filter rows (Normal and Attack) to {TCP, MQTT} in Phase 3."
+      - "multi-value cells: first_only; drop n_mqtt_msgs."
+      - "time_since_first_frame_in_this_tcp_stream: diagnostic only, decide at G2."
+      - "requested_qos: keep (INVALID-class behaviour; Normal has almost no SUBSCRIBE)."
+  g2_log:
+    approved_on: "2026-10-03"
+    decisions:
+      - "time_since_first_frame_in_this_tcp_stream: promoted to the core feature set."
+      - "irtt, time_delta_from_previous_displayed_frame, will_*, requested_qos, keep_alive: keep (no leakage flag in Phase 5)."
+      - "label_mode: 6class (C5: DoS vs DDoS macro-F1 BCF 0.586, DELAYED 0.599 are near chance)."
+      - "leakage thresholds confirmed: single_feature_f1_flag 0.9, na_only_f1_flag 0.5, dos_ddos_f1_flag 0.6, leakage_gap_flag 0.05."
