@@ -345,6 +345,18 @@ def test_limitations_use_the_interpretation_and_the_ledger_when_given(tmp_path):
     assert "not met" not in {i["topic"]: i["text"] for i in lim.limitations(cfg, R)}["Weak fidelity and privacy diagnostics"]
 
 
+def test_packet_level_limitation_gives_the_size_of_the_correlated_units_when_measured(tmp_path):
+    cfg = fake_sources(tmp_path)
+    topic = "Packet-level data, record-level epsilon"
+    base = {i["topic"]: i["text"] for i in lim.limitations(cfg)}[topic]
+    assert "of one TCP stream and of one capture are correlated" in base and "strongly" not in base and "In the train split" not in base           # no measurement: no number
+    unit = {"classes": {"NORMAL": {"rows_per_stream_mean": 1.2, "rows_per_group_max": 1277}, "DELAYED": {"rows_per_stream_mean": 1.0, "rows_per_group_max": 188},
+                        "WILL": {"rows_per_stream_mean": 1.0, "rows_per_group_max": 63}}}
+    R = {"meta": {"rare_classes": ["DELAYED", "WILL"]}, "guide": {"privacy_unit": unit}}
+    t = {i["topic"]: i["text"] for i in lim.limitations(cfg, R)}[topic]
+    assert "a stream gives 1.0-1.2 rows on average" in t and "up to 63-188 rows of a rare class" in t and "the capture, not the stream (section 9.10)" in t      # NORMAL is not a rare class
+
+
 def test_render_md_has_one_bullet_per_item(tmp_path):
     items = lim.limitations(fake_sources(tmp_path))
     md = lim.render_md(items)
@@ -354,8 +366,11 @@ def test_render_md_has_one_bullet_per_item(tmp_path):
 # --------------------------------------------------------------------------------------------------
 # README blocks
 # --------------------------------------------------------------------------------------------------
-def readme_text():
-    return (ROOT / "README.md").read_text(encoding="utf-8")
+READMES = ["README.md", "README.vi.md"]
+
+
+def readme_text(name="README.md"):
+    return (ROOT / name).read_text(encoding="utf-8")
 
 
 def test_replace_block_keeps_the_rest_and_is_idempotent():
@@ -369,27 +384,29 @@ def test_replace_block_keeps_the_rest_and_is_idempotent():
         rg.replace_block(f"{e}\n{b}\n", "x", "z")                         # END before BEGIN
 
 
-def test_readme_carries_every_generated_block_in_order():
-    t = readme_text()
+@pytest.mark.parametrize("name", READMES)
+def test_readme_carries_every_generated_block_in_order(name):
+    t = readme_text(name)
     pos = [t.index(rg.markers(n)[0]) for n in rg.BLOCKS]
     ends = [t.index(rg.markers(n)[1]) for n in rg.BLOCKS]
     assert pos == sorted(pos) and all(b < e for b, e in zip(pos, ends))
 
 
-def test_readme_results_and_limitations_are_what_the_generators_write_from_the_committed_json(monkeypatch):
+@pytest.mark.parametrize("name", READMES)
+def test_readme_results_and_limitations_are_what_the_generators_write_from_the_committed_json(name, monkeypatch):
     p = ROOT / "results" / "interpretation.json"
     if not p.exists():
         pytest.skip("no results/interpretation.json")
     monkeypatch.chdir(ROOT)
     cfg, R = load_config(), json.loads(p.read_text(encoding="utf-8"))
-    t = readme_text()
+    t = readme_text(name)
 
-    def block(name):
-        b, e = rg.markers(name)
+    def block(key):
+        b, e = rg.markers(key)
         return t[t.index(b) + len(b):t.index(e)].strip("\n")
-    assert block("results") == rg.results_block(R, cfg).strip("\n"), "README results block is stale: run `ppfeddata aggregate`"
-    assert block("limitations") == rg.limitations_block(lim.limitations(cfg, R, None)).strip("\n"), "README limitations block is stale: run `ppfeddata aggregate`"
-    assert "**Why a CVAE at all?**" in block("results") and "Not tested" in block("results")
+    assert block("results") == rg.results_block(R, cfg).strip("\n"), f"{name} results block is stale: run `ppfeddata aggregate`"
+    assert block("limitations") == rg.limitations_block(lim.limitations(cfg, R, None)).strip("\n"), f"{name} limitations block is stale: run `ppfeddata aggregate`"
+    assert "**Why a CVAE at all?**" in block("results") and "Not tested" in block("results") and "**Which of M1, M2, M3 for which requirement?**" in block("results")
 
 
 def test_results_block_reports_the_numbers_of_the_json(tmp_path):
@@ -431,8 +448,9 @@ def test_update_readme_rewrites_the_blocks_and_only_them(tmp_path):
     assert new.startswith("# T\nintro\n") and new.endswith("\noutro\n") and "10 limitations" not in new and "limitations (the list of section 10" in new
 
 
-def test_every_command_of_the_readme_parses_with_the_real_cli():
-    cmds = re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", readme_text())
+@pytest.mark.parametrize("name", READMES)
+def test_every_command_of_the_readme_parses_with_the_real_cli(name):
+    cmds = re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", readme_text(name))
     assert len(cmds) >= 25
     parser = build_parser()
     for c in cmds:
@@ -441,16 +459,40 @@ def test_every_command_of_the_readme_parses_with_the_real_cli():
             parser.parse_args(argv)                                            # raises SystemExit on an unknown command or option
 
 
-def test_readme_links_point_to_files_that_exist():
-    for target in re.findall(r"\]\(([^)#\s]+)\)", readme_text()):
+@pytest.mark.parametrize("name", READMES)
+def test_readme_links_point_to_files_that_exist(name):
+    for target in re.findall(r"\]\(([^)#\s]+)\)", readme_text(name)):
         if not target.startswith("http"):
             assert (ROOT / target).exists(), target
 
 
-def test_readme_has_a_full_command_for_every_cli_command():
-    named = {c.split()[0] for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", readme_text())}
+@pytest.mark.parametrize("name", READMES)
+def test_readme_has_a_full_command_for_every_cli_command(name):
+    named = {c.split()[0] for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", readme_text(name))}
     every = set(build_parser()._subparsers._group_actions[0].choices)
     assert every <= named, sorted(every - named)
+
+
+def test_the_two_readmes_say_the_same_thing_in_two_languages():
+    en, vi = readme_text("README.md"), readme_text("README.vi.md")
+    assert "[Tiếng Việt](README.vi.md)" in en.split("\n\n")[1] and "[English](README.md)" in vi.split("\n\n")[1]                 # each points to the other at the top
+    cmd = lambda s: [re.sub(r"<[^>]*>", "<x>", c) for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", s)]               # noqa: E731  (the words inside <...> are translated)
+    assert cmd(en) == cmd(vi), "the commands (and their order) differ between the two READMEs"
+    assert len(re.findall(r"^## ", en, flags=re.M)) == len(re.findall(r"^## ", vi, flags=re.M))
+    assert re.findall(r"BEGIN GENERATED: (\w+)", en) == re.findall(r"BEGIN GENERATED: (\w+)", vi) == list(rg.BLOCKS)
+    paths = lambda s: re.findall(r"`((?:configs|results|src|demo)/[^`]+)`", s.split("<!-- BEGIN GENERATED: results -->")[0])   # noqa: E731
+    assert paths(en) and paths(en) == paths(vi), "the files the two READMEs name before the results block differ"
+
+
+def test_update_readmes_writes_every_readme_that_exists(tmp_path):
+    cfg = {**fake_sources(tmp_path), "compute": {"artifacts_dir": str(tmp_path / "art"), "runs_csv": str(tmp_path / "res" / "runs.csv")}}
+    text = "# T\n" + "".join(f"\n{rg.markers(n)[0]}\nold {n}\n{rg.markers(n)[1]}\n" for n in rg.BLOCKS)
+    a, b, missing = tmp_path / "README.md", tmp_path / "README.vi.md", tmp_path / "README.xx.md"
+    a.write_text(text, encoding="utf-8")
+    b.write_text(text, encoding="utf-8")
+    done = rg.update_readmes(cfg, None, None, paths=(a, b, missing))
+    assert done == [f"{n}: {k}" for n in ("README.md", "README.vi.md") for k in ("libraries", "times", "limitations")]
+    assert a.read_text(encoding="utf-8") == b.read_text(encoding="utf-8") and not missing.exists()
 
 
 # --------------------------------------------------------------------------------------------------
@@ -565,6 +607,21 @@ def test_demo_sidebar_states_the_main_conclusion_from_the_json(monkeypatch):
     pm = premise(R)
     side = " ".join(m.value for m in at.sidebar.markdown)
     assert ("không cải thiện IDS" in side) == bool(pm and pm["unsupported"])
+
+
+def test_demo_page_3_shows_which_configuration_for_which_requirement(monkeypatch):
+    rep = ROOT / "results" / "reports" / "final_report.md"
+    if not rep.exists() or "### 9.10 " not in rep.read_text(encoding="utf-8"):
+        pytest.skip("the committed report has no section 9.10")
+    monkeypatch.chdir(ROOT)
+    at = app()
+    at.run()
+    at.sidebar.radio(key="page").set_value(PAGES[2]).run()
+    assert not at.exception and not at.error
+    assert any("Cấu hình nào cho yêu cầu nào" in s.value for s in at.subheader)
+    text = " ".join(m.value for m in at.markdown)
+    assert "Requirement to configuration" in text and "What in the IoT / MQTT data changes the choice" in text
+    assert not any(e.label.startswith("9.10") for e in at.expander)                                       # shown once, under its own subheader
 
 
 @pytest.mark.skipif(not HAVE_REAL, reason="needs the trained models and data/processed")

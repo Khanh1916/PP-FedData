@@ -82,6 +82,21 @@ def ran_a4(summ: pd.DataFrame | None) -> bool:
     return bool(summ is not None and len(summ) and summ["config"].astype(str).str.startswith("A4").any())
 
 
+def a4_text(interp: dict[str, Any] | None, summ: pd.DataFrame | None) -> str:
+    """What is known about the dependence on the choice of test groups: from the sensitivity worlds of `ppfeddata sensitivity`, else from the ledger, else nothing."""
+    worlds = [w for w in ((interp or {}).get("sensitivity") or {}).get("worlds", []) if w["tag"] == "main" or w["tag"].startswith("A4")]
+    if len(worlds) > 1:
+        from ppfeddata.sensitivity import verdicts
+        v = verdicts({"worlds": worlds})
+        same = sum(x["same_everywhere"] for x in v)
+        shared = [w["test_groups_shared_with_main"] for w in worlds[1:] if w.get("test_groups_shared_with_main") is not None]
+        return (f"Sensitivity A4 was run with {len(worlds) - 1} other choices of the validation and test groups (test groups shared with the main study: {', '.join(map(str, shared))}): "
+                f"{same} of {len(v)} comparisons keep the same verdict in every world (section 8c). The groups still come from few captures, and the sensitivity covers only these choices.")
+    if ran_a4(summ):
+        return "Sensitivity A4 (other split seeds) was run: see the ledger."
+    return "Sensitivity A4 (other choices of test groups) was not run, so how far the conclusions depend on these groups is untested."
+
+
 def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ: pd.DataFrame | None = None) -> list[dict[str, str]]:
     """The list, in the order of the spec's Definition of Done; each item is {id, topic, text, source}."""
     man, sch = load_manifest(cfg), load_schema(cfg)
@@ -93,9 +108,18 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     def add(topic: str, text: str, source: str) -> None:
         out.append({"id": f"L{len(out) + 1:02d}", "topic": topic, "text": text, "source": source})
 
+    unit = ((interp or {}).get("guide") or {}).get("privacy_unit") or {}
+    uc = unit.get("classes") or {}
+    rare = [c for c in ((interp or {}).get("meta", {}).get("rare_classes") or []) if c in uc]
+    sizes = ""
+    if uc and rare:
+        gm = [uc[c]["rows_per_group_max"] for c in rare]
+        sm = [v["rows_per_stream_mean"] for v in uc.values()]
+        sizes = (f" In the train split a stream gives {min(sm):.1f}-{max(sm):.1f} rows on average, but one capture group gives up to {min(gm)}-{max(gm)} rows of a rare class, "
+                 "so the correlated unit of this data is the capture, not the stream (section 9.10).")
     add("Packet-level data, record-level epsilon",
-        "The data are packet-level and epsilon is per record (one packet). Packets of one TCP stream are strongly correlated, so what DP protects about a whole attack session "
-        "is much weaker than epsilon suggests (group privacy).", "spec Definition of Done; section 9.8")
+        "The data are packet-level and epsilon is per record (one packet). Packets of one TCP stream and of one capture are correlated, so what DP protects about a whole attack session "
+        "or capture is much weaker than epsilon suggests (group privacy)." + sizes, "spec Definition of Done; sections 9.8, 9.10")
     add("Labels are not protected",
         "As in the spec, the claim of epsilon is scoped to the features of a record: the class label is treated as known side information. Epsilon is not claimed to hide labels, class "
         "counts or which classes a client holds.", "spec Definition of Done")
@@ -114,8 +138,7 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         "data once. A real federation would have to compute them securely or fix them beforehand. They are not covered by epsilon, and neither are the per-class scales of the "
         "residual-noise variant (the rows without the `-plain` suffix).", "spec Definition of Done; SPEC_DEVIATIONS 7.1, 8.8")
     groups = f"{meta['n_groups']} capture groups and {meta['n_streams']:,} TCP streams" if meta.get("n_groups") and meta.get("n_streams") else "few capture groups"
-    a4 = ("Sensitivity A4 (other split seeds) was run: see the ledger." if ran_a4(summ)
-          else "Sensitivity A4 (other choices of test groups) was not run, so how far the conclusions depend on these groups is untested.")
+    a4 = a4_text(interp, summ)
     add("Test split from few capture groups",
         f"The real test split comes from {groups}. {a4}", "leakage_report.md; SPEC_DEVIATIONS 3.3-3.5")
     thr = ", ".join(f"{k} = {th[k]:g}" for k in ("mia_auc_max", "eps_max_recommend", "overhead_ratio_max", "seed_std_max", "seed_std_redflag") if k in th)
@@ -172,8 +195,11 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         "The intervals and verdicts of section 9 reflect the sampling of test rows (or of whole streams) and three training seeds only. They do not cover the choice of capture groups, "
         "the hyper-parameters or the data sampling.", "section 9")
     add("What was not compared",
-        "The CVAE is the premise of the spec, not the result of a comparison of generators. Not tested: federated training of the classifier itself, federated class weights or SMOTE, other "
-        "generators, other ways to use the synthetic data (see section 9.9).", "section 9.9; SPEC_DEVIATIONS 12.10")
+        ("The CVAE is the premise of the spec, not the result of a comparison of generators. Training the classifier itself by FL was tested after the main study (section 9.9). Not tested: federated SMOTE, a DP or "
+         "SecAgg version of the direct classifier, other generators, other ways to use the synthetic data."
+         if (interp or {}).get("fed_classifier") else
+         "The CVAE is the premise of the spec, not the result of a comparison of generators. Not tested: federated training of the classifier itself, federated class weights or SMOTE, other "
+         "generators, other ways to use the synthetic data (see section 9.9)."), "section 9.9; SPEC_DEVIATIONS 12.10")
     return out
 
 

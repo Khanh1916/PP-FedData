@@ -120,12 +120,18 @@ def test_limitations_must_be_in_the_list_the_report_and_the_readme(tmp_path):
 
 
 def test_readme_check_lists_what_is_missing():
-    full = "## Cài đặt\n## Dữ liệu\n## Chạy từng Phase\n## Tái lập\n## Cấu trúc thư mục\n## Thời gian chạy tham khảo\n## Hạn chế\nrequirements-lock.txt\n"
-    r = ac.check_readme(full, {"a", "b"}, {"a", "b"})
-    assert r.status == "PARTIAL" and "clean machine" in r.evidence                                  # structure is complete; 'enough' needs a human
-    r = ac.check_readme(full, {"a"}, {"a", "b"})
-    assert r.status == "FAIL" and "command b" in r.evidence
-    assert ac.check_readme("# x\n", set(), set()).status == "FAIL" and ac.check_readme(None, set(), set()).status == "FAIL"
+    def readme(heads, cmds):
+        return "\n".join(heads) + "\nrequirements-lock.txt\n" + "".join(f"`python -m ppfeddata.cli {c} --x`\n" for c in cmds)
+    en = readme(ac.README_NEED["README.md"][:-1], ["a", "b"])
+    vi = readme(ac.README_NEED["README.vi.md"][:-1], ["a", "b"])
+    r = ac.check_readme({"README.md": en, "README.vi.md": vi}, {"a", "b"})
+    assert r.status == "PARTIAL" and "clean machine" in r.evidence and "English and Vietnamese" in r.evidence                 # structure is complete; 'enough' needs a human
+    r = ac.check_readme({"README.md": en, "README.vi.md": readme(ac.README_NEED["README.vi.md"][:-1], ["a"])}, {"a", "b"})
+    assert r.status == "FAIL" and "README.vi.md: command b" in r.evidence and "README.md:" not in r.evidence                # the Vietnamese one lacks a command
+    r = ac.check_readme({"README.md": en, "README.vi.md": vi.replace("## Hạn chế", "")}, {"a", "b"})
+    assert r.status == "FAIL" and "README.vi.md: ## Hạn chế" in r.evidence
+    assert ac.check_readme({"README.md": en, "README.vi.md": None}, {"a"}).status == "FAIL"                                  # one language missing is a FAIL
+    assert ac.check_readme({"README.md": "# x\n", "README.vi.md": "# x\n"}, set()).status == "FAIL" and ac.check_readme({}, set()).status == "FAIL"
 
 
 def test_render_counts_the_statuses_and_keeps_the_table_well_formed():

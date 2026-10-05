@@ -127,6 +127,14 @@ def build_parser() -> argparse.ArgumentParser:
     p_ac = sub.add_parser("accept", help="Check the Definition of Done of the spec against the files of the repository -> results/reports/dod_checklist.md (exit 1 if a row FAILS)")
     p_ac.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     p_ac.add_argument("--no-regenerate", action="store_true", help="do not re-run `aggregate` into a scratch folder to compare the final report with what the code produces (about 40 s)")
+    p_fc = sub.add_parser("fed-baseline", help="Train the IDS classifier itself by FedAvg on the same non-IID clients as B3 (and the pooled controls) -> results/fed_classifier.json; run `aggregate` after it")
+    p_fc.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_fc.add_argument("--seeds", nargs="+", type=int, default=None, help="default: config seeds")
+    p_fc.add_argument("--only", nargs="+", default=None, help="subset of FedMLP FedMLPcw CentMLP CentMLPcw")
+    p_se = sub.add_parser("sensitivity", help="Extensions A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
+    p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default A4-s1 A4-s2 A5-cap20")
+    p_se.add_argument("--report-only", action="store_true", help="do not run anything, only rewrite the report from the worlds that exist")
+    p_se.add_argument("--seeds", nargs="+", type=int, default=None)
     p_pk = sub.add_parser("package", help="Reproducibility bundle: results/repro/ (pip freeze, configs, environment, checksums), the feature schema next to the split manifests, requirements-lock.txt")
     p_pk.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     p_pk.add_argument("--out-dir", default=None, help="default results/repro")
@@ -361,6 +369,26 @@ def main(argv: list[str] | None = None) -> None:
         if any(i.status == "FAIL" for i in items):
             raise SystemExit(1)
 
+    def cmd_fed_baseline(a):
+        from ppfeddata.fed_classifier import NAMES, run_all
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        r = run_all(c, seeds=a.seeds, names=tuple(a.only) if a.only else NAMES)
+        for n, v in r["classifiers"].items():
+            logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"])
+
+    def cmd_sensitivity(a):
+        from ppfeddata.sensitivity import SCENARIOS, report, run_world
+        c = load_config(a.config)
+        tags = a.tags or list(SCENARIOS)
+        if not a.report_only:
+            for t in tags:
+                logger.info("sensitivity world %s", t)
+                run_world(c, t, a.seeds)
+        r = report(c, tags)
+        logger.info("sensitivity: %d worlds in the report", len(r["worlds"]))
+
     def cmd_package(a):
         from ppfeddata.package import package
         c = load_config(a.config)
@@ -401,6 +429,8 @@ def main(argv: list[str] | None = None) -> None:
         "benchmark": cmd_benchmark,
         "demo": cmd_demo,
         "package": cmd_package,
+        "fed-baseline": cmd_fed_baseline,
+        "sensitivity": cmd_sensitivity,
         "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)

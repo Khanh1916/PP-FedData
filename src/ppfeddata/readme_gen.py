@@ -17,6 +17,8 @@ from ppfeddata import limitations as lim
 from ppfeddata.interpret import PRIMARY
 
 README = Path(__file__).resolve().parents[2] / "README.md"
+README_VI = Path(__file__).resolve().parents[2] / "README.vi.md"
+READMES = (README, README_VI)                                          # the same generated blocks (English, one set of sentence templates) in both languages
 BLOCKS = ("results", "libraries", "times", "limitations")
 
 
@@ -120,3 +122,8 @@ def update_readme(path: str | Path, cfg: dict[str, Any], R: dict[str, Any] | Non
             done.append(name)
     p.write_text(text, encoding="utf-8")
     return done
+
+
+def update_readmes(cfg: dict[str, Any], R: dict[str, Any] | None, summ: pd.DataFrame | None = None, paths: tuple[Path, ...] = READMES) -> list[str]:
+    """`update_readme` for every README that exists (English and Vietnamese); returns `"<file>: <block>"` for each block written."""
+    return [f"{p.name}: {name}" for p in paths if Path(p).exists() for name in update_readme(p, cfg, R, summ)]

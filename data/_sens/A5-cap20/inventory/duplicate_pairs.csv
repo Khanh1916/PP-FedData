@@ -1,0 +1,5 @@
+first,second,source,rows,both,equal,only_first,only_second
+frame_length_on_wire_1,frame_length_on_wire_2,attack,14044724,14044724,14044724,0,0
+clean_session_flag_1,clean_session_flag_2,attack,14044724,2028233,2028233,0,0
+frame_length_on_wire_1,frame_length_on_wire_2,normal,45580102,0,0,0,45580102
+clean_session_flag_1,clean_session_flag_2,normal,45580102,0,0,0,3427904

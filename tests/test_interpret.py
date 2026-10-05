@@ -562,3 +562,95 @@ def test_aggregate_without_interpretation_or_without_predictions_keeps_the_place
     cfg["paths"]["work_dir"] = str(tmp_path / "nowhere")                                  # no test split on disk
     out = ag.aggregate(cfg, out_dir=tmp_path / "b")
     assert out["interpretation"] is None and "not applied yet" in (tmp_path / "b" / "reports" / "final_report.md").read_text(encoding="utf-8")
+
+
+# --------------------------------------------------------------------------------------------------
+# Section 9.10: which configuration for which requirement
+# --------------------------------------------------------------------------------------------------
+def test_guide_recall_by_class_rows_and_dp_change_come_from_the_summary(world):
+    G = world.R["guide"]["by_class"]
+    assert [r["label"] for r in G["rows"]] == ["B3-plain", "B3", "M1-eps1", "M1-eps5", "M1-eps10", "M2", "M3-eps5"] and G["majority"] == "NORMAL" and G["rare"] == ["DELAYED", "SYN", "INVALID", "WILL"]
+    by = {r["label"]: r for r in G["rows"]}
+    assert by["B3-plain"]["decoder"] == "plain" and by["M1-eps5"]["decoder"] == "plain" and by["M2"]["decoder"] == "residual noise" and by["M1-eps5"]["kind"] == "dp" and by["M3-eps5"]["kind"] == "dpsa"
+    s = world.summ.set_index("config")
+    for lab, name in (("B3", "B3-TSTR-rf"), ("M1-eps5", "M1d-t21-eps5-plain-TSTR-rf"), ("M2", "M2-TSTR-mlp")):
+        clf = name.rsplit("-", 1)[1]
+        for c in CLASSES:
+            assert by[lab][clf]["recall"][c] == pytest.approx(s.loc[name, f"recall_{c}_mean"])
+        assert by[lab][clf]["rare_mean"] == pytest.approx(np.mean([s.loc[name, f"recall_{c}_mean"] for c in G["rare"]])) and by[lab][clf]["macro_f1"] == pytest.approx(s.loc[name, "macro_f1_mean"])
+    assert set(G["real_only"]) == {"rf", "mlp"} and G["real_only"]["rf"]["macro_f1"] == pytest.approx(s.loc["B0-rf", "macro_f1_mean"])
+    assert len(G["dp_change"]) == 8 and {c["label"] for c in G["dp_change"]} == {"M1-eps1", "M1-eps5", "M1-eps10", "M3-eps5"}      # 4 DP rows x 2 classifiers, never B3 or M2
+    for c in G["dp_change"]:
+        base = by["B3-plain"][c["classifier"]]["rare_mean"]
+        assert c["rare_mean_inf"] == pytest.approx(base) and c["rare_relative"] == pytest.approx(c["rare_mean"] / base - 1)
+
+
+def test_guide_scenarios_name_the_configurations_that_answer_each_requirement(world):
+    S = {s["id"]: s for s in world.R["guide"]["scenarios"]}
+    flat = world.R["R4"]["curves"]["TSTR-rf"]["flat"]
+    assert S["S1"]["choose"] == ["M2"] and S["S3"]["choose"] == ["M3-eps5"] and S["S4"]["choose"] == ["M2"]               # S4: protected and inside the overhead filter
+    assert S["S2"]["eps_curve_flat"] == flat and S["S2"]["choose"] == (["M1-eps1"] if flat else ["M1-eps1", "M1-eps5", "M1-eps10"])
+    cand = world.R["R6"]["candidates"]
+    r4 = {"curves": {"TSTR-rf": {"flat": True}}}
+    assert it._scenarios(r4, {"candidates": [c for c in cand if c["label"] != "M2"]})[0]["choose"] == []                    # no SecAgg run: no configuration for S1
+    cheap = [dict(c, ok_overhead=True) for c in cand]
+    assert it._scenarios(r4, {"candidates": cheap})[3]["choose"] == ["M2"]                                                   # S4 names SecAgg alone, DP rows are never listed there
+    assert it._scenarios({"curves": {}}, {"candidates": cand})[1]["choose"] == ["M1-eps1", "M1-eps5", "M1-eps10"]            # without a curve there is no basis to pick one epsilon
+
+
+def test_guide_privacy_unit_and_client_rarity_from_the_files(tmp_path):
+    classes = ["NORMAL", "BCF", "DELAYED", "SYN", "INVALID", "WILL"]
+    cfg = {"label_mode": "6class", "fl": {"dirichlet_alpha": 0.5}, "paths": {"work_dir": str(tmp_path)}}
+    ctx = SimpleNamespace(cfg=cfg, classes=classes, rare={c: classes.index(c) for c in classes[2:]}, meta={"seeds": [0, 1]})
+    assert it._privacy_unit(ctx) is None and it._client_rarity(ctx) is None                                                    # no files: nothing is invented
+    y = np.array([0] * 6 + [5] * 40)                                                                                           # WILL: groups of 30 and 10 rows, streams of 5 rows
+    g = np.array(["n0"] * 6 + ["w0"] * 30 + ["w1"] * 10)
+    s = np.array([f"n{i}" for i in range(6)] + [f"w0:{i // 5}" for i in range(30)] + [f"w1:{i // 5}" for i in range(10)])
+    pdir = tmp_path / "processed" / "6class"
+    pdir.mkdir(parents=True)
+    np.savez(pdir / "train.npz", y=y, group_id=g, stream_id=s)
+    u = it._privacy_unit(ctx)
+    w = u["classes"]["WILL"]
+    assert u["n_groups"] == 3 and set(u["classes"]) == {"NORMAL", "WILL"} and w["rows"] == 40 and w["groups"] == 2
+    assert w["rows_per_group_max"] == 30 and w["rows_per_group_median"] == 20 and w["rows_per_stream_mean"] == 5 and w["rows_per_stream_max"] == 5
+    assert u["classes"]["NORMAL"]["rows_per_stream_mean"] == 1
+    parts = tmp_path / "partitions"
+    parts.mkdir()
+    table = [[100, 50, 5, 0, 20, 30, 205], [90, 40, 600, 12, 11, 2, 755]]                                                      # cells of the rare classes: 5, 0, 20, 30 / 600, 12, 11, 2
+    (parts / "alpha0.5_seed0.json").write_text(json.dumps({"classes": classes, "table": table}), encoding="utf-8")
+    cr = it._client_rarity(ctx)
+    assert list(cr["seeds"]) == ["0"] and cr["alpha"] == 0.5 and cr["cutoff"] == it.RARE_CELL                                  # seed 1 has no partition file
+    assert cr["seeds"]["0"] == {"clients": 2, "cells": 8, "thin": 3, "empty": 1, "min_by_class": {"DELAYED": 5, "SYN": 0, "INVALID": 11, "WILL": 2}}
+
+
+def test_guide_section_is_generated_from_the_numbers(world):
+    R = json.loads(json.dumps(it.to_jsonable(world.R)))
+    text = "\n".join(render(R, world.cfg))
+    sec = text.split("### 9.10")[1].split("## 10.")[0]
+    assert "### 9.10 Which configuration for which requirement (M1, M2, M3)" in text and tables_are_well_formed(text)
+    o = {x["pair"]: x for x in R["R5"]["overhead"]}
+    assert f"{o['M2 / B3']['time_ratio']:.2f}x time per round and {o['M2 / B3']['bytes_per_param_ratio']:.2f}x bytes per parameter against B3" in sec
+    assert f"plus {o['M3-eps5 / M1-eps5']['time_ratio']:.2f}x time and {o['M3-eps5 / M1-eps5']['bytes_per_param_ratio']:.2f}x bytes per parameter against M1-eps5" in sec
+    for lab in ("B3", "B3-plain", "M2", "M1-eps1", "M1-eps5", "M1-eps10", "M3-eps5"):
+        assert re.search(rf"^\| {re.escape(lab)} \|", sec, flags=re.M), lab
+    ans = text.split("### 9.1 R1")[0]
+    assert "**Which of M1, M2, M3 for which requirement?**" in ans and "**M2** if only the aggregation server must not see the updates" in ans and "not a measured privacy benefit" in ans
+    assert "none of M1, M2, M3: class weights (B1a) or SMOTE (B1b)" in sec and "M2 is the only protected configuration within it" in sec and "A2 was not run" in sec
+    assert "a number of clients other than 5" in sec and "Measured on this study's data; the causes are not tested" in sec
+    # the text follows the data, it is not fixed
+    R2 = json.loads(json.dumps(R))
+    R2["guide"]["by_class"]["dp_change"][0]["rare_mean_inf"] = 0.9876
+    R2["guide"]["scenarios"][3]["choose"] = []
+    R2["guide"]["scenarios"][1]["eps_curve_flat"] = False
+    R2["guide"]["client_rarity"] = {"alpha": 0.5, "cutoff": 10, "seeds": {"7": {"clients": 5, "cells": 20, "thin": 13, "empty": 6, "min_by_class": {}}}}
+    R2["guide"]["privacy_unit"] = {"classes": {"WILL": {"rows": 40, "groups": 2, "rows_per_group_median": 20, "rows_per_group_max": 77, "rows_per_stream_mean": 5.0, "rows_per_stream_max": 5}}}
+    full2 = "\n".join(render(R2, world.cfg))
+    t2 = full2.split("### 9.10")[1]
+    assert "against 0.99" in t2 and "none of the protected configurations is within it" in t2 and "so the smallest epsilon costs no more utility here" not in t2
+    assert "seed 7: 13 of 20, 6 with none" in t2 and "up to 77 rows" in t2 and "(per class: WILL 77)" in t2
+    assert "the three epsilons are indistinguishable in utility" not in full2.split("### 9.1 R1")[0]
+    # an old interpretation.json (no guide) degrades to a note, with no bullet in 9.0
+    R3 = json.loads(json.dumps(R))
+    del R3["guide"]
+    t3 = "\n".join(render(R3, world.cfg))
+    assert "### 9.10" in t3 and "_(not available" in t3.split("### 9.10")[1] and "**Which of M1, M2, M3" not in t3

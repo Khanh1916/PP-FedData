@@ -1,6 +1,6 @@
 {
   "label_mode": "6class",
-  "git_commit": "5c3334cf8625be65cb78745be95dae4ce4206d13",
+  "git_commit": "f24d9c0f9e92de13f4f4592ca886dd74e6687183",
   "files": {
     "results/runs.csv": {
       "sha256": "0339e5ceebb348f0df428d806786ff4ef0fe24a37cf1e7e69e2ae9c4a94a00e7",
@@ -11,12 +11,12 @@
       "bytes": 128389
     },
     "results/interpretation.json": {
-      "sha256": "1ca4c90193cd7a00db57a392627f066e04f742e24a0a819d901a3050fc647c08",
-      "bytes": 161127
+      "sha256": "1f1a593d28c65f56787d54c68b20296cca9b363d54fec81eedffc1e1e6b1e2cd",
+      "bytes": 170873
     },
     "results/reports/final_report.md": {
-      "sha256": "27336351b950afaa317f0d47c46adbd5c93d69b7348b63b4365a4ecf5dd430bc",
-      "bytes": 52259
+      "sha256": "08b563b5375c1d82b12118d7ad63cbb4bdaa170a4d12b59634932d906b522a57",
+      "bytes": 60313
     },
     "results/manifests/split_manifest_6class.json": {
       "sha256": "839a130273df0a2cb94a0ae760786be10ac77efa22153b2fdfea1b7604857a4d",
@@ -35,7 +35,7 @@
       "bytes": 3485
     },
     "results/repro/environment.json": {
-      "sha256": "15fac1132613599a65ac367afdfaa8553e1cf0324e55852d315da5192960814d",
+      "sha256": "a1c6bbacf0ff2deb8e829ad2a5b3bd4097a16be611b708f6cd7eadbed36177cd",
       "bytes": 806
     },
     "results/repro/configs/best_cvae.yaml": {

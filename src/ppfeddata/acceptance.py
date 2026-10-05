@@ -195,14 +195,27 @@ def check_limitations(items: list[dict[str, str]], report: str | None, readme: s
     return Item("D9", crit, "PASS" if ok else "FAIL", ev + (f"; missing: {miss}" if miss else ""))
 
 
-def check_readme(text: str | None, commands: set[str], cli_commands: set[str]) -> Item:
+README_NEED = {"README.md": ("## Installation", "## Data", "## Running each phase", "## Reproducing the results", "## Repository layout", "## Reference run times", "## Limitations", "requirements-lock.txt"),
+               "README.vi.md": ("## Cài đặt", "## Dữ liệu", "## Chạy từng Phase", "## Tái lập", "## Cấu trúc thư mục", "## Thời gian chạy tham khảo", "## Hạn chế", "requirements-lock.txt")}
+
+
+def readme_commands(text: str | None) -> set[str]:
+    """The CLI commands a README gives in full (`python -m ppfeddata.cli <command> ...`)."""
+    return {c.split()[0] for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", text or "")}
+
+
+def check_readme(texts: dict[str, str | None], cli_commands: set[str]) -> Item:
+    """`texts` maps each README (English and Vietnamese) to its text; each must have every section and a full command for every CLI command."""
     crit = "The README is enough for someone else to re-run everything from scratch"
-    if text is None:
-        return Item("D10", crit, "FAIL", "README.md not found")
-    need = ("## Cài đặt", "## Dữ liệu", "## Chạy từng Phase", "## Tái lập", "## Cấu trúc thư mục", "## Thời gian chạy tham khảo", "## Hạn chế", "requirements-lock.txt")
-    miss = [n for n in need if n not in text] + [f"command {c}" for c in sorted(cli_commands - commands)]
+    miss: list[str] = []
+    for name, need in README_NEED.items():
+        text = texts.get(name)
+        if text is None:
+            miss.append(f"{name} not found")
+            continue
+        miss += [f"{name}: {n}" for n in need if n not in text] + [f"{name}: command {c}" for c in sorted(cli_commands - readme_commands(text))]
     return Item("D10", crit, "FAIL" if miss else "PARTIAL",
-                (f"missing: {miss}" if miss else f"has install, data, every phase command ({len(cli_commands)} CLI commands), reproduction steps, layout, run times and limitations; "
+                (f"missing: {miss}" if miss else f"both READMEs (English and Vietnamese) have install, data, every phase command ({len(cli_commands)} CLI commands), reproduction steps, layout, run times and limitations; "
                  "not tried on a clean machine (that is the only real test of 'enough')"))
 
 
@@ -254,16 +267,16 @@ def run_all(cfg: dict[str, Any], regenerate: bool = True, root: Path = ROOT) -> 
             ag.aggregate(cfg, out_dir=td)
             regenerated = (Path(td) / "reports" / "final_report.md").read_text(encoding="utf-8")
     items = lim.limitations(cfg, R, pd.read_csv(results / "summary.csv") if (results / "summary.csv").exists() else None)
-    readme = _read(root / "README.md")
+    readmes = {n: _read(root / n) for n in README_NEED}
+    readme = readmes["README.md"]
     from ppfeddata.cli import build_parser
     cli = set(build_parser()._subparsers._group_actions[0].choices)
-    named = {c.split()[0] for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", readme or "")}
     leak = Path(cfg.get("leakage", {}).get("report_path", results / "reports" / "leakage_report.md"))
 
     return [check_phase_tests(root / "tests"), check_counts(man, quota), check_group_split(man, gids, sha_ok, tun), check_leakage_report(_read(leak), cfg),
             check_seeds(done, seeds), check_epsilon(dp, f5), check_secagg(secagg), check_positive_control(R),
             check_report(report_text, regenerated, (R or {}).get("meta", {}).get("integrity_max_abs_diff_vs_ledger")),
-            check_compute_budget(_read(results / "reports" / "compute_budget.md")), check_limitations(items, report_text, readme, lim.SPEC_LIST), check_readme(readme, named, cli)]
+            check_compute_budget(_read(results / "reports" / "compute_budget.md")), check_limitations(items, report_text, readme, lim.SPEC_LIST), check_readme(readmes, cli)]
 
 
 def render(items: list[Item], cfg: dict[str, Any]) -> str:

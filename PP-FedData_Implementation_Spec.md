@@ -1,6 +1,6 @@
-# PP-FedData — Đặc tả triển khai cho coding agent (v1.2)
+# PP-FedData — Đặc tả triển khai cho coding agent (v1.3)
 
-> Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt. v1.2 gộp các thay đổi rút ra khi thực hiện Phase 0-5 (bằng chứng chi tiết ở `SPEC_DEVIATIONS.md`); các mục 🔶 và quyết định G1, G2 đã được người dùng chốt ghi rõ trong từng Phase.
+> Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt. v1.2 gộp các thay đổi rút ra khi thực hiện Phase 0-5; **v1.3 gộp tiếp các thay đổi của Phase 6-13** (các đoạn bắt đầu bằng "**v1.3:**"). Bằng chứng chi tiết và số đo nằm ở `SPEC_DEVIATIONS.md` (nhật ký bằng chứng, vẫn được giữ; spec này chỉ ghi luật, không ghi kết quả); các mục 🔶 và quyết định G1-G4 đã được người dùng chốt ghi rõ trong từng Phase.
 
 **Đề tài:** Khung sinh dữ liệu bảo toàn quyền riêng tư trong học liên kết (FL) để tăng cường phát hiện tấn công MQTT DoS/DDoS trên IoT.
 **Ý tưởng:** CVAE có điều kiện nhãn, huấn luyện bằng FL trên dữ liệu non-IID; so sánh ba cơ chế bảo vệ: **DP** (DP-SGD tại client), **SecAgg** (Flower), và **DP + SecAgg**; dữ liệu sinh ra dùng để cân bằng lớp cho bộ phân loại IDS (Random Forest, MLP).
@@ -44,7 +44,8 @@ Thư viện (ghim phiên bản sau khi cài): `python>=3.10`, `numpy`, `pandas`,
 
 ### 1.2 Ngân sách tính toán (🔶 phải đo, không dựa vào ước lượng)
 - Spec không cam kết thời gian chạy. Agent đo ở bước **7.4** rồi lập `results/reports/compute_budget.md`.
-- Lưu ý chung 🔶: DP-SGD (gradient từng mẫu) thường chậm hơn huấn luyện thường nhiều lần; mô phỏng FL chạy client tuần tự trên một máy, nên thời gian một vòng ≈ tổng thời gian các client.
+- Lưu ý chung 🔶: DP-SGD (gradient từng mẫu) thường chậm hơn huấn luyện thường nhiều lần; mô phỏng FL chạy trên một máy nên không đo được độ trễ mạng.
+- **v1.3:** Flower mô phỏng bằng **Ray**, các client chạy như actor song song dùng chung CPU, nên thời gian một vòng không phải tổng thời gian các client (SPEC_DEVIATIONS 8.10); `ray` phải có trong `requirements.txt` (extra `flwr[simulation]` không cài Ray trên Windows với Python 3.13). Thời gian vòng 1 gồm khởi động Ray, nên lấy trung vị từ vòng 2.
 
 ---
 
@@ -61,20 +62,21 @@ ppfeddata/
 ├── src/ppfeddata/
 │   ├── data/      inventory.py, harmonize.py, split_sample.py, parse_multi.py, preprocess.py, partition.py
 │   ├── models/    cvae.py, generate.py
-│   ├── fl/        client_app.py, server_app.py, dp_utils.py, secagg_sim.py (fallback)
-│   ├── eval/      utility.py, fidelity.py, privacy.py, overhead.py, stats.py
+│   ├── fl/        app.py (ServerApp/ClientApp), run.py, core.py, b3.py, m1.py, m2.py, dp_utils.py, secagg.py   # v1.3: không cần secagg_sim.py
+│   ├── eval/      utility.py, fidelity.py, privacy.py, overhead.py, stats.py, runs.py (sổ chạy), baselines.py, compare.py (bootstrap ghép cặp), dp_check.py (ε tính lại độc lập)
 │   ├── checks/    leakage.py, leakage_report.py
-│   ├── tune.py, run_experiment.py, aggregate.py, cli.py
+│   ├── tune.py, tune_dp.py, run_experiment.py, aggregate.py, interpret.py, interpret_report.py,
+│   │   limitations.py, demo_lib.py, readme_gen.py, package.py, acceptance.py, cli.py   # v1.3: Phase 11-13
 ├── tests/
 ├── notebooks/     00_eda.ipynb ... (chỉ để xem, không chứa logic)
 ├── data/          inventory/, interim/<mode>/, processed/<mode>/, partitions/   (KHÔNG commit; <mode> = 6class | 11class)
 ├── artifacts/     {run_id}/ model.pt, synthetic.parquet, preds/
 ├── results/       runs.csv, summary.csv, figures/, reports/, manifests/   (manifests/split_manifest_<mode>.json được commit: chỉ có mã nhóm, số lượng, hash, phiên bản thư viện)
 ├── demo/          app.py
-├── requirements.txt, README.md, BLOCKERS.md (nếu có), SPEC_DEVIATIONS.md (nhật ký bằng chứng cho các thay đổi spec)
+├── requirements.txt, requirements-lock.txt, README.md, README.vi.md, BLOCKERS.md (nếu có), SPEC_DEVIATIONS.md (nhật ký bằng chứng cho các thay đổi spec)
 ```
 
-CLI thống nhất: `python -m ppfeddata.cli {inventory|harmonize|sample|preprocess|check|baseline|tune|run|aggregate|demo} --config ...`.
+CLI thống nhất: `python -m ppfeddata.cli <lệnh> --config ...` với lệnh ∈ {`inventory`, `harmonize`, `sample`, `preprocess`, `check`, `baseline`, `tune`, `b2`, `benchmark`, `b3`, `m1`, `tune-dp`, `verify-dp`, `m2`, `m3`, `secagg-check`, `secagg-report`, `run`, `aggregate`, `demo`, `package`, `accept`} (**v1.3**).
 
 ---
 
@@ -127,16 +129,18 @@ preprocess:
   ultra_sparse_fix: true         # trống >= cận trên (nhưng không phải 100%): thống kê trên dòng áp dụng + có cờ (false = đúng quy tắc v1.1)
   numeric_scale: {time_delta_from_previous_displayed_frame: 1000}   # nhân trước log1p (giây -> ms): với cột thời gian < 1 s, log1p gần như đồng nhất nên 1,04% dòng bị cắt ở 5σ, sau khi nhân còn 0,08%
 cvae: {latent_dim: 16, hidden: [128, 64], beta: 0.5, beta_warmup_epochs: 10,
-       lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false}
+       lr: 1.0e-3, batch_size: 256, epochs: 50, class_balanced_sampler: false,
+       patience: 5}                  # v1.3: early stopping theo loss val, đếm sau giai đoạn warm-up beta
 fl: {num_clients: 5, rounds: 30, local_epochs: 2, dirichlet_alpha: 0.5, min_client_size: 500}
-dp: {epsilons: [1, 5, 10], delta: 1.0e-5, max_grad_norm: 1.0}
-secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 8.0}
-generate: {target_per_class: 20000}
+dp: {epsilons: [1, 5, 10], delta: 1.0e-5, max_grad_norm: 1.0}   # v1.3: max_grad_norm riêng cho DP lấy từ configs/best_cvae_dp.yaml (Phase 9)
+secagg: {num_shares: 5, reconstruction_threshold: 3, clipping_range: 16.0, max_weight: 100000}   # v1.3: 8 -> 16 (|w| quan sát được đến 11,4); max_weight là cận trên công khai của n_i (mặc định Flower 1000 làm cắt trọng số FedAvg)
+generate: {target_per_class: 20000, residual_noise: true, snap_support: false, snap_max_unique: 256}   # v1.3: nhiễu phần dư theo lớp (Phase 7)
 eval:
   rf: {n_estimators: 200}
+  smote: {k_neighbors: 5}
   mlp: {hidden: [128, 64], max_iter: 100, early_stopping: true}
   bootstrap: 1000
-tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100}
+tune: {n_trials: 30, syn_per_class: 5000, rf_trees: 100, epochs: 30}
 thresholds:                     # 🔶 heuristic khởi điểm — người dùng chốt, không phải chuẩn khoa học
   c2st_auc_max: 0.95            # dữ liệu sinh không được hiển nhiên là giả
   dup_rate_max: 0.01
@@ -148,6 +152,10 @@ thresholds:                     # 🔶 heuristic khởi điểm — người dù
   single_feature_f1_flag: 0.9   # C3: một cột riêng lẻ, macro-F1 hoặc F1 tốt nhất theo lớp vượt mức này -> soi ngữ nghĩa
   na_only_f1_flag: 0.5          # C2: RF chỉ dùng cờ _is_na vượt mức này -> mô hình học cách trích xuất
   dos_ddos_f1_flag: 0.6         # C5: F1 phân biệt DoS/DDoS dưới mức này -> không tách được (ngẫu nhiên = 0,5)
+  eps_max_recommend: 5.0        # v1.3, Phase 12 (R6): cấu hình DP chỉ được khuyến nghị nếu ε (max theo client và theo seed) ≤ mức này
+  seed_std_redflag: 0.05        # v1.3, Phase 12: cờ đỏ std macro-F1 giữa seed (seed_std_max = 0,02 là mức ghi chú mềm)
+  f1_near_one: 0.95             # v1.3, Phase 12: cờ đỏ macro-F1 của B0 ≥ mức này -> nghi rò rỉ (quay lại Phase 5)
+  eps_recompute_rtol: 0.10      # v1.3, Phase 12: cờ đỏ ε báo cáo khác ε tính lại độc lập quá tỉ lệ này
 leakage: {rf_trees: 100, cv_folds: 5}
 harmonize:                      # 🔶 heuristic của Phase 2; quyết định của người dùng nằm ở user_overrides / row_filters / g1_log / g2_log
   suspect_presence_diff: 0.95
@@ -159,6 +167,7 @@ harmonize:                      # 🔶 heuristic của Phase 2; quyết định 
   # user_overrides, row_filters (protocol: [TCP, MQTT]), g1_log, g2_log: xem configs/default.yaml
 compute:
   artifacts_dir: "./artifacts"  # Colab: "/content/drive/MyDrive/ppfeddata/artifacts"
+  runs_csv: "./results/runs.csv"   # v1.3: sổ chạy (Colab: đường dẫn trên Drive)
   checkpoint_every_rounds: 5
   budget_hours: null            # 🔶 người dùng đặt sau bước 7.4
 ```
@@ -292,7 +301,8 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 
 ### 6.3 Baseline
 - **B0:** chỉ dữ liệu thật.
-- **B1a:** RF `class_weight="balanced"`. **B1b:** SMOTE trên không gian đã mã hóa tới `target_per_class`, hậu xử lý (argmax cho nhóm one-hot, làm tròn cờ nhị phân).
+- **B1a:** RF `class_weight="balanced"` (**v1.3:** chỉ RF; `MLPClassifier` của sklearn không có `class_weight` và code từ chối tổ hợp này). **B1b:** SMOTE trên không gian đã mã hóa tới `target_per_class`, hậu xử lý (argmax cho nhóm one-hot, làm tròn cờ nhị phân). Bộ chạy là B0-rf, B0-mlp, B1a-rf, B1b-rf, B1b-mlp. **v1.3:** `run_id = {config}_{seed}` với `config` đã gồm bộ phân loại (`B0-rf`); chế độ 11 lớp thêm `11class` vào id.
+- **v1.3 (sổ chạy):** `eval/runs.py` (`RunLedger`) ghi `results/runs.csv` từ Phase 6: run đã xong bị bỏ qua khi chạy lại, run cùng id bị thay thế; dự đoán test lưu ở `artifacts/<run_id>/preds/test.npz` (Phase 12 đọc lại để bootstrap). Runner từ chối chạy nếu `feature_schema.json` không ghi `fit = {split: train, n_rows}` khớp số dòng train.
 - (Tuỳ chọn) **W:** WGAN-GP tập trung, chỉ để đo thời gian và số tham số, chứng minh "WGAN-GP nặng hơn CVAE".
 
 ### 6.4 Metric
@@ -315,26 +325,27 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 
 ### 7.1 Kiến trúc (`models/cvae.py`)
 - Encoder: `[x ; onehot(y)] → Linear(hidden[0]) → ReLU → Linear(hidden[1]) → ReLU → (μ, logσ²)` (latent 16).
-- Decoder: `[z ; onehot(y)] → hidden ngược → các đầu ra theo khối`: logit nhị phân/cờ `_is_na` (BCE), logit từng nhóm phân loại (CE), giá trị số (MSE).
+- Decoder: `[z ; onehot(y)] → hidden ngược → các đầu ra theo khối`: logit nhị phân/cờ `_is_na` (BCE), logit từng nhóm phân loại (CE), giá trị số (MSE). Tham số mô hình là **một vector kích thước cố định** (để FedAvg và SecAgg áp dụng không đổi).
 - **Không dùng BatchNorm** (không tương thích Opacus); chỉ `nn.Linear`, `ReLU`, tuỳ chọn `LayerNorm`.
 - Loss = tổng recon các khối + `β · KL`, trung bình theo mẫu; β tăng tuyến tính từ 0 tới `beta` trong `beta_warmup_epochs`.
 - Early stopping theo loss trên val.
 
 ### 7.2 Sinh dữ liệu (`models/generate.py`)
 `generate(model, class_counts, seed)`: lấy `z ~ N(0,I)` và nhãn theo số lượng yêu cầu; cột số → nghịch đảo chuẩn hóa/log1p → cắt về [min, max] của train → làm tròn với cột nguyên; cột nhị phân/`_is_na` lấy mẫu Bernoulli; cột phân loại lấy mẫu từ softmax; nếu `_is_na = 1` thì đặt giá trị cột số tương ứng về mặc định.
+- **v1.3 (nhiễu phần dư):** decoder MSE cho giá trị trung bình nên dữ liệu sinh co phương sai; thêm nhiễu Gauss theo **độ lệch chuẩn phần dư tái tạo của từng lớp** (ước lượng trên train, `generate.residual_noise: true`). Biến thể này là mặc định cho cấu hình **không DP**. Thang nhiễu tính từ toàn bộ train pool nên **nằm ngoài ε**: cấu hình DP (M1, M3) có hai biến thể đánh giá, `plain` (decoder thuần, hoàn toàn trong ε, là **số chính**) và biến thể có nhiễu (chỉ để so sánh); B3 cũng được đánh giá `B3-plain` (điểm ε = ∞ cùng decoder). Hạng mục phân loại có 0 dòng train bị loại (`dead_category_mask`). `snap_support` thử và tắt.
 
 ### 7.3 Tối ưu siêu tham số (`tune.py`)
 - Optuna TPE, `n_trials` = 30, lưu SQLite để resume.
 - Không gian: `latent ∈ {8,16,32}`, `hidden width ∈ {64,128,256}`, `β ∈ [0.1, 2]` (log), `lr ∈ [1e-4, 3e-3]` (log), epoch cố định 30.
 - **Fitness:** macro-F1 TSTR (RF 100 cây, `syn_per_class` = 5000) đánh giá trên **val thật**. Không dùng test.
-- Kết quả: `configs/best_cvae.yaml`. Ghi rõ hạn chế: tuning làm trên dữ liệu tập trung, không riêng tư.
+- Kết quả: `configs/best_cvae.yaml`. Ghi rõ hạn chế: tuning làm trên dữ liệu tập trung, không riêng tư. **v1.3:** tune qua đường sinh dữ liệu cuối (có nhiễu phần dư); huấn luyện chạy tối đa 30 epoch (đúng số epoch đã tune) với early stopping `cvae.patience`.
 
 **Test:** shape vào/ra; loss giảm sau vài epoch trên dữ liệu nhỏ; `generate` trả đúng số lượng mỗi lớp; giá trị nằm trong khoảng hợp lệ; one-hot sinh ra cộng đúng 1; tái lập theo seed.
-**Gate:** B2 chạy đủ 3 seed. Kiểm tra tối thiểu (🔶 ngưỡng lấy từ `thresholds`): C2ST AUC < `c2st_auc_max`, tỉ lệ trùng lặp < `dup_rate_max`, DCR ratio > `dcr_ratio_min`. Báo cáo TSTR và TAug so với B0, kể cả khi không cải thiện.
+**Gate:** B2 chạy đủ 3 seed. Kiểm tra tối thiểu (🔶 ngưỡng lấy từ `thresholds`): C2ST AUC < `c2st_auc_max`, tỉ lệ trùng lặp < `dup_rate_max`, DCR ratio > `dcr_ratio_min`. Báo cáo TSTR và TAug so với B0, kể cả khi không cải thiện. **v1.3:** C2ST không đạt (≈ 1,000 ở mọi bộ sinh) được báo cáo như hạn chế "độ trung thực thấp" chứ không chặn các Phase sau (quyết định của người dùng); đối chứng dương của MIA (mục 6.4) chạy ở Phase 7 và **nếu không đạt thì phải nêu rõ** rằng AUC ≈ 0,5 chỉ nói không có dòng sinh nào gần như bản sao của dòng train, không chứng minh không ghi nhớ.
 
 ### 7.4 Benchmark tài nguyên (🔶 bắt buộc trước Phase 8)
 1. Trên một client (n ≈ 18.000 dòng), đo: thời gian 1 epoch CVAE thường, thời gian 1 epoch DP-SGD (Opacus), RAM đỉnh.
-2. Ngoại suy: thời gian 1 run FL ≈ `rounds × local_epochs × Σ_i t_epoch_i` (client chạy tuần tự); tổng ma trận = cộng các run theo bảng Phase 11 × 3 seed; thời gian Optuna = `n_trials` × thời gian 1 trial. Ghi vào `results/reports/compute_budget.md` kèm số đo gốc.
+2. Ngoại suy: thời gian 1 run FL ≈ `rounds × local_epochs × Σ_i t_epoch_i` (cận trên khi client chạy tuần tự; **v1.3:** thực tế client chạy song song nên số đo thấp hơn công thức, xem mục 1.2); tổng ma trận = cộng các run theo bảng Phase 11 × 3 seed; thời gian Optuna = `n_trials` × thời gian 1 trial. Ghi vào `results/reports/compute_budget.md` kèm số đo gốc.
 3. Nếu tổng vượt `compute.budget_hours` (người dùng đặt) hoặc không vừa số phiên Colab dự kiến, cắt giảm **theo thứ tự**: (a) Optuna 30 → 15 trial; (b) `rounds` 30 → 20; (c) seed của M1-ε1 và M1-ε10 còn 2; (d) bỏ phần mở rộng A1–A5. **Không cắt** seed của B0–B3, M1-ε5, M2, M3. Mọi cắt giảm phải ghi rõ trong báo cáo cuối.
 4. Optuna lưu SQLite vào `compute.artifacts_dir` để resume giữa các phiên Colab.
 
@@ -348,6 +359,7 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 3. Mỗi 5 vòng, đánh giá ELBO của mô hình toàn cục trên val (chỉ để theo dõi; ghi chú đây là đánh giá phía mô phỏng, không có trong FL thật). Lưu checkpoint cuối và log từng vòng.
 4. Sau vòng cuối: sinh dữ liệu và đánh giá đầy đủ (Phase 6).
 5. **Checkpoint/resume:** mỗi `checkpoint_every_rounds` vòng lưu vào `artifacts/{run_id}/ckpt/`: trọng số toàn cục, chỉ số vòng, trạng thái RNG, bộ đếm bước DP của từng client (Phase 9), log vòng. Tham số `--resume` nạp checkpoint mới nhất.
+6. **v1.3 (cách chạy Flower):** dùng API thông điệp của Flower 1.39 (`ServerApp`, `ClientApp`, `FedAvg.start`) khởi chạy bằng `run_simulation` với backend Ray, mỗi run trong một tiến trình riêng (`python -m ppfeddata.fl.run`) để điều khiển seed/resume/spec bằng mã. Client dùng Adam mới mỗi vòng, beta warm-up theo epoch toàn cục. **Phản hồi được gộp theo thứ tự mã client** (thứ tự cộng float32 làm hai lần chạy cùng seed lệch nhau, sau khi cố định thì giống từng bit). Dừng ngay nếu một vòng thiếu phản hồi của client (`require_all_replies`) và tự chạy lại từ checkpoint tối đa 2 lần (Ray trên Windows từng làm actor chết giữa chừng). Chia dữ liệu **theo hàng, không theo TCP stream** nên một stream có thể nằm ở nhiều client. Mọi thống kê sinh dữ liệu (nhiễu phần dư theo lớp) tính từ toàn bộ train pool tại server mô phỏng và không nằm trong DP.
 
 **Test/Gate:**
 - Phân hoạch: các chỉ số đôi một rời nhau, hợp lại = toàn bộ train pool.
@@ -362,13 +374,15 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 ## Phase 9 — DP tại client (M1) (`fl/dp_utils.py`) 🔶 API Opacus cần xác minh theo phiên bản cài
 
 **Việc:**
-1. Với mỗi client `i` (kích thước `n_i`), tần suất lấy mẫu `q_i = batch_size / n_i`, tổng số bước `T_i = rounds × local_epochs × (n_i / batch_size)`. Tính `σ_i` một lần cho cả quá trình huấn luyện bằng tiện ích của Opacus (`get_noise_multiplier` với `target_epsilon`, `target_delta`, `sample_rate`, và số bước hoặc epoch; kiểm tra chữ ký hàm ở phiên bản đã cài).
+1. Với mỗi client `i` (kích thước `n_i`), tần suất lấy mẫu `q_i = batch_size / n_i`, tổng số bước `T_i = rounds × local_epochs × (n_i / batch_size)`. Tính `σ_i` một lần cho cả quá trình huấn luyện bằng tiện ích của Opacus (`get_noise_multiplier` với `target_epsilon`, `target_delta`, `sample_rate`, và số bước hoặc epoch; kiểm tra chữ ký hàm ở phiên bản đã cài). **v1.3 (Opacus 1.6.0):** loader Poisson có `q = 1/ceil(n/B)` và `ceil(n/B)` bước mỗi epoch (không phải `B/n` và `n/B` thô; do `int(1/q)` đôi khi cắt xuống một bước, **ε báo cáo dùng số bước đếm được**); đổi kế hoạch (số vòng, ε, δ) khi resume làm đổi σ nên bị từ chối.
 2. Mỗi vòng, `PrivacyEngine.make_private(..., noise_multiplier=σ_i, max_grad_norm=C, poisson_sampling=True)`. **Lưu ý:** tạo lại engine mỗi vòng sẽ **đặt lại accountant**, nên không dùng `get_epsilon` của từng vòng. Thay vào đó, đếm tổng số bước và tính ε cuối cùng bằng RDP accountant từ `(σ_i, q_i, T_i)`.
 3. Chạy `ModuleValidator.validate` để chắc mô hình tương thích (không BatchNorm).
 4. Quét `ε ∈ {1, 5, 10}` (δ = 1e-5; đảm bảo δ < 1/n_i cho mọi client); thêm mốc "không DP" (= B3).
 5. **Cách báo cáo ε khi các client có `n_i` khác nhau:** hiệu chỉnh `σ_i` sao cho mỗi `ε_i ≤` mục tiêu. Với mỗi cấu hình báo cáo bảng `ε_i` từng client; **ε của cấu hình = max_i ε_i** (trường hợp xấu nhất, dùng làm số chính trong biểu đồ và quy tắc khuyến nghị), kèm trung vị. Ý nghĩa: ε_i bảo vệ một bản ghi thuộc client i trước mọi bên chỉ thấy cập nhật của client đó. Không tuyên bố hiệu ứng khuếch đại riêng tư do SecAgg.
-6. **Đơn vị bảo vệ (hạn chế quan trọng):** ε ở đây là mức **bản ghi (packet)**. Các packet cùng TCP stream tương quan mạnh, nên một phiên tấn công gồm nhiều packet được bảo vệ yếu hơn nhiều so với con số ε (theo tính chất group privacy, độ suy giảm cỡ số packet trong nhóm; 🔶 không tuyên bố công thức chính xác nếu chưa tính). Phải nêu rõ trong báo cáo. Giảm nhẹ (tuỳ chọn): bật `train_sampling.max_rows_per_stream` và chạy độ nhạy A5 để xem kết quả có phụ thuộc vào tương quan nội-stream không.
+6. **Đơn vị bảo vệ (hạn chế quan trọng):** ε ở đây là mức **bản ghi (packet)**. Các packet cùng TCP stream và cùng capture tương quan, nên một phiên tấn công gồm nhiều packet được bảo vệ yếu hơn nhiều so với con số ε (theo tính chất group privacy, độ suy giảm cỡ số packet trong nhóm; 🔶 không tuyên bố công thức chính xác nếu chưa tính). **v1.3:** báo cáo kích thước đo được của hai đơn vị này (số dòng mỗi stream và mỗi nhóm capture trong train; trong dữ liệu này mỗi stream chỉ ~1,0-1,2 dòng vì mẫu lấy ngẫu nhiên, còn một nhóm capture có tới vài chục đến vài trăm dòng của một lớp hiếm, nên đơn vị tương quan thực tế là capture). Phải nêu rõ trong báo cáo. Giảm nhẹ (tuỳ chọn): bật `train_sampling.max_rows_per_stream` và chạy độ nhạy A5 để xem kết quả có phụ thuộc vào tương quan nội-stream không.
 7. Nhãn (điều kiện) không được bảo vệ bởi DP-SGD của đặc trưng; ghi rõ trong phần hạn chế.
+8. **v1.3 (siêu tham số riêng cho DP):** với C = 1 mọi gradient từng mẫu đều bị cắt (chuẩn 4-40) nên có `tune_dp.py` (Optuna, mô phỏng một client 20 % dữ liệu theo đúng đường mã FL, fitness = val macro-F1 TSTR-rf bằng decoder thuần, chỉ dùng val) và `verify-dp` (chạy FL thật cho vài ứng viên tốt nhất, quy tắc chọn đặt trước: max val macro-F1, hoà trong 0,01 thì chọn val ELBO thấp hơn) → `configs/best_cvae_dp.yaml` (họ `M1d-t21`). Họ này là họ DP chính của ma trận; họ siêu tham số Phase 7 (`M1-eps*`) giữ làm bảng tham chiếu. Phải nêu: tune dùng val thật không riêng tư và không tính vào ε, một seed mỗi trial, tune ở ε = 5.
+9. **v1.3 (decoder trong ε):** mỗi mô hình DP có hai biến thể đánh giá: `plain` (số chính) và có nhiễu phần dư (ngoài ε, chỉ để so sánh); xem Phase 7.2. **ε được tính lại độc lập** bằng mã RDP tự viết (`eval/dp_check.py`, bậc nguyên 2-256, chuyển đổi như Opacus) và so với ε báo cáo (cờ đỏ F5).
 
 **Test/Gate:**
 - ε thực đạt ≤ 1,02 × ε mục tiêu cho mọi client (kể cả sau khi resume từ checkpoint: ε tính lại bằng tổng số bước phải bằng chạy không ngắt).
@@ -384,13 +398,15 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 1. Dùng `SecAggPlusWorkflow` (hoặc `SecAggWorkflow`, trường hợp riêng của SecAgg+) phía server và `secaggplus_mod` phía client; bắt đầu từ ví dụ `flwr new @flwrlabs/flower-secure-aggregation` rồi thay mô hình bằng CVAE. Tham số khởi đầu: `num_shares` = số client, `reconstruction_threshold` = 3 (đọc tài liệu để xác nhận ngữ nghĩa/ràng buộc của hai tham số này ở phiên bản đã cài); `clipping_range`, `quantization_range`, `modulus_range` để mặc định rồi kiểm tra.
 2. Kiểm tra `max |w|` của mọi tham số qua mọi vòng nhỏ hơn `clipping_range`; nếu vượt, tăng `clipping_range` hoặc báo cảnh báo (giá trị bị cắt gây sai lệch).
 3. M3 = DP client (Phase 9) + SecAgg cùng lúc. Ghi ε thực đạt.
-4. **Phương án dự phòng** nếu SecAgg của Flower không chạy được trong mô phỏng ở phiên bản đã cài: viết `secagg_sim.py` (masking cặp kiểu Bonawitz: mỗi cặp client cộng/trừ cùng một mask từ seed chung, mask triệt tiêu khi cộng), ghi rõ đây là mô phỏng thay thế và sai khác so với giao thức đầy đủ (không có phần chịu client rớt).
+4. **Phương án dự phòng** nếu SecAgg của Flower không chạy được trong mô phỏng ở phiên bản đã cài: viết `secagg_sim.py` (masking cặp kiểu Bonawitz: mỗi cặp client cộng/trừ cùng một mask từ seed chung, mask triệt tiêu khi cộng), ghi rõ đây là mô phỏng thay thế và sai khác so với giao thức đầy đủ (không có phần chịu client rớt). **v1.3:** không cần dùng; `SecAggPlusWorkflow` và `secaggplus_mod` của Flower 1.39.0 chạy được trong mô phỏng Ray.
+5. **v1.3 (cách dùng Flower 1.39.0):** `SecAggPlusWorkflow` thuộc API cũ (cần `LegacyContext`, `Strategy` cũ), nên giữ vòng lặp ServerApp của B3 (validation, log, checkpoint, resume) và mỗi vòng gọi **nguyên bản** workflow qua một `Strategy` cũ tối thiểu (`fl/secagg.py`); client dùng cùng hàm huấn luyện (thường hoặc DP-SGD) bọc trong `secaggplus_mod`. `num_shares` = số mảnh bí mật của mỗi client, `reconstruction_threshold` = số mảnh tối thiểu để khôi phục (threshold < num_shares, num_shares > 2; 5/3 chịu tối đa 2 client rớt mỗi vòng). **`max_weight` phải ≥ `n_i` lớn nhất** (nâng lên 100.000) và `clipping_range` là 16 sau khi kiểm tra |w| (mục 2). Cận lỗi lượng tử hóa = (số client) × 2·clip/2^22 ÷ Σ(n_i/max_weight). `num_examples` và metrics của FitRes đi không mã hoá trong Flower (server biết `n_i`, công khai trong nghiên cứu này). Một vòng thiếu client **làm run dừng** rồi resume từ checkpoint (để kế hoạch và sổ ε của DP đúng thiết kế). SecAgg không vào sổ ε và **không tuyên bố khuếch đại riêng tư**.
 
 **Test/Gate:**
 - **T-SA1 (đúng đắn):** global model của SecAgg so với FedAvg thường cùng seed: `max |Δ|` ≤ 1e-4 (sai số lượng tử hóa); hiệu số macro-F1 nằm trong std giữa các seed.
 - **T-SA2 (che giấu, nếu có thể móc log của workflow):** vector đã mask mà server nhận có tương quan Pearson |ρ| < 0,05 với cập nhật thật và phân bố xấp xỉ đều trên [0, modulus) (KS test). Nếu không móc được, ghi rõ "không kiểm chứng trực tiếp".
 - **T-SA3 (tuỳ chọn):** cho 1 client rớt ở một vòng, tổng hợp vẫn hoàn tất nếu còn ≥ ngưỡng.
-- Đo **overhead** SecAgg: `thời gian/vòng SecAgg ÷ thời gian/vòng thường` và byte/vòng (ghi chú: mô phỏng một máy đo được phần tính toán mật mã, không đo được độ trễ mạng).
+- Đo **overhead** SecAgg: `thời gian/vòng SecAgg ÷ thời gian/vòng thường` và byte/vòng (ghi chú: mô phỏng một máy đo được phần tính toán mật mã, không đo được độ trễ mạng). **v1.3:** thời gian = trung vị vòng 2+; byte đếm trên lưới (kích thước protobuf), chuẩn hoá theo số tham số vì mô hình DP-tuned nhỏ hơn mô hình B3/M2; so M2 với B3 và M3 với M1 cùng cấu hình DP.
+- **v1.3:** T-SA1, T-SA2, T-SA3 chạy trên dữ liệu thật (`secagg-check`) và ghi ở `artifacts/secagg_checks_<mode>.json`; báo cáo `m2_m3_secagg.md` (`secagg-report`). Huấn luyện FL nhạy với nhiễu cỡ 1e-5 (Adam khởi tạo lại mỗi vòng) nên hiệu hai run bất kỳ không bit-đồng nhất có thể cỡ ±0,03 macro-F1 ở TSTR: tiêu chí T-SA1 về utility là "trong std giữa các seed" và sai số tổng hợp một lần phải ≤ cận lượng tử hóa.
 
 ---
 
@@ -408,6 +424,8 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 | M2 | FL + SecAgg |
 | M3 | FL + DP(ε=5) + SecAgg |
 
+**v1.3:** M1 và M3 dùng họ siêu tham số riêng cho DP (`M1d-t21`, `M3d-t21`; Phase 9) và được đánh giá bằng decoder `plain` làm số chính. Ngoài ma trận có nhóm `reference` (`B3-plain` = điểm ε = ∞; `M1p7-eps*` = họ siêu tham số Phase 7) và nhóm `extension`; mỗi cấu hình có một file `configs/exp/<id>.yaml` (`kind`, `group`, `est_minutes`). A1 có runner (`α ∈ {0.1, 10}`; α = 0,5 chính là B3); A2-A5 cần chạy lại Phase 3-4 (hạn mức, `split_seed`, `max_rows_per_stream` khác) nên chỉ là cấu hình đánh dấu `needs_data`.
+
 **Mở rộng (chỉ làm nếu còn thời gian, bị cắt đầu tiên khi vượt ngân sách):** A1 độ lệch non-IID `α ∈ {0.1, 0.5, 10}` trên B3; A2 tỉ lệ mất cân bằng train pool `{10:1, 60:1, 200:1}`; A3 mode 11 lớp; A4 **độ nhạy theo nhóm test**: đổi `split_seed` (2 cách chọn nhóm test/val khác) rồi chạy lại B0 và B3 để xem kết luận có phụ thuộc vào file được chọn không; A5 `max_rows_per_stream` bật so với tắt trên B3 và M1-ε5.
 
 **Yêu cầu:**
@@ -415,7 +433,7 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 - `aggregate.py` sinh `results/summary.csv` (mean ± std theo cấu hình) và các hình: (1) macro-F1 theo cấu hình (thanh lỗi); (2) recall theo lớp cho lớp hiếm; (3) đường **utility–privacy** (macro-F1 vs ε, cùng MIA AUC vs ε); (4) độ trung thực (Wasserstein, C2ST) vs ε; (5) overhead (thời gian/vòng, byte/vòng); (6) Pareto: macro-F1 vs MIA AUC, kích thước điểm theo overhead.
 - Sinh tự động `results/reports/final_report.md` từ các bảng, không viết tay số liệu.
 
-**Gate 🛑 G4 (trước khi chạy toàn bộ):** chạy thử 1 seed cho mọi cấu hình, xem log; người dùng đồng ý rồi mới chạy đủ 3 seed.
+**Gate 🛑 G4 (trước khi chạy toàn bộ):** chạy thử 1 seed cho mọi cấu hình, xem log; người dùng đồng ý rồi mới chạy đủ 3 seed. **v1.3:** G4 được mã hoá vào công cụ: `run --stage trial` chạy lại từ đầu cả ma trận cho 1 seed trong workspace tách biệt (`artifacts/_trial`, sổ riêng) rồi so với kết quả hiện có và ghi `g4_trial.md`; `run --stage full` ném `PermissionError` nếu thiếu `--approve-g4`. `run_experiment.py` là lớp điều phối: `plan` (done / partial / todo), `execute` chạy phần thiếu theo thứ tự rẻ trước, một cấu hình lỗi không dừng các cấu hình khác. `aggregate` ghi `summary.csv` (mean ± std, ddof = 0, kèm thời gian vòng trung vị), 6 hình, `final_report.md` và (Phase 12) `interpretation.json` và các khối sinh tự động của README.
 
 ---
 
@@ -431,6 +449,13 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 | R4. DP tốn bao nhiêu và đem lại gì? | B3 − M1(ε); MIA AUC, DCR ratio, trùng lặp | Có đường cong utility–privacy đơn điệu hợp lý; MIA AUC tiến gần 0,5 khi ε giảm (đã qua đối chứng dương) |
 | R5. SecAgg tốn gì? | \|M2 − B3\| về utility; overhead | Utility chênh trong nhiễu giữa seed; overhead được định lượng |
 | R6. Cấu hình khuyến nghị? | Tất cả | Theo quy tắc bên dưới |
+
+**v1.3 (định nghĩa các điểm spec để ngỏ):**
+- **R1, R2:** Δ = trung bình theo seed của hiệu macro-F1 (hoặc recall) giữa hai cấu hình cùng seed; CI = khoảng phân vị 95 % của trung bình đó trên `eval.bootstrap` mẫu lại **dùng chung cho mọi run** (lấy mẫu lại dòng test phân tầng theo lớp); "std giữa các seed" = max của std (ddof = 0) của hai cấu hình; "có tác dụng" khi cả hai điều kiện đúng và dấu của Δ cùng phía với CI. Kiểm tra độ nhạy bắt buộc: lặp lại bằng **bootstrap theo stream** (rút nguyên stream), đánh dấu † khi kết luận đổi.
+- **R3:** chỉ báo cáo mức mất B2 − B3. **R4:** so DP với `B3-plain` (cùng decoder, điểm ε = ∞); "đường cong đơn điệu hợp lý" = bước sang ε lớn hơn không làm xấu đi quá std lớn nhất của hai điểm. **R5:** "trong nhiễu" = kết luận "không tác dụng" theo luật R1.
+- **R6:** B2 gộp dữ liệu thật nên **không đủ điều kiện** (vẫn có trong bảng); các cấu hình "không tệ hơn bản tốt nhất theo luật R1" coi là **hoà**, hoà được phá theo mức bảo vệ hình thức (ε hữu hạn, càng nhỏ càng mạnh; rồi SecAgg). Báo cáo thêm nhánh "cần bảo đảm DP" (bỏ riêng điều kiện overhead) và xếp hạng theo TSTR bên cạnh TAug.
+- **Cờ đỏ:** F1 (B0 ≥ `f1_near_one`), F2 (TSTR hơn B0 theo luật R1; nếu bị kích hoạt phải điều tra bằng cách so với tham chiếu thật cân bằng lớp B1b, tín hiệu cân bằng lớp trong recall, và việc không dùng test để fit/tune), F3 (trùng lặp > `dup_rate_max` hoặc DCR ratio < `dcr_ratio_min`), F4 (std > `seed_std_redflag`; phân biệt dòng trong và ngoài ma trận), F5 (ε báo cáo khác ε tính lại độc lập quá `eps_recompute_rtol`).
+- **Báo cáo mục 9 sinh từ `interpretation.json`, không viết tay số.** Báo cáo phải có: (9.9) giải trình vì sao dùng CVAE khi R1, R2 âm: CVAE là **tiền đề thiết kế** của đề tài chứ không phải kết quả so sánh bộ sinh; R1, R2 là phép thử tiền đề đó; nếu không được ủng hộ thì nêu số âm, nêu bối cảnh còn lại (dữ liệu thô không gộp được, chỉ có TSTR) và **các phương án chưa kiểm** (huấn luyện bộ phân loại bằng FL, class weight/SMOTE liên bang, bộ sinh khác); không bao giờ tuyên bố CVAE giúp IDS khi kết quả không nói vậy. (9.10) hướng dẫn **cấu hình nào cho yêu cầu nào** (M1, M2, M3): vì R6 chỉ chọn một cấu hình mà TAug không phân biệt được các ứng viên, bảng yêu cầu → cấu hình đặt chi phí đo được (thời gian, byte, TSTR, recall lớp hiếm) cạnh cái mỗi cấu hình bảo vệ, kèm các đặc thù đo được của dữ liệu IoT/MQTT (lớp hiếm mỏng ở từng client, chi phí DP rơi vào lớp hiếm, đơn vị capture so với bản ghi, thiết bị hạn chế); không tuyên bố lợi ích riêng tư khi MIA ở mức ngẫu nhiên và chưa qua đối chứng dương.
 
 **Quy tắc khuyến nghị (minh bạch, chỉnh ngưỡng trong config):** (🔶 các ngưỡng là heuristic, đọc từ `thresholds`) trong các cấu hình thỏa `MIA_AUC ≤ mia_auc_max` **và** `ε_max ≤ 5` (nếu có DP) **và** overhead thời gian/vòng ≤ `overhead_ratio_max` × FL thường, chọn cấu hình có macro-F1 TAug cao nhất; nếu không cấu hình nào thỏa, báo cáo Pareto và nêu rõ đánh đổi. Nêu rõ SecAgg bảo vệ cập nhật từng client khỏi server, còn DP bảo vệ khỏi rò rỉ từ mô hình/dữ liệu sinh.
 
@@ -448,6 +473,12 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 - `demo/app.py` (Streamlit, chạy trên máy cá nhân; có thể thay bằng Gradio nếu chạy trên Colab): (1) tổng quan dữ liệu và phân bố lớp; (2) bảng/hình kết quả từ `results/summary.csv`; (3) biểu đồ utility–privacy–overhead và khuyến nghị; (4) tạo mẫu: chọn cấu hình + lớp + số lượng → xem bảng mẫu sinh, tải CSV; (5) trang giải thích mô hình đe dọa và hạn chế.
 - `README.md`: cách cài, cách chạy từng Phase, cách tái lập (`python -m ppfeddata.cli ...`), cấu trúc thư mục, phiên bản thư viện, thời gian chạy tham khảo.
 - Lưu `pip freeze`, `configs/`, `split_manifest.json`, `feature_schema.json` cùng kết quả để tái lập.
+- **v1.3:**
+  - **Demo:** logic nằm ở `demo_lib.py` (test được không cần Streamlit), `demo/app.py` chỉ dựng giao diện (tiếng Việt). Trang 3 có thêm "cấu hình nào cho yêu cầu nào" (mục 9.10). Trang 4 lấy mẫu bằng đúng `models.generate.generate` của phần đánh giá (cùng mô hình, seed, số lượng thì giống từng bit với `synthetic.npz` đã lưu), đưa về đơn vị gốc bằng `Preprocessor.inverse_transform`; **cấu hình DP chỉ sinh bằng decoder thuần**. Không số nào gõ tay: mọi con số đọc từ `results/`.
+  - **README hai bản:** `README.md` (tiếng Anh, mặc định trên GitHub) và `README.vi.md` (tiếng Việt), liên kết chéo, cùng cấu trúc và lệnh. Các khối `<!-- BEGIN GENERATED: results|libraries|times|limitations -->` (bằng tiếng Anh, giống hệt ở hai file) do `aggregate` viết lại từ `interpretation.json`, sổ chạy và phiên trial; không sửa tay. Test so README với những gì bộ sinh viết từ `interpretation.json` đã commit.
+  - **Hạn chế** viết một lần ở `limitations.py` (mọi ý của Definition of Done và vài ý bổ sung), dùng chung cho mục 10 của báo cáo, README và trang 5 của demo; con số lấy từ manifest, schema, config và `interpretation.json`, không gõ tay.
+  - `ppfeddata package` ghi `results/repro/` (`pip_freeze.txt`, bản sao `configs/` không có `local.yaml`, `environment.json`, `MANIFEST.json` với SHA-256) và chép `feature_schema.json` sang `results/manifests/feature_schema_<mode>.json`; `requirements-lock.txt` cùng nội dung với `pip_freeze.txt`.
+  - `ppfeddata accept` đối chiếu từng ô Definition of Done với các file và ghi `results/reports/dod_checklist.md` (PASS / PARTIAL / MANUAL / FAIL; file thiếu là FAIL, không bao giờ là PASS).
 
 ---
 
@@ -458,11 +489,11 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 - [ ] Không nhóm nào xuất hiện ở hơn một split; test thật được khóa, không dùng để tuning.
 - [ ] `leakage_report.md` có đủ C1–C5; quyết định G1, G2 được lưu.
 - [ ] B0, B1, B2, B3, M1×3, M2, M3 đều có đủ 3 seed trong `runs.csv`.
-- [ ] ε thực đạt của DP được báo cáo và khớp mục tiêu; T-SA1 đạt; MIA có đối chứng dương.
+- [ ] ε thực đạt của DP được báo cáo và khớp mục tiêu; T-SA1 đạt; MIA có đối chứng dương (**v1.3:** nếu đối chứng không đạt với CVAE thì ô này là FAIL được ghi nhận kèm giải thích, và báo cáo không dùng MIA làm bằng chứng lợi ích của DP).
 - [ ] `final_report.md` sinh tự động, mọi số có nguồn trong `results/`.
 - [ ] `compute_budget.md` có số đo thực và ghi lại mọi cắt giảm (nếu có).
-- [ ] Danh sách hạn chế nêu đủ: dữ liệu ở mức packet; **ε ở mức bản ghi, các packet trong stream tương quan**; đặc trưng thời gian phụ thuộc cách xuất và CVAE sinh packet độc lập; tuning không riêng tư; mô phỏng một máy (không đo độ trễ mạng); chuẩn hóa dùng thống kê tập trung; nhãn không được bảo vệ bởi DP; tập test lấy từ ít nhóm (xem A4 nếu đã chạy); các ngưỡng đánh giá là heuristic do người dùng chốt; kết quả trên một dataset; các lớp tấn công khó phân biệt ở mức từng packet (B0 ≈ 0,45-0,50) nên CVAE sinh packet độc lập không thể tạo thêm độ phân biệt không có sẵn trong đặc trưng; 8/11 lớp con chỉ có một file capture nên val/test của chúng là các khối liên tiếp trong cùng một capture, và việc bỏ stream vắt qua nhiều khối loại 1,2% đến 9,9% dòng đủ điều kiện mỗi lớp con (lệch về phía kết nối ngắn); lọc `protocol ∈ {TCP, MQTT}` bỏ 0,50% dòng Normal và 128 dòng RIPv2 của Attack; chỉ dùng phần tử đầu của ô nhiều giá trị (mất thông tin gộp nhiều bản tin trong một packet, phần nào còn trong `tcp_segment_len`); đuôi `time_delta...` vẫn bị cắt ở 5σ ở mức 0,08% dòng train sau khi nhân 1000 (1,04% nếu không); cột siêu thưa xử lý khác v1.1; thông tin nhãn lớp con DoS/DDoS bị gộp ở chế độ 6 lớp.
-- [ ] README đủ để người khác chạy lại từ đầu.
+- [ ] Danh sách hạn chế nêu đủ: dữ liệu ở mức packet; **ε ở mức bản ghi, các packet trong stream và trong capture tương quan**; đặc trưng thời gian phụ thuộc cách xuất và CVAE sinh packet độc lập; tuning không riêng tư; mô phỏng một máy (không đo độ trễ mạng); chuẩn hóa dùng thống kê tập trung; nhãn không được bảo vệ bởi DP; tập test lấy từ ít nhóm (xem A4 nếu đã chạy); các ngưỡng đánh giá là heuristic do người dùng chốt; kết quả trên một dataset; các lớp tấn công khó phân biệt ở mức từng packet (B0 ≈ 0,45-0,50) nên CVAE sinh packet độc lập không thể tạo thêm độ phân biệt không có sẵn trong đặc trưng; 8/11 lớp con chỉ có một file capture nên val/test của chúng là các khối liên tiếp trong cùng một capture, và việc bỏ stream vắt qua nhiều khối loại 1,2% đến 9,9% dòng đủ điều kiện mỗi lớp con (lệch về phía kết nối ngắn); lọc `protocol ∈ {TCP, MQTT}` bỏ 0,50% dòng Normal và 128 dòng RIPv2 của Attack; chỉ dùng phần tử đầu của ô nhiều giá trị (mất thông tin gộp nhiều bản tin trong một packet, phần nào còn trong `tcp_segment_len`); đuôi `time_delta...` vẫn bị cắt ở 5σ ở mức 0,08% dòng train sau khi nhân 1000 (1,04% nếu không); cột siêu thưa xử lý khác v1.1; thông tin nhãn lớp con DoS/DDoS bị gộp ở chế độ 6 lớp.
+- [ ] README đủ để người khác chạy lại từ đầu (**v1.3:** cả hai bản README; phép thử thật là cài trên máy/venv sạch).
 
 ---
 
@@ -474,6 +505,7 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 
 ## Lịch sử thay đổi
 
+- **v1.3 (2026-10-05):** gộp các thay đổi rút ra khi làm Phase 6-13 (chi tiết và bằng chứng: `SPEC_DEVIATIONS.md` các mục 6-13, giữ làm nhật ký). Cấu hình: `patience`, `generate.residual_noise`, `secagg.clipping_range` 16 và `max_weight`, `eval.smote`, `compute.runs_csv`, 4 ngưỡng Phase 12. Phase 6: B1a chỉ RF, `run_id` gồm bộ phân loại, sổ chạy từ Phase 6. Phase 7: nhiễu phần dư theo lớp, hạng mục chết, tune qua đường sinh cuối, C2ST không chặn. Phase 8: cách chạy Flower 1.39 (Ray, thứ tự gộp theo mã client, dừng khi thiếu phản hồi). Phase 9: số bước Opacus, decoder `plain` là số chính, tune DP riêng (`tune-dp`, `verify-dp`), ε tính lại độc lập. Phase 10: dùng nguyên bản `SecAggPlusWorkflow` (không cần `secagg_sim.py`), `max_weight`, `clipping_range`, T-SA1-3 trên dữ liệu thật. Phase 11: họ DP chính, nhóm reference/extension, G4 mã hoá vào công cụ. Phase 12: định nghĩa R1-R6 và cờ đỏ, bootstrap theo stream, mục 9.9 (vì sao CVAE) và 9.10 (cấu hình nào cho yêu cầu nào). Phase 13: demo, README hai bản, `limitations.py`, `package`, `accept`. Đã sửa: nhận định "gói tin cùng stream tương quan mạnh" chỉ đúng ở mức capture (mẫu có ~1,0-1,2 dòng mỗi stream). `SPEC_DEVIATIONS.md` có ghi chú đầu file nói các dòng nào đã được gộp.
 - **v1.2 (2026-10-03):** gộp các thay đổi rút ra khi làm Phase 0-5 (chi tiết và bằng chứng: `SPEC_DEVIATIONS.md`). Phase 2: kiểm toán token, cặp cột trùng, header; ánh xạ nhãn chữ↔mã số; luật SUSPECT sinh từ số liệu (sự kiện cha, ngưỡng đếm); `first_only` thay cho first+count/sum và bỏ `n_mqtt_msgs`; lọc `protocol`; quyết định người dùng lưu ở config (`user_overrides`, `g1_log`, `g2_log`). Phase 3: chọn trước chỉ số dòng thay cho reservoir, `interim/<mode>/`, nhóm `#blkNN`, bỏ stream vắt qua nhiều khối, manifest có phiên bản và bản sao commit được. Phase 4: cột siêu thưa, bố cục khối, cột `diagnostic`, `processed/<mode>/`. Phase 5: C3 cân bằng lớp + F1 theo lớp, C4 thêm chia theo stream và chỉ cờ theo nhóm/stream, ablation; 3 ngưỡng mới; quyết định G1, G2; `configs/local.yaml` và `config_hash` bỏ `paths`; hạn chế bổ sung. Sau G2: `numeric_scale` cho `time_delta`, `requirements.txt` bỏ ràng buộc `numpy<2.0` (kiểm tra bằng dry-run cài `torch`, `flwr`, `opacus`: không xung đột), cho phép commit báo cáo `.md` và hình `.png` trong `results/`.
 - **v1.1:** thêm mục 1.1 (Colab/Drive, chống mất phiên) và 1.2 (ngân sách tính toán); thêm bước 7.4 benchmark; bảng quota 11 lớp và bỏ mode `binary` riêng; kiểm tra đặc trưng thời gian (Phase 2); giữ `stream_id` và tuỳ chọn `max_rows_per_stream`; quy tắc báo cáo ε theo từng client (max_i); checkpoint/resume cho FL và DP; nhãn 🔶 và khối `thresholds` trong config; độ nhạy A4 (đổi nhóm test) và A5; cập nhật Definition of Done.
 - **v1.0:** bản đầu tiên.

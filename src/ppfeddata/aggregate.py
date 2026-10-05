@@ -605,6 +605,13 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
               "Generator and training side of the same runs. alpha changes more than the label mix: with a skewed split the clients also differ in size, and a larger client "
               "takes more optimiser steps and carries more FedAvg weight (SPEC_DEVIATIONS 8.6), so the effective number of steps per round differs between rows.", "", _table(rows2), ""]
 
+    sens = (interp or {}).get("sensitivity")
+    if sens and sens.get("worlds"):
+        from ppfeddata import sensitivity
+        body = sensitivity.render(sens)
+        L += ["## 8c. Extensions A4 and A5: which test groups, how many packets per stream", ""]
+        L += [("### " + ln[3:]) if ln.startswith("## ") else ln for ln in body[1:]] + [""]
+
     if interp is not None:
         from ppfeddata.interpret_report import render
         L += render(interp, cfg)
@@ -652,7 +659,7 @@ def aggregate(cfg: dict[str, Any], out_dir: str | Path | None = None, dp_familie
     if out_dir is None and interp is not None:                         # only the real results: a preview or a test must not rewrite the repository's README
         from ppfeddata import interpret, readme_gen
         try:                                                           # from the numbers as written to interpretation.json (8 decimals), so the README equals what is generated from that file
-            readme = readme_gen.update_readme(readme_gen.README, cfg, interpret.to_jsonable(interp), summ)
+            readme = readme_gen.update_readmes(cfg, interpret.to_jsonable(interp), summ)
         except (OSError, ValueError) as e:
             logger.warning("README blocks not updated: %s", e)
     return {"summary": str(root / "summary.csv"), "rows": int(len(summ)), "figures": [str(p) for p in figs.values()], "report": str(report), "interpretation": interp_path,

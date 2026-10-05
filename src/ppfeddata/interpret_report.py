@@ -144,6 +144,13 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
             s += f"If a formal DP guarantee is required, the DP option the rule would pick without the overhead filter is {alt['recommended']} (tied: {', '.join(alt['tied'])})."
         out.append(s)
 
+    gb = _guide_bullet(R)
+    if gb:
+        out.append(gb)
+    sb = _sensitivity_bullet(R)
+    if sb:
+        out.append(sb)
+
     # red flags
     W = R.get("why")
     if W and R["R1"]["rows"] and R["R2"]["rows"]:
@@ -155,9 +162,12 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                 + f" (worse than class weights and SMOTE in {pm['r2_worse']} of {pm['r2_n']} comparisons; generators better than real data only: "
                 + ", ".join(f"{clf.upper()} {v['better']} of {v['n']}, at most {v['best']:+.3f}" + (f" against {pm['smote'][clf]:+.3f} for SMOTE" if pm["smote"].get(clf) is not None else "") for clf, v in pm["per_clf"].items()) + "). "
                 "The CVAE is the premise of the spec (a federated, label-conditional generator whose data balance the classes of the IDS), not the outcome of a comparison between generators, and this study is its test.")
+        fed = _fed_clause(R)
         tail = (" What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give "
-                f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
-                "federated class weights or SMOTE, other generators. See 9.9." if tstr and b0 else " See 9.9.")
+                f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. "
+                + (f"{fed} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators, a DP or SecAgg version of the direct classifier. See 9.9."
+                   if fed else "Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
+                   "federated class weights or SMOTE, other generators. See 9.9.") if tstr and b0 else " See 9.9.")
         out.append(head + tail)
     bits = [f"{f['id']} ({f['title']}): {f['status']}" for f in R["flags"]]
     out.append("**Red flags** (spec Phase 12): " + "; ".join(bits) + ". Details in 9.7.")
@@ -407,14 +417,276 @@ def _flags(R: dict[str, Any]) -> list[str]:
     return L
 
 
+WORD_VS = {"better": "above", "worse": "below", "none": "not different from (inside the noise)"}
+
+
+def _fed_facts(R: dict[str, Any]) -> dict[str, Any] | None:
+    """The classifier trained by FedAvg on the clients (`ppfeddata fed-baseline`) next to the synthetic-data route; None when it was not run."""
+    F = R.get("fed_classifier")
+    cl = (F or {}).get("classifiers") or {}
+    if not F or "FedMLP" not in cl or "FedMLPcw" not in cl:
+        return None
+    ref, cmpx = F.get("references") or {}, F.get("comparisons") or {}
+
+    def vs(a: str, b: str, key: str = "macro_f1") -> dict[str, Any] | None:
+        return (cmpx.get(a) or {}).get(b, {}).get(key)
+    return {"F": F, "cl": cl, "ref": ref, "vs": vs, "b3": ref.get("B3-TSTR-mlp"), "b0": ref.get("B0-mlp"), "smote": ref.get("B1b-mlp")}
+
+
+def _fed_clause(R: dict[str, Any]) -> str | None:
+    """One sentence: what the classifier trained by FL reaches against the synthetic-data route."""
+    f = _fed_facts(R)
+    if not f:
+        return None
+    cl, b3 = f["cl"], f["b3"]
+    s = (f"Tested after the main study: training the MLP itself by FedAvg on the same clients (no generator) reaches macro-F1 {cl['FedMLPcw']['macro_f1_mean']:.3f} with class weights "
+         f"(the clients then share their class counts) and {cl['FedMLP']['macro_f1_mean']:.3f} without")
+    if b3:
+        w, p = f["vs"]("FedMLPcw", "B3-TSTR-mlp"), f["vs"]("FedMLP", "B3-TSTR-mlp")
+        s += f", against {b3['macro_f1_mean']:.3f} for the CVAE route (synthetic data only, TSTR-MLP)"
+        if w and p:
+            s += f": the class-weighted federated MLP is {WORD_VS[w['effect']]} it (delta {w['delta']:+.3f}), the plain one {WORD_VS[p['effect']]} it (delta {p['delta']:+.3f})"
+    return s + "."
+
+
+def _cell(c: dict[str, Any] | None) -> str:
+    return f"{c['delta']:+.3f} {c['effect']}" if c else "-"
+
+
+def _fed_paragraph(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
+    f = _fed_facts(R)
+    if not f:
+        return []
+    F, cl, ref = f["F"], f["cl"], f["ref"]
+    L = ["**The detector trained directly by federated learning (run after the main study: `ppfeddata fed-baseline`).** The obvious competitor of the federated CVAE when raw data cannot be pooled is not to generate data at all "
+         f"and to train the MLP by FedAvg on the same {F['num_clients']} non-IID clients (Dirichlet alpha {F['alpha']:g}, same partitions and seeds as B3, evaluated on the same real test split). It is plain PyTorch run in "
+         "process (it measures utility, not Flower's overhead), has the architecture of the sklearn MLP, no hyper-parameter search and no DP or SecAgg; the round with the best validation macro-F1 is kept, with the "
+         f"{F['rounds']} rounds x {F['local_epochs']} epochs of the federated CVAE and again with {F.get('longer_rounds')} rounds. `CentMLP*` are the same recipe on the pooled data, the control that separates "
+         "'federated' from 'this MLP'. `*cw` weights the loss by class from the summed class counts of the clients, which the clients would have to share.", ""]
+    rows = []
+    for n in [x for x in cl if "@" not in x] + [x for x in cl if "@" in x]:
+        v = cl[n]
+        rows.append({"classifier": n, "macro-F1": f"{v['macro_f1_mean']:.3f} ± {v['macro_f1_std']:.3f}", "recall of the rare classes": f"{v['rare_recall_mean']:.3f}",
+                     "vs B3 synthetic-only (TSTR-MLP)": _cell(f["vs"](n, "B3-TSTR-mlp")), "vs B0-MLP (real, pooled)": _cell(f["vs"](n, "B0-mlp")), "vs B1b-MLP (SMOTE, pooled)": _cell(f["vs"](n, "B1b-mlp"))})
+    for k, v in ref.items():
+        rows.append({"classifier": f"{k} ({v['label']})", "macro-F1": f"{v['macro_f1_mean']:.3f} ± {v['macro_f1_std']:.3f}", "recall of the rare classes": f"{v['rare_recall_mean']:.3f}",
+                     "vs B3 synthetic-only (TSTR-MLP)": "-", "vs B0-MLP (real, pooled)": "-", "vs B1b-MLP (SMOTE, pooled)": "-"})
+    L += [_table(rows), ""]
+    w, p, c = f["vs"]("FedMLPcw", "B3-TSTR-mlp"), f["vs"]("FedMLP", "B3-TSTR-mlp"), cl.get("CentMLPcw")
+    wr = f["vs"]("FedMLPcw", "B3-TSTR-mlp", "rare_recall")
+    if w and p and f["b3"]:
+        L += [f"**Reading.** The class-weighted federated MLP reaches {cl['FedMLPcw']['macro_f1_mean']:.3f}, {WORD_VS[w['effect']]} the CVAE route ({f['b3']['macro_f1_mean']:.3f}; delta {w['delta']:+.3f} [{w['lo']:+.3f}, {w['hi']:+.3f}])"
+              + (f", and its recall of the rare classes is {WORD_VS[wr['effect']]} it ({cl['FedMLPcw']['rare_recall_mean']:.3f} against {f['b3']['rare_recall_mean']:.3f})" if wr else "")
+              + f"; without class weights it is {WORD_VS[p['effect']]} the CVAE route ({cl['FedMLP']['macro_f1_mean']:.3f}). "
+              + (f"The same weighted MLP on the pooled data reaches {c['macro_f1_mean']:.3f}, so the federation costs {c['macro_f1_mean'] - cl['FedMLPcw']['macro_f1_mean']:.3f} of macro-F1 for this classifier. " if c else "")
+              + ("So training the detector itself by FL is not shown to be worse than the federated CVAE with synthetic data, at a fraction of the cost and with no synthetic data to protect; "
+                 "what the CVAE route can still offer, and the direct route cannot, is a dataset that can be shared or inspected, whose value this study measures only through TSTR and whose privacy it cannot show (R4)."
+                 if w["effect"] != "worse" else
+                 "So the federated CVAE route is above the direct federated classifier in this comparison, which keeps part of the case for it when raw data cannot be pooled."), ""]
+    L += ["Limits of this comparison: one MLP architecture, untuned (the CVAE was tuned on validation data), 3 seeds, the class-weighted variant needs the class counts of every client, no DP or SecAgg version of the direct classifier "
+          "was run, and the CVAE route might use class balance too if its synthetic data were used differently (not tested).", ""]
+    return L
+
+
+PROTECTS = {"gen": "nothing (no protection layer)", "ref": "nothing (epsilon = infinity, plain decoder)", "secagg": "each client's update, from the aggregation server",
+            "dp": "one record (epsilon)", "dpsa": "one record (epsilon) and each client's update"}
+
+
+def _fmt_range(xs: list[float], nd: int = 2, suffix: str = "") -> str:
+    lo, hi = min(xs), max(xs)
+    return f"{lo:.{nd}f}{suffix}" if f"{lo:.{nd}f}" == f"{hi:.{nd}f}" else f"{lo:.{nd}f}-{hi:.{nd}f}{suffix}"
+
+
+def _guide_facts(R: dict[str, Any]) -> dict[str, Any] | None:
+    """The numbers behind section 9.10 and its bullet in 9.0, read from the computed dict (None when the dict has no guide or no R6 candidates)."""
+    G = R.get("guide")
+    if not G or not R.get("R6", {}).get("candidates") or not G.get("by_class", {}).get("rows"):
+        return None
+    cost, cand = R.get("cost", {}), {r["label"]: r for r in R["R6"]["candidates"]}
+    sc = {s["id"]: s for s in G["scenarios"]}
+    bc = G["by_class"]
+    rows = {r["label"]: r for r in bc["rows"]}
+    ov = {o["pair"]: o for o in R["R5"]["overhead"]}
+
+    def secagg_utility(pair: str) -> dict[str, Any] | None:
+        cs = [p["macro_f1"] for p in R["R5"]["pairs"] if p["pair"] == pair]
+        return {"n": len(cs), "none": sum(c["effect"] == "none" for c in cs), "max_abs": max(abs(c["delta"]) for c in cs)} if cs else None
+
+    dp = [r for r in R["R6"]["candidates"] if r["kind"] == "dp"]
+    f: dict[str, Any] = {"cost": cost, "cand": cand, "sc": sc, "bc": bc, "rows": rows, "ov": ov, "dp": dp, "m2_utility": secagg_utility("M2 - B3"), "m3_utility": secagg_utility("M3-eps5 - M1-eps5"),
+                         "tstr_delta": [c["macro_f1"]["delta"] for c in R["R4"].get("cost", []) if c["protocol"] == "TSTR"], "dp_loss": (R.get("why") or {}).get("dp_tstr_relative_loss"),
+                         "dp_change": [c for c in bc["dp_change"] if c["classifier"] == PRIMARY], "flat": sc["S2"]["eps_curve_flat"],
+                         "curve": R["R4"].get("curves", {}).get(f"TSTR-{PRIMARY}"), "dp_time": [cost[r["label"]]["ratio"] for r in dp if r["label"] in cost]}
+    return f
+
+
+def _sensitivity_bullet(R: dict[str, Any]) -> str | None:
+    """Do the verdicts survive another choice of test groups (A4) and a cap on packets per stream (A5)? From `ppfeddata sensitivity`."""
+    S = R.get("sensitivity")
+    if not S or len(S.get("worlds", [])) < 2:
+        return None
+    from ppfeddata.sensitivity import verdicts
+    V = verdicts(S)
+    changed = [v for v in V if not v["same_everywhere"]]
+    tags = [w["tag"] for w in S["worlds"][1:]]
+    s = (f"**Do the answers depend on the test groups or the sampling?** Extensions {', '.join(tags)} re-ran the study from Phase 3 with one setting changed: {len(V) - len(changed)} of {len(V)} comparisons "
+         f"(R1, synthetic-only against real data, DP cost) keep their verdict in every world")
+    if changed:
+        s += "; those that change: " + "; ".join(f"{v['what']} ({', '.join(f'{t} {e}' for t, e in v['verdicts'].items())})" for v in changed)
+    return s + ". Section 8c has the numbers; the choice of other datasets, quotas and client counts is not covered."
+
+
+def _guide_bullet(R: dict[str, Any]) -> str | None:
+    f = _guide_facts(R)
+    if not f:
+        return None
+    cand, sc, ov = f["cand"], f["sc"], f["ov"]
+    taug = [r["taug_f1"] for r in cand.values()]
+    s = (f"**Which of M1, M2, M3 for which requirement?** Utility does not decide it (the TAug-{PRIMARY.upper()} macro-F1 of every candidate lies in {min(taug):.4f}-{max(taug):.4f}); what each one protects and what it costs does (9.10). ")
+    parts = []
+    if sc["S1"]["choose"] and "M2 / B3" in ov:
+        u = f["m2_utility"]
+        parts.append(f"**{sc['S1']['choose'][0]}** if only the aggregation server must not see the updates ({ov['M2 / B3']['time_ratio']:.2f}x time per round, {ov['M2 / B3']['bytes_per_param_ratio']:.2f}x bytes per parameter"
+                     + (f", utility: {u['none']} of {u['n']} comparisons with B3 show no effect" if u else "") + "; no epsilon)")
+    if sc["S2"]["choose"] and f["dp_change"] and f["dp_time"]:
+        ch = f["dp_change"]
+        parts.append(f"**{sc['S2']['choose'][0]}** if a formal guarantee on the released model or synthetic data is required ("
+                     + (f"TSTR macro-F1 {f['dp_loss']['min'] * 100:.0f} to {f['dp_loss']['max'] * 100:.0f} % against epsilon = infinity, " if f["dp_loss"] else "")
+                     + f"recall of the rare classes {_fmt_range([c['rare_mean'] for c in ch])} against {ch[0]['rare_mean_inf']:.2f}, {_fmt_range(f['dp_time'], 1)}x time per round"
+                     + ("; the three epsilons are indistinguishable in utility, so the smallest costs no more here" if f["flat"] else "") + ")")
+    if sc["S3"]["choose"] and "M3-eps5 / M1-eps5" in ov:
+        o, u = ov["M3-eps5 / M1-eps5"], f["m3_utility"]
+        parts.append(f"**{sc['S3']['choose'][0]}** if both are needed (on top of M1-eps5: {o['time_ratio']:.2f}x time, {o['bytes_per_param_ratio']:.2f}x bytes per parameter"
+                     + (f", {u['none']} of {u['n']} utility comparisons show no effect" if u else "") + ")")
+    if not parts:
+        return None
+    return (s + "; ".join(parts) + ". These are costs and guarantees, not a measured privacy benefit: the empirical attack is at chance for every configuration (R4)."
+            + (" If the goal is only a detector, training it directly by FL is the alternative to all three (9.9)." if _fed_facts(R) else ""))
+
+
+
+def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
+    L = ["### 9.10 Which configuration for which requirement (M1, M2, M3)", ""]
+    f = _guide_facts(R)
+    if not f:
+        return L + ["_(not available: run `ppfeddata aggregate` with the processed data present)_", ""]
+    G, th, cost, cand, sc, ov, bc = R["guide"], cfg["thresholds"], f["cost"], f["cand"], f["sc"], f["ov"], f["bc"]
+    taug = [r["taug_f1"] for r in cand.values()]
+    rf, mlp = PRIMARY, "mlp"
+    L += ["R6 (9.6) ranks the configurations by one number, the TAug macro-F1, and that number does not separate them (all candidates lie in "
+          f"{min(taug):.4f}-{max(taug):.4f}), so M1, M2 and M3 were not compared for use but filtered. What does separate them is what each protects and what it costs. This section sets the measured costs next to "
+          "the requirement a deployment may have. It applies only when the raw data cannot be pooled (9.9); when they can, use class weights or SMOTE, whatever the protection requirement.", ""]
+
+    # A. what each option costs
+    major = bc["majority"]
+    order = ["B3", "B3-plain", "M2"] + [r["label"] for r in f["dp"]] + [r["label"] for r in R["R6"]["candidates"] if r["kind"] == "dpsa"]
+    why = {x["id"]: x for x in (R.get("why") or {}).get("rows", [])}
+    table = []
+    for lab in order:
+        r = next((x for x in bc["rows"] if x["label"] == lab), None)
+        if not r or rf not in r:
+            continue
+        c = cost.get(lab)
+        table.append({"configuration": lab, "protects": PROTECTS.get(r["kind"], PROTECTS["gen"]), "decoder": r["decoder"],
+                      f"TSTR-{rf.upper()}": f"{r[rf]['macro_f1']:.3f}", "TSTR-MLP": f"{r[mlp]['macro_f1']:.3f}" if mlp in r else "-",
+                      f"recall rare classes ({rf.upper()})": f"{r[rf]['rare_mean']:.3f}" if r[rf]["rare_mean"] is not None else "-",
+                      f"recall {major} ({rf.upper()})": f"{r[rf]['recall'][major]:.3f}" if major in r[rf]["recall"] else "-",
+                      "time / round (x B3)": f"{c['ratio']:.2f}" if c else "-", "MB / round": f"{c['bytes'] / 1e6:.2f}" if c and c["bytes"] == c["bytes"] else "-",
+                      "bytes / param": f"{c['bytes_per_param']:.1f}" if c and c["bytes_per_param"] == c["bytes_per_param"] else "-"})
+    real = bc["real_only"].get(rf)
+    L += ["**What each option costs** (the synthetic data alone train the classifier, TSTR, test macro-F1 and recall, mean over seeds; the rare classes are " + ", ".join(bc["rare"])
+          + "; the DP rows use the plain decoder, the one inside epsilon, and are compared with B3-plain, the epsilon = infinity point with the same decoder; the DP-tuned model is smaller than the B3 / M2 model, "
+          "so compare bytes per parameter).", "", _table(table), ""]
+    if real and real["rare_mean"] is not None:
+        L += [f"For scale: a classifier trained on real data only (B0, {rf.upper()}) reaches macro-F1 {real['macro_f1']:.3f}, recall {real['rare_mean']:.3f} on the rare classes and "
+              f"{real['recall'].get(major, float('nan')):.3f} on {major}.", ""]
+
+    # B. requirement -> configuration
+    pm = _premise(R)
+    b0, b1a, b1b = (why[k]["macro_f1"].get(rf) if k in why else None for k in ("B0:TRTR", "B1a:TRTR", "B1b:TRTR"))
+    req = []
+    if b0 is not None and (b1a is not None or b1b is not None):
+        better = " / ".join(f"{v:.3f}" for v in (b1a, b1b) if v is not None)
+        req.append({"requirement": "The real training data can be pooled and the goal is a better IDS", "choose": "none of M1, M2, M3: class weights (B1a) or SMOTE (B1b)" if pm["unsupported"] else "see 9.1 and 9.2",
+                    "what it costs (measured)": f"{rf.upper()} macro-F1 {better} against {b0:.3f} for real data only (R1, R2)", "what it does not give": "no protection of the raw data (it is pooled); " + ("the federated classifier is in the next row and in 9.9" if _fed_facts(R) else "federated variants not tested (9.9)")})
+    fed = _fed_facts(R)
+    if fed and fed["b3"]:
+        cw, w = fed["cl"]["FedMLPcw"], fed["vs"]("FedMLPcw", "B3-TSTR-mlp")
+        req.append({"requirement": "Raw data stay at the clients and the goal is only a detector: no synthetic data have to be shared", "choose": "FedAvg on the classifier itself, class-weighted (no CVAE; 9.9)",
+                    "what it costs (measured)": f"MLP macro-F1 {cw['macro_f1_mean']:.3f} against {fed['b3']['macro_f1_mean']:.3f} for the CVAE route with synthetic data only: {WORD_VS[w['effect']] if w else 'see 9.9'}; "
+                                                f"without class weights {fed['cl']['FedMLP']['macro_f1_mean']:.3f}; the class weights need the clients' class counts",
+                    "what it does not give": "synthetic data to share or inspect; a DP or SecAgg version was not run, so nothing here says what protecting the classifier updates costs"})
+    s1, s2, s3, s4 = sc["S1"]["choose"], sc["S2"]["choose"], sc["S3"]["choose"], sc["S4"]["choose"]
+    if s1 and "M2 / B3" in ov:
+        o, u = ov["M2 / B3"], f["m2_utility"]
+        req.append({"requirement": "Raw data stay at the clients; only the aggregation server must not see a client's update; model and synthetic data stay inside the federation", "choose": s1[0],
+                    "what it costs (measured)": f"{o['time_ratio']:.2f}x time per round and {o['bytes_per_param_ratio']:.2f}x bytes per parameter against B3" + (f"; utility: {u['none']} of {u['n']} comparisons with B3 show no effect (R5)" if u else ""),
+                    "what it does not give": "no epsilon: nothing limits what the model or the synthetic data reveal about a record; a malicious client is not covered (9.8)"})
+    if s2 and f["dp_change"] and f["dp_loss"]:
+        ch = f["dp_change"]
+        req.append({"requirement": "The model or the synthetic data leave the federation and a formal guarantee about a record is required", "choose": ", ".join(s2),
+                    "what it costs (measured)": f"TSTR macro-F1 {f['dp_loss']['min'] * 100:.0f} to {f['dp_loss']['max'] * 100:.0f} % against epsilon = infinity (R4); recall of the rare classes {_fmt_range([c['rare_mean'] for c in ch])} against {ch[0]['rare_mean_inf']:.2f}; "
+                                                f"{_fmt_range(f['dp_time'], 1)}x time per round (above the {th['overhead_ratio_max']:g}x filter of R6)"
+                                                + ("; the TSTR curve is flat over epsilon = 1, 5, 10" + (f" (range {f['curve']['range']:.3f}, seed std up to {f['curve']['max_std']:.3f})" if f["curve"] else "") + ", so the smallest epsilon costs no more utility here" if f["flat"] else ""),
+                    "what it does not give": "protection of the class label; protection of a whole capture (see below); a hidden update, the server sees the noisy update; an empirical benefit (the attack is at chance for every generator)"})
+    if s3 and "M3-eps5 / M1-eps5" in ov:
+        o, u = ov["M3-eps5 / M1-eps5"], f["m3_utility"]
+        eps = sorted({cand[x]["eps_max"] for x in s3 if cand[x]["eps_max"] is not None})
+        req.append({"requirement": "Both: the server must not see a client's update, and a formal guarantee is required", "choose": ", ".join(s3),
+                    "what it costs (measured)": f"what {sc['S2']['choose'][0] if s2 else 'M1'} costs, plus {o['time_ratio']:.2f}x time and {o['bytes_per_param_ratio']:.2f}x bytes per parameter against M1-eps5" + (f"; utility: {u['none']} of {u['n']} comparisons with M1-eps5 show no effect" if u else ""),
+                    "what it does not give": "SecAgg adds no epsilon credit" + (f"; only epsilon = {', '.join(f'{e:.0f}' for e in eps)} was run for it" if eps else "")})
+    dpt = f["dp_time"]
+    req.append({"requirement": "Clients that cannot afford DP-SGD's extra compute (the R6 overhead filter is " + f"{th['overhead_ratio_max']:g}x plain FL)",
+                "choose": (", ".join(s4) + " is the only protected configuration within it") if s4 else "none of the protected configurations is within it",
+                "what it costs (measured)": (f"DP configurations take {_fmt_range(dpt, 1)}x the time per round of B3 on this CPU" if dpt else "see the cost table"),
+                "what it does not give": "a measurement on real IoT hardware or a real network (single-machine simulation, 9.8 and section 10)"})
+    L += ["**Requirement to configuration.**", "", _table(req), ""]
+
+    # C. what the IoT / MQTT data change
+    L += ["**What in the IoT / MQTT data changes the choice.** Measured on this study's data; the causes are not tested.", ""]
+    ch = f["dp_change"]
+    cr = G.get("client_rarity")
+    if cr:
+        per = "; ".join(f"seed {s}: {v['thin']} of {v['cells']}, {v['empty']} with none" for s, v in cr["seeds"].items())
+        L += [f"- **The rare attack classes are thin at the clients, and DP is where it shows.** In the Dirichlet partition (alpha {cr['alpha']:g}) the (client, rare class) cells that hold at most {cr['cutoff']} records are ({per}). "
+              + (f"With DP the synthetic-only {rf.upper()} recovers the rare classes much worse (mean recall {_fmt_range([c['rare_mean'] for c in ch])} against {ch[0]['rare_mean_inf']:.2f} at epsilon = infinity), "
+                 f"while {major} moves from {ch[0]['major_recall_inf']:.2f} to {_fmt_range([c['major_recall'] for c in ch])}: the DP cost falls mostly on the rare classes. "
+                 "Mean over the seeds; the DP rows have the largest spread between seeds (flag F4), and they also differ from B3-plain in architecture and hyper-parameters (the DP-tuned model), so the gap is not only the noise." if ch else ""), ""]
+    pu = G.get("privacy_unit")
+    if pu and pu.get("classes"):
+        rare = [c for c in bc["rare"] if c in pu["classes"]]
+        if rare:
+            gm = [pu["classes"][c]["rows_per_group_max"] for c in rare]
+            sm = [pu["classes"][c]["rows_per_stream_mean"] for c in pu["classes"]]
+            ng = [pu["classes"][c]["groups"] for c in rare]
+            eps_min = min((cand[x]["eps_max"] for x in cand if cand[x]["kind"] == "dp" and cand[x]["eps_max"] is not None), default=None)
+            L += [f"- **Attacks arrive as captures, and epsilon protects one packet.** In the train split a TCP stream gives {_fmt_range(sm, 1)} rows on average, but each rare class comes from {_fmt_range(ng, 0)} capture groups (blocks of a capture file) "
+                  f"and one capture group gives up to {_fmt_range(gm, 0)} rows of it (per class: " + ", ".join(f"{c} {pu['classes'][c]['rows_per_group_max']}" for c in rare) + "). "
+                  "By group privacy the guarantee for k rows of one source is at most k times epsilon (delta grows as well), so " + (f"at epsilon = {eps_min:.3g} the bound for a whole capture of {max(gm)} rows is about {max(gm) * eps_min:.3g}, a vacuous one: " if eps_min else "")
+                  + "epsilon says little about whether one attacker's or one device's capture took part in the training (k counts the rows of one capture held by one client, so it is at most these figures; no exact conversion is claimed).", ""]
+    dpt = f["dp_time"]
+    if dpt:
+        b3, m2 = cost.get("B3"), cost.get("M2")
+        L += ["- **MQTT devices are constrained, so compute and bytes matter.** Measured on one CPU by simulation, without network latency: DP-SGD takes "
+              f"{_fmt_range(dpt, 1)}x the time per round of plain FL" + (f", SecAgg {m2['ratio']:.2f}x" if m2 else "") + (f"; the plain model sends {b3['bytes'] / 1e6:.1f} MB per round, SecAgg {m2['bytes'] / 1e6:.1f} MB" if b3 and m2 else "")
+              + "; the DP-tuned model is smaller, so its messages are smaller in absolute terms even though SecAgg adds bytes per parameter (cost table above).", ""]
+    L += ["- **The adversary of the threat model is the aggregation server.** SecAgg answers exactly that threat at a small measured cost; DP answers a different one (what the released model or the synthetic data reveal). "
+          "The study could not measure a privacy benefit for either: the membership-inference attack is at chance for every configuration, the non-private ones included, and did not pass its positive control (R4).", ""]
+    nc = cfg.get("fl", {}).get("num_clients")
+    L += ["**Not tested here:** real devices or a real network; clients that drop out during SecAgg; "
+          + (f"a number of clients other than {nc}" if nc else "a different number of clients") + "; M3 with an epsilon other than 5; a deployment whose rare classes are rarer or less rare than the quotas of this study (extension A2 was not run); "
+          "a classifier trained by FL (9.9).", ""]
+    return L
+
+
 def _protection() -> list[str]:
     return ["### 9.8 What secure aggregation and differential privacy each protect", "",
             "- **SecAgg** (M2, M3) hides each client's model update from the aggregation server: an honest-but-curious server sees only the sum of the updates of the clients that took part. "
             "It does not limit what the aggregated model, or the synthetic data generated from it, reveals about a training record, and it gives no epsilon (SecAgg+ is not credited with privacy amplification here). "
             "It does not defend against a malicious client.",
             "- **DP-SGD** (M1, M3) bounds what the trained weights, and therefore the synthetic data generated from them, reveal about one record of one client: epsilon at the level of a record (a packet), "
-            "worst case over the clients, delta 1e-5. Packets of one TCP stream are strongly correlated, so an entire attack session is protected much less than epsilon suggests (group privacy); the class label "
-            "that conditions the generator is not protected; the hyper-parameters were tuned on non-private validation data; the residual-noise variants of the decoder use statistics of the pooled train data and "
+            "worst case over the clients, delta 1e-5. Packets of one TCP stream and of one capture are correlated, so an entire attack session or capture is protected much less than epsilon suggests (group privacy; "
+            "the sizes of these units in this sample are in 9.10); the class label that conditions the generator is not protected; the hyper-parameters were tuned on non-private validation data; the residual-noise variants of the decoder use statistics of the pooled train data and "
             "are outside epsilon (headline numbers use the plain decoder).",
             "- **M3** combines both: the server cannot see an individual (noisy) update, and the aggregate carries the DP guarantee of the clients' noise.",
             "- The empirical checks (duplicate rate, DCR ratio, membership inference) are weak: they detect near-copies only (section 4), so they cannot replace the formal guarantee, and a C2ST close to 1 shows that "
@@ -494,6 +766,8 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     if sent:
         L += ["; ".join(sent) + ".", ""]
 
+    L += _fed_paragraph(R, cfg)
+
     ts = W.get("train_seconds", {})
     fit = ["it is label-conditional, so classes can be generated on demand", "its parameters form one fixed-size vector, so FedAvg and secure aggregation apply unchanged",
            "it has no BatchNorm, so the per-sample gradients of DP-SGD work in Opacus (spec 7.1; a test checks it)"]
@@ -515,9 +789,12 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
           + (", and it did not pass its positive control on an over-fitted CVAE" if pc.get("available") and not pc["overfit_cvae_detected"] else "")
           + ", so the study cannot show that the synthetic data leak less than the real data. Only epsilon (M1, M3) gives a guarantee"
           + (f", and it costs {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % of the synthetic-only macro-F1 (R4)." if dpl else "."),
-          "- Not tested: federated training of the IDS classifier itself (for example FedAvg on the MLP), the obvious alternative when raw data cannot be pooled and no synthetic data have to be shared; federated "
-          "versions of class weighting or SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); other generators (the optional WGAN-GP, TVAE or CTGAN-type models, diffusion); "
-          "other ways of using the synthetic data than topping every class up to `target_per_class`.", ""]
+          ("- Not tested: federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); a DP or SecAgg version of the direct federated classifier; other generators (the optional WGAN-GP, "
+           "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)."
+           if _fed_facts(R) else
+           "- Not tested: federated training of the IDS classifier itself (for example FedAvg on the MLP), the obvious alternative when raw data cannot be pooled and no synthetic data have to be shared; federated "
+           "versions of class weighting or SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); other generators (the optional WGAN-GP, TVAE or CTGAN-type models, diffusion); "
+           "other ways of using the synthetic data than topping every class up to `target_per_class`."), ""]
 
     r6, bits = R["R6"], []
     b1 = [v for v in (mf("B1a:TRTR"), mf("B1b:TRTR")) if v is not None]
@@ -539,5 +816,5 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
          f"(the macro-F1 recomputed from the predictions equals the ledger's to {m['integrity_max_abs_diff_vs_ledger']:.0e}); `results/interpretation.json` holds the same numbers in machine-readable form.", ""]
     L += _how_judged(R)
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
-    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg)
+    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _guide(R, cfg)
     return L

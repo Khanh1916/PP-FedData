@@ -1,0 +1,758 @@
+{
+  "n_features": 61,
+  "n_na_flags": 12,
+  "fit": {
+    "split": "train",
+    "n_rows": 88500
+  },
+  "settings": {
+    "categorical_top_k": 10,
+    "log1p_skew_threshold": 2.0,
+    "clip_sigma": 5.0,
+    "na_flag_range": [
+      0.005,
+      0.995
+    ],
+    "ultra_sparse_fix": true,
+    "numeric_scale": {
+      "time_delta_from_previous_displayed_frame": 1000.0
+    },
+    "multi_policy": "first_only"
+  },
+  "blocks": [
+    {
+      "name": "time_delta_from_previous_displayed_frame",
+      "type": "numeric",
+      "column": "time_delta_from_previous_displayed_frame",
+      "start": 0,
+      "width": 1
+    },
+    {
+      "name": "frame_length_on_wire_2",
+      "type": "numeric",
+      "column": "frame_length_on_wire_2",
+      "start": 1,
+      "width": 1
+    },
+    {
+      "name": "irtt",
+      "type": "numeric",
+      "column": "irtt",
+      "start": 2,
+      "width": 1
+    },
+    {
+      "name": "time_since_first_frame_in_this_tcp_stream",
+      "type": "numeric",
+      "column": "time_since_first_frame_in_this_tcp_stream",
+      "start": 3,
+      "width": 1
+    },
+    {
+      "name": "tcp_segment_len",
+      "type": "numeric",
+      "column": "tcp_segment_len",
+      "start": 4,
+      "width": 1
+    },
+    {
+      "name": "calculated_window_size",
+      "type": "numeric",
+      "column": "calculated_window_size",
+      "start": 5,
+      "width": 1
+    },
+    {
+      "name": "keep_alive",
+      "type": "numeric",
+      "column": "keep_alive",
+      "start": 6,
+      "width": 1
+    },
+    {
+      "name": "user_name_length",
+      "type": "numeric",
+      "column": "user_name_length",
+      "start": 7,
+      "width": 1
+    },
+    {
+      "name": "password_length",
+      "type": "numeric",
+      "column": "password_length",
+      "start": 8,
+      "width": 1
+    },
+    {
+      "name": "will_message_length",
+      "type": "numeric",
+      "column": "will_message_length",
+      "start": 9,
+      "width": 1
+    },
+    {
+      "name": "will_topic_length",
+      "type": "numeric",
+      "column": "will_topic_length",
+      "start": 10,
+      "width": 1
+    },
+    {
+      "name": "topic_length",
+      "type": "numeric",
+      "column": "topic_length",
+      "start": 11,
+      "width": 1
+    },
+    {
+      "name": "msg_len",
+      "type": "numeric",
+      "column": "msg_len",
+      "start": 12,
+      "width": 1
+    },
+    {
+      "name": "syn",
+      "type": "binary",
+      "column": "syn",
+      "start": 13,
+      "width": 1
+    },
+    {
+      "name": "reset",
+      "type": "binary",
+      "column": "reset",
+      "start": 14,
+      "width": 1
+    },
+    {
+      "name": "acknowledgment",
+      "type": "binary",
+      "column": "acknowledgment",
+      "start": 15,
+      "width": 1
+    },
+    {
+      "name": "retain",
+      "type": "binary",
+      "column": "retain",
+      "start": 16,
+      "width": 1
+    },
+    {
+      "name": "clean_session_flag_2",
+      "type": "binary",
+      "column": "clean_session_flag_2",
+      "start": 17,
+      "width": 1
+    },
+    {
+      "name": "will_retain",
+      "type": "binary",
+      "column": "will_retain",
+      "start": 18,
+      "width": 1
+    },
+    {
+      "name": "will_flag",
+      "type": "binary",
+      "column": "will_flag",
+      "start": 19,
+      "width": 1
+    },
+    {
+      "name": "irtt_is_na",
+      "type": "na_flag",
+      "column": "irtt",
+      "start": 20,
+      "width": 1
+    },
+    {
+      "name": "keep_alive_is_na",
+      "type": "na_flag",
+      "column": "keep_alive",
+      "start": 21,
+      "width": 1
+    },
+    {
+      "name": "user_name_length_is_na",
+      "type": "na_flag",
+      "column": "user_name_length",
+      "start": 22,
+      "width": 1
+    },
+    {
+      "name": "password_length_is_na",
+      "type": "na_flag",
+      "column": "password_length",
+      "start": 23,
+      "width": 1
+    },
+    {
+      "name": "retain_is_na",
+      "type": "na_flag",
+      "column": "retain",
+      "start": 24,
+      "width": 1
+    },
+    {
+      "name": "clean_session_flag_2_is_na",
+      "type": "na_flag",
+      "column": "clean_session_flag_2",
+      "start": 25,
+      "width": 1
+    },
+    {
+      "name": "will_retain_is_na",
+      "type": "na_flag",
+      "column": "will_retain",
+      "start": 26,
+      "width": 1
+    },
+    {
+      "name": "will_flag_is_na",
+      "type": "na_flag",
+      "column": "will_flag",
+      "start": 27,
+      "width": 1
+    },
+    {
+      "name": "will_message_length_is_na",
+      "type": "na_flag",
+      "column": "will_message_length",
+      "start": 28,
+      "width": 1
+    },
+    {
+      "name": "will_topic_length_is_na",
+      "type": "na_flag",
+      "column": "will_topic_length",
+      "start": 29,
+      "width": 1
+    },
+    {
+      "name": "topic_length_is_na",
+      "type": "na_flag",
+      "column": "topic_length",
+      "start": 30,
+      "width": 1
+    },
+    {
+      "name": "msg_len_is_na",
+      "type": "na_flag",
+      "column": "msg_len",
+      "start": 31,
+      "width": 1
+    },
+    {
+      "name": "message_type",
+      "type": "categorical",
+      "column": "message_type",
+      "start": 32,
+      "width": 12,
+      "categories": [
+        "3",
+        "1",
+        "4",
+        "2",
+        "5",
+        "6",
+        "7",
+        "8",
+        "13",
+        "12",
+        "OTHER",
+        "NONE"
+      ]
+    },
+    {
+      "name": "qos_level_1",
+      "type": "categorical",
+      "column": "qos_level_1",
+      "start": 44,
+      "width": 6,
+      "categories": [
+        "1",
+        "2",
+        "0",
+        "3",
+        "OTHER",
+        "NONE"
+      ]
+    },
+    {
+      "name": "qos_level_2",
+      "type": "categorical",
+      "column": "qos_level_2",
+      "start": 50,
+      "width": 4,
+      "categories": [
+        "0",
+        "2",
+        "OTHER",
+        "NONE"
+      ]
+    },
+    {
+      "name": "requested_qos",
+      "type": "categorical",
+      "column": "requested_qos",
+      "start": 54,
+      "width": 3,
+      "categories": [
+        "1",
+        "OTHER",
+        "NONE"
+      ]
+    },
+    {
+      "name": "protocol",
+      "type": "categorical",
+      "column": "protocol",
+      "start": 57,
+      "width": 4,
+      "categories": [
+        "TCP",
+        "MQTT",
+        "OTHER",
+        "NONE"
+      ]
+    }
+  ],
+  "diagnostic": {
+    "n_features": 0,
+    "blocks": []
+  },
+  "params": {
+    "message_type": {
+      "type": "categorical",
+      "categories": [
+        "3",
+        "1",
+        "4",
+        "2",
+        "5",
+        "6",
+        "7",
+        "8",
+        "13",
+        "12",
+        "OTHER",
+        "NONE"
+      ],
+      "train_counts": {
+        "3": 11766,
+        "1": 8215,
+        "4": 6268,
+        "2": 4082,
+        "5": 1196,
+        "6": 1067,
+        "7": 956,
+        "8": 461,
+        "13": 9,
+        "12": 2,
+        "OTHER": 0,
+        "NONE": 54478
+      },
+      "na_rate": 0.6155706214689266,
+      "has_flag": false
+    },
+    "qos_level_1": {
+      "type": "categorical",
+      "categories": [
+        "1",
+        "2",
+        "0",
+        "3",
+        "OTHER",
+        "NONE"
+      ],
+      "train_counts": {
+        "1": 6344,
+        "2": 5440,
+        "0": 84,
+        "3": 1,
+        "OTHER": 0,
+        "NONE": 76631
+      },
+      "na_rate": 0.8658870056497175,
+      "has_flag": false
+    },
+    "qos_level_2": {
+      "type": "categorical",
+      "categories": [
+        "0",
+        "2",
+        "OTHER",
+        "NONE"
+      ],
+      "train_counts": {
+        "0": 8132,
+        "2": 83,
+        "OTHER": 0,
+        "NONE": 80285
+      },
+      "na_rate": 0.9071751412429379,
+      "has_flag": false
+    },
+    "requested_qos": {
+      "type": "categorical",
+      "categories": [
+        "1",
+        "OTHER",
+        "NONE"
+      ],
+      "train_counts": {
+        "1": 461,
+        "OTHER": 0,
+        "NONE": 88039
+      },
+      "na_rate": 0.9947909604519773,
+      "has_flag": false
+    },
+    "protocol": {
+      "type": "categorical",
+      "categories": [
+        "TCP",
+        "MQTT",
+        "OTHER",
+        "NONE"
+      ],
+      "train_counts": {
+        "TCP": 54479,
+        "MQTT": 34021,
+        "OTHER": 0,
+        "NONE": 0
+      },
+      "na_rate": 0.0,
+      "has_flag": false
+    },
+    "time_delta_from_previous_displayed_frame": {
+      "type": "numeric",
+      "na_rate": 0.0,
+      "scale": 1000.0,
+      "has_flag": false,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 9.033277400337187,
+      "mean": 0.7590039984439698,
+      "std": 0.9802330440171528,
+      "constant": false,
+      "nonneg_clip": true,
+      "n_negative_in_train": 1,
+      "raw_min": 0.0,
+      "raw_max": 0.690082,
+      "is_integer": false
+    },
+    "frame_length_on_wire_2": {
+      "type": "numeric",
+      "na_rate": 0.0,
+      "scale": 1.0,
+      "has_flag": false,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 2.9771961602009176,
+      "mean": 4.481267133601742,
+      "std": 0.8076000894171769,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 54.0,
+      "raw_max": 1526.0,
+      "is_integer": true
+    },
+    "irtt": {
+      "type": "numeric",
+      "na_rate": 0.3759322033898305,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 34.570973984268505,
+      "mean": 0.002725421785477587,
+      "std": 0.01978667628946638,
+      "constant": false,
+      "nonneg_clip": true,
+      "n_negative_in_train": 0,
+      "raw_min": 2e-05,
+      "raw_max": 1.077776,
+      "is_integer": false
+    },
+    "time_since_first_frame_in_this_tcp_stream": {
+      "type": "numeric",
+      "na_rate": 0.0,
+      "scale": 1.0,
+      "has_flag": false,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 7.722552066023821,
+      "mean": 0.6874985153576688,
+      "std": 2.0670807579753725,
+      "constant": false,
+      "nonneg_clip": true,
+      "n_negative_in_train": 0,
+      "raw_min": 0.0,
+      "raw_max": 17842.70557,
+      "is_integer": false
+    },
+    "tcp_segment_len": {
+      "type": "numeric",
+      "na_rate": 0.0,
+      "scale": 1.0,
+      "has_flag": false,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 2.9697072179634865,
+      "mean": 1.5400105640547541,
+      "std": 2.2671079985013503,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 0.0,
+      "raw_max": 1472.0,
+      "is_integer": true
+    },
+    "calculated_window_size": {
+      "type": "numeric",
+      "na_rate": 0.0,
+      "scale": 1.0,
+      "has_flag": false,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 9.184155713021728,
+      "mean": 9.793682659847256,
+      "std": 3.5069101757043373,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 0.0,
+      "raw_max": 1214848.0,
+      "is_integer": true
+    },
+    "syn": {
+      "type": "binary",
+      "na_rate": 0.0,
+      "has_flag": false,
+      "p_one": 0.13757062146892654
+    },
+    "reset": {
+      "type": "binary",
+      "na_rate": 0.0,
+      "has_flag": false,
+      "p_one": 0.10317514124293785
+    },
+    "acknowledgment": {
+      "type": "binary",
+      "na_rate": 0.0,
+      "has_flag": false,
+      "p_one": 0.8158192090395481
+    },
+    "keep_alive": {
+      "type": "numeric",
+      "na_rate": 0.9071751412429379,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 5.519015300897661,
+      "mean": 0.5038540233216848,
+      "std": 1.6783702988368927,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 60.0,
+      "raw_max": 3600.0,
+      "is_integer": true
+    },
+    "user_name_length": {
+      "type": "numeric",
+      "na_rate": 0.9071751412429379,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 3.0296777377741004,
+      "mean": 0.18316553332979088,
+      "std": 0.5764657136458854,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 3.0,
+      "raw_max": 9.0,
+      "is_integer": true
+    },
+    "password_length": {
+      "type": "numeric",
+      "na_rate": 0.9071751412429379,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 2.8062963559355856,
+      "mean": 0.2039570610487802,
+      "std": 0.6376056653653477,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 8.0,
+      "raw_max": 8.0,
+      "is_integer": true
+    },
+    "retain": {
+      "type": "binary",
+      "na_rate": 0.8658870056497175,
+      "has_flag": true,
+      "p_one": 0.00016850619260257814
+    },
+    "clean_session_flag_2": {
+      "type": "binary",
+      "na_rate": 0.9071751412429379,
+      "has_flag": true,
+      "p_one": 0.9471698113207547
+    },
+    "will_retain": {
+      "type": "binary",
+      "na_rate": 0.9071751412429379,
+      "has_flag": true,
+      "p_one": 0.010103469263542301
+    },
+    "will_flag": {
+      "type": "binary",
+      "na_rate": 0.9071751412429379,
+      "has_flag": true,
+      "p_one": 0.010103469263542301
+    },
+    "will_message_length": {
+      "type": "numeric",
+      "na_rate": 0.9990621468926554,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": true,
+      "log1p": false,
+      "skew": -0.866622456874169,
+      "mean": 2211.590361445783,
+      "std": 1450.6671422133538,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 2.0,
+      "raw_max": 3164.0,
+      "is_integer": true
+    },
+    "will_topic_length": {
+      "type": "numeric",
+      "na_rate": 0.9990621468926554,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": true,
+      "log1p": false,
+      "skew": 0.0,
+      "mean": 15.0,
+      "std": 1.0,
+      "constant": true,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 15.0,
+      "raw_max": 15.0,
+      "is_integer": true
+    },
+    "topic_length": {
+      "type": "numeric",
+      "na_rate": 0.8606779661016949,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 177.6717480795472,
+      "mean": 0.47443496337244534,
+      "std": 1.1804683116783676,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 23.0,
+      "raw_max": 20256.0,
+      "is_integer": true
+    },
+    "msg_len": {
+      "type": "numeric",
+      "na_rate": 0.6155706214689266,
+      "scale": 1.0,
+      "has_flag": true,
+      "ultra_sparse": false,
+      "log1p": true,
+      "skew": 31.58882401871969,
+      "mean": 1.0594987679311403,
+      "std": 1.595912186148617,
+      "constant": false,
+      "nonneg_clip": false,
+      "n_negative_in_train": 0,
+      "raw_min": 0.0,
+      "raw_max": 3214.0,
+      "is_integer": true
+    }
+  },
+  "label_map": {
+    "NORMAL": 0,
+    "BCF": 1,
+    "DELAYED": 2,
+    "SYN": 3,
+    "INVALID": 4,
+    "WILL": 5
+  },
+  "label_mode": "6class",
+  "class_distribution": {
+    "train": {
+      "NORMAL": 60000,
+      "BCF": 20000,
+      "DELAYED": 3000,
+      "SYN": 3000,
+      "INVALID": 1500,
+      "WILL": 1000
+    },
+    "val": {
+      "NORMAL": 2000,
+      "BCF": 2000,
+      "DELAYED": 2000,
+      "SYN": 2000,
+      "INVALID": 2000,
+      "WILL": 2000
+    },
+    "test": {
+      "NORMAL": 5000,
+      "BCF": 5000,
+      "DELAYED": 5000,
+      "SYN": 5000,
+      "INVALID": 5000,
+      "WILL": 5000
+    }
+  },
+  "audit": {
+    "train": {
+      "unparsed": {},
+      "clipped_sigma": {
+        "time_delta_from_previous_displayed_frame": 88,
+        "irtt": 140,
+        "topic_length": 3
+      },
+      "negative_clipped": {
+        "time_delta_from_previous_displayed_frame": 1
+      }
+    },
+    "val": {
+      "unparsed": {},
+      "clipped_sigma": {
+        "time_delta_from_previous_displayed_frame": 5,
+        "irtt": 11
+      },
+      "negative_clipped": {}
+    },
+    "test": {
+      "unparsed": {},
+      "clipped_sigma": {
+        "time_delta_from_previous_displayed_frame": 15,
+        "irtt": 59
+      },
+      "negative_clipped": {}
+    }
+  }
+}

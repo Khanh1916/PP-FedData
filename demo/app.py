@@ -189,10 +189,10 @@ def page_results(cfg: dict, path: str | None) -> None:
                 st.info(f"Chưa có `results/figures/{fname}`.")
     md = get_report(path, _stamp(dl.report_path(cfg)))
     if md:
-        with st.expander("Báo cáo cuối (sinh tự động, tiếng Anh): các bảng 2a-8b"):
+        with st.expander("Báo cáo cuối (sinh tự động, tiếng Anh): các bảng 2a-8c"):
             secs = dl.split_markdown(md, 2)
             for k, v in secs.items():
-                if k[:2] in ("1.", "2a", "2b", "3.", "4.", "5.", "6.", "7.", "8.", "8b"):
+                if k[:2] in ("1.", "2a", "2b", "3.", "4.", "5.", "6.", "7.", "8.", "8b", "8c"):
                     st.markdown(f"#### {k}")
                     show_md(v, dl.report_path(cfg).parent)
 
@@ -209,6 +209,9 @@ def page_tradeoff(cfg: dict, path: str | None) -> None:
     note = dl.why_cvae_note(R, cfg)
     if note:
         st.warning("Trước khi đọc khuyến nghị:\n\n" + note)
+    md = get_report(path, _stamp(dl.report_path(cfg)))
+    secs = dl.split_markdown(md, 3) if md else {}
+    base = dl.report_path(cfg).parent
     rec = dl.recommendation(R)
     if rec:
         st.subheader("Cấu hình khuyến nghị theo quy tắc R6")
@@ -224,6 +227,12 @@ def page_tradeoff(cfg: dict, path: str | None) -> None:
             st.markdown(f"Nếu cần bảo đảm DP hình thức, lựa chọn DP mà quy tắc sẽ chọn nếu bỏ điều kiện overhead là **{rec['dp_alternative']}**.")
         st.dataframe(rec["table"], hide_index=True, width="stretch")
         st.caption("Khuyến nghị chỉ xếp hạng các cấu hình CVAE với nhau; nó không nói rằng dùng CVAE tốt hơn không dùng (xem cảnh báo ở đầu trang và mục 9.6, 9.9 của báo cáo).")
+    guide = next((k for k in secs if k.split()[0] == "9.10"), None)
+    if guide:
+        st.subheader("Cấu hình nào cho yêu cầu nào (M1, M2, M3)")
+        st.caption("Utility không phân biệt được các cấu hình (R6), nên lựa chọn dựa trên cái mà mỗi cấu hình bảo vệ và chi phí đo được, kèm các đặc thù của dữ liệu IoT/MQTT. "
+                   "Nội dung sinh từ mục 9.10 của `final_report.md` (tiếng Anh, như mọi đoạn trích từ báo cáo).")
+        show_md(secs[guide], base)
     c = st.columns(2)
     for col, name, cap in ((c[0], "utility_privacy.png", "Utility - privacy theo ε."), (c[1], "overhead.png", "Overhead của từng cấu hình.")):
         p = dl.figure(cfg, name)
@@ -232,13 +241,9 @@ def page_tradeoff(cfg: dict, path: str | None) -> None:
     p = dl.figure(cfg, "pareto.png")
     if p:
         st.image(str(p), caption="Pareto: macro-F1 so với MIA AUC, kích thước điểm theo overhead.", width="stretch")
-    md = get_report(path, _stamp(dl.report_path(cfg)))
-    if md:
-        secs = dl.split_markdown(md, 3)
-        base = dl.report_path(cfg).parent
-        for key in [k for k in secs if k[:3] in ("9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "9.8", "9.9")]:
-            with st.expander(key, expanded=key.startswith("9.9")):
-                show_md(secs[key], base)
+    for key in [k for k in secs if k.split()[0] in ("9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "9.8", "9.9")]:
+        with st.expander(key, expanded=key.startswith("9.9")):
+            show_md(secs[key], base)
 
 
 # --------------------------------------------------------------------------------------------------

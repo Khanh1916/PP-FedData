@@ -31,6 +31,7 @@ PRIMARY = "rf"                       # the classifier whose TAug macro-F1 ranks 
 CLFS = ("rf", "mlp")
 PROTOS = ("TSTR", "TAug")
 MIA_CHANCE_BAND = 0.05               # an MIA AUC within 0.5 +/- this is "no detectable signal" (the config's mia_auc_max is 0.55)
+RARE_CELL = 10                       # descriptive only (not a decision threshold): a (client, class) cell with at most this many records is called "thin"
 
 
 # --------------------------------------------------------------------------------------------------
@@ -356,6 +357,118 @@ def why(ctx: Context) -> dict[str, Any]:
 
 
 # --------------------------------------------------------------------------------------------------
+# Which configuration for which requirement (M1, M2, M3) and what the IoT / MQTT data change about it (section 9.10)
+# --------------------------------------------------------------------------------------------------
+def _recall_stats(ctx: Context, name: str | None) -> dict[str, Any] | None:
+    """Recall by class (mean over seeds) of a ledger configuration, the mean over the rare classes and the macro-F1."""
+    r = ctx.summ[ctx.summ["config"] == name] if name else ctx.summ.iloc[0:0]
+    if not len(r):
+        return None
+    r = r.iloc[0]
+    rec = {c: float(r[f"recall_{c}_mean"]) for c in ctx.classes if f"recall_{c}_mean" in r.index and not pd.isna(r[f"recall_{c}_mean"])}
+    if not rec:
+        return None
+    rare = [rec[c] for c in ctx.rare if c in rec]
+    return {"recall": rec, "rare_mean": float(np.mean(rare)) if rare else None, "macro_f1": float(r["macro_f1_mean"])}
+
+
+def _majority_class(ctx: Context) -> str:
+    q = ctx.cfg.get("quota", {})
+    known = [c for c in ctx.classes if c in q]
+    return max(known, key=lambda c: q[c][0]) if known else ctx.classes[0]
+
+
+def _by_class(ctx: Context) -> dict[str, Any]:
+    """Recall by class of the synthetic-only classifier (TSTR) for the options that need no pooled data, with the real-data-only reference.
+    The DP rows use the plain decoder (the one inside epsilon) and are compared with B3-plain, the epsilon = infinity point with the same decoder."""
+    ref = next((e for e in ctx.refs if e["label"].startswith("B3-plain")), None)
+    rows: list[dict[str, Any]] = []
+
+    def add(label: str, decoder: str, e: dict[str, Any], kind: str, eps: float | None = None) -> None:
+        row: dict[str, Any] = {"label": label, "decoder": decoder, "kind": kind, "eps": eps}
+        for clf in CLFS:
+            st = _recall_stats(ctx, e["cfgs"].get(("TSTR", clf)))
+            if st:
+                row[clf] = st
+        if any(clf in row for clf in CLFS):
+            rows.append(row)
+
+    if ref:
+        add("B3-plain", "plain", ref, "ref")
+    for e in ctx.ents:
+        if e["color"] != "baseline" and e["label"] != "B2":
+            add(e["label"], "plain" if e["color"] in ("dp", "dpsa") else "residual noise", e, e["color"], e.get("eps"))
+    b0 = _entry(ctx.ents, "B0")
+    real = {clf: st for clf in CLFS if b0 and (st := _recall_stats(ctx, b0["cfgs"].get(("TRTR", clf))))}
+    major, base = _majority_class(ctx), next((r for r in rows if r["label"] == "B3-plain"), None)
+    change = []
+    for r in rows:
+        if r["kind"] not in ("dp", "dpsa") or not base:
+            continue
+        for clf in CLFS:
+            if clf in r and clf in base and base[clf]["rare_mean"]:
+                change.append({"label": r["label"], "classifier": clf, "rare_mean": r[clf]["rare_mean"], "rare_mean_inf": base[clf]["rare_mean"],
+                               "rare_relative": float(r[clf]["rare_mean"] / base[clf]["rare_mean"] - 1), "major_recall": r[clf]["recall"].get(major),
+                               "major_recall_inf": base[clf]["recall"].get(major)})
+    return {"classes": list(ctx.classes), "rare": list(ctx.rare), "majority": major, "rows": rows, "real_only": real, "dp_change": change}
+
+
+def _client_rarity(ctx: Context) -> dict[str, Any] | None:
+    """How thin the rare classes are at the clients: the (client, rare class) cells of the Dirichlet partition of each seed."""
+    from ppfeddata.partition import partition_path
+    alpha = ctx.cfg.get("fl", {}).get("dirichlet_alpha")
+    out: dict[str, Any] = {"alpha": alpha, "cutoff": RARE_CELL, "seeds": {}}
+    for s in ctx.meta["seeds"]:
+        try:
+            p = partition_path(ctx.cfg, alpha, s)
+            meta = json.loads(p.read_text(encoding="utf-8"))
+        except (KeyError, TypeError, FileNotFoundError, OSError, ValueError):
+            continue
+        table, classes = np.asarray(meta["table"]), meta["classes"]
+        idx = [classes.index(c) for c in ctx.rare if c in classes]
+        if not idx:
+            continue
+        cells = table[:, idx]
+        out["seeds"][str(s)] = {"clients": int(table.shape[0]), "cells": int(cells.size), "thin": int((cells <= RARE_CELL).sum()), "empty": int((cells == 0).sum()),
+                                "min_by_class": {classes[i]: int(table[:, i].min()) for i in idx}}
+    return out if out["seeds"] else None
+
+
+def _privacy_unit(ctx: Context) -> dict[str, Any] | None:
+    """How many rows one TCP stream and one capture group contribute to each class of the train split: the size of what record-level epsilon does not cover."""
+    try:
+        z = np.load(processed_dir(ctx.cfg) / "train.npz", allow_pickle=True)
+        y, g, s = z["y"], z["group_id"], z["stream_id"]
+    except (KeyError, TypeError, FileNotFoundError, OSError):
+        return None
+    out: dict[str, Any] = {"split": "train", "n_groups": int(len(np.unique(g))), "classes": {}}
+    for i, c in enumerate(ctx.classes):
+        m = y == i
+        if not m.any():
+            continue
+        gc, sc = np.unique(g[m], return_counts=True)[1], np.unique(s[m], return_counts=True)[1]
+        out["classes"][c] = {"rows": int(m.sum()), "groups": int(len(gc)), "rows_per_group_median": float(np.median(gc)), "rows_per_group_max": int(gc.max()),
+                             "rows_per_stream_mean": float(sc.mean()), "rows_per_stream_max": int(sc.max())}
+    return out
+
+
+def _scenarios(R4: dict[str, Any], R6: dict[str, Any]) -> list[dict[str, Any]]:
+    """Which labelled configurations answer which requirement. S1: only the aggregation server must not see the updates; S2: a formal guarantee on the released
+    model / synthetic data; S3: both; S4: clients that cannot afford DP-SGD's extra compute (the overhead filter of R6)."""
+    cand = R6.get("candidates", [])
+    dp = sorted((r for r in cand if r["kind"] == "dp"), key=lambda r: r["eps_max"] if r["eps_max"] is not None else 1e9)
+    flat = bool((R4.get("curves", {}).get(f"TSTR-{PRIMARY}") or {}).get("flat"))
+    return [{"id": "S1", "choose": [r["label"] for r in cand if r["kind"] == "secagg"]},
+            {"id": "S2", "choose": [dp[0]["label"]] if dp and flat else [r["label"] for r in dp], "eps_curve_flat": flat},
+            {"id": "S3", "choose": [r["label"] for r in cand if r["kind"] == "dpsa"]},
+            {"id": "S4", "choose": [r["label"] for r in cand if r["federated"] and r["kind"] == "secagg" and r["ok_overhead"]]}]
+
+
+def guide(ctx: Context, R4: dict[str, Any], R6: dict[str, Any]) -> dict[str, Any]:
+    return {"by_class": _by_class(ctx), "client_rarity": _client_rarity(ctx), "privacy_unit": _privacy_unit(ctx), "scenarios": _scenarios(R4, R6)}
+
+
+# --------------------------------------------------------------------------------------------------
 # Red flags
 # --------------------------------------------------------------------------------------------------
 def _flag(fid: str, title: str, rule: str, triggered: bool, status: str, evidence: Any = None, notes: list[str] | None = None) -> dict[str, Any]:
@@ -493,10 +606,22 @@ def flags(ctx: Context) -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------------------------------
 # Entry point
 # --------------------------------------------------------------------------------------------------
+def read_extra(cfg: dict[str, Any], name: str) -> dict[str, Any] | None:
+    """A result file written by a follow-up command next to results/runs.csv (e.g. fed_classifier.json); read as it is, None when absent."""
+    try:
+        p = Path(cfg["compute"]["runs_csv"]).parent / name
+        return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+    except (KeyError, TypeError, ValueError, OSError):
+        return None
+
+
 def interpret(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame, n_boot: int | None = None, ctx: Context | None = None) -> dict[str, Any]:
     ctx = ctx or build_context(cfg, summ, df, n_boot)
     cost = {r["label"]: r for r in ag.cost_rows(summ, ctx.ents)}
     R = {"meta": ctx.meta, "R1": r1(ctx), "R2": r2(ctx), "R3": r3(ctx), "R4": r4(ctx), "R5": r5(ctx, cost), "R6": r6(ctx, cost), "flags": flags(ctx), "why": why(ctx)}
+    R["guide"] = guide(ctx, R["R4"], R["R6"])
+    R["fed_classifier"] = read_extra(cfg, "fed_classifier.json")         # follow-ups run after the main study (`fed-baseline`, `sensitivity`); None when not run
+    R["sensitivity"] = read_extra(cfg, "sensitivity.json")
     R["cost"] = {k: {x: v[x] for x in ("s_round", "ratio", "bytes", "bytes_per_param")} for k, v in cost.items()}
     return R
 
