@@ -1,0 +1,7 @@
+# Phase 6. SMOTE in the encoded space up to generate.target_per_class per class.
+id: B1b
+title: SMOTE oversampling (RF and MLP)
+group: matrix
+kind: baseline
+params: {names: [B1b-rf, B1b-mlp]}
+est_minutes: 5

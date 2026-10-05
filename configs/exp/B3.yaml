@@ -1,0 +1,7 @@
+# Phase 8. CVAE trained with FedAvg over 5 Dirichlet(0.5) clients.
+id: B3
+title: CVAE + FedAvg (non-IID)
+group: matrix
+kind: b3
+params: {}
+est_minutes: 5

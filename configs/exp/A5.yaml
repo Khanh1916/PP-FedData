@@ -1,0 +1,8 @@
+# Extension A5. train_sampling.max_rows_per_stream switched on versus off, on B3 and M1-eps5.
+id: A5
+title: max_rows_per_stream on versus off
+group: extension
+kind: needs_data
+params: {}
+est_minutes: null
+note: needs Phase 3 and 4 re-run with max_rows_per_stream (separate work_dir), then B3 and M1-eps5 on it (no runner yet)

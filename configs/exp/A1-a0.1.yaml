@@ -1,0 +1,7 @@
+# Extension A1. B3 with a more skewed label split (Dirichlet alpha 0.1; alpha 0.5 is B3 itself).
+id: A1-a0.1
+title: B3 with Dirichlet alpha 0.1
+group: extension
+kind: a1
+params: {alpha: 0.1}
+est_minutes: 3

@@ -1,0 +1,7 @@
+# Phase 6. Random forest with class_weight="balanced".
+id: B1a
+title: class_weight balanced (RF)
+group: matrix
+kind: baseline
+params: {names: [B1a-rf]}
+est_minutes: 1

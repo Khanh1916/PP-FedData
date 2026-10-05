@@ -1,0 +1,7 @@
+# Phase 7. Centralised CVAE; TSTR and TAug with RF and MLP.
+id: B2
+title: Centralised CVAE
+group: matrix
+kind: b2
+params: {}
+est_minutes: 6

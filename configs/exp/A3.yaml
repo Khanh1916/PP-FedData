@@ -1,0 +1,8 @@
+# Extension A3. 11-class label mode: needs the 11class interim/processed data and a re-run of the tuning for the new schema.
+id: A3
+title: 11-class mode
+group: extension
+kind: needs_data
+params: {}
+est_minutes: null
+note: needs data/processed/11class, new CVAE tuning and the 11-class partitions (no runner yet)

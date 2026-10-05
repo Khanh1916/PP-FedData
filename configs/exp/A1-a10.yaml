@@ -1,0 +1,7 @@
+# Extension A1. B3 with an almost IID split (Dirichlet alpha 10).
+id: A1-a10
+title: B3 with Dirichlet alpha 10
+group: extension
+kind: a1
+params: {alpha: 10}
+est_minutes: 3

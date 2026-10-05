@@ -1,0 +1,7 @@
+# Phase 10. FedAvg through Flower's SecAgg+ (5 shares, threshold 3).
+id: M2
+title: FedAvg + SecAgg+
+group: matrix
+kind: m2
+params: {}
+est_minutes: 5

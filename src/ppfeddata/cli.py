@@ -101,8 +101,23 @@ def build_parser() -> argparse.ArgumentParser:
     p_sr.add_argument("--eps", type=float, default=5.0)
     p_sr.add_argument("--untuned", action="store_true")
     # Phase 11
-    sub.add_parser("run", help="Run experiment configurations")
-    sub.add_parser("aggregate", help="Aggregate results and generate figures")
+    p_run = sub.add_parser("run", help="Run the experiment matrix of configs/exp/*.yaml. stage trial = one seed in an isolated workspace (Gate G4); "
+                                       "stage full = all seeds in the main workspace, needs --approve-g4")
+    p_run.add_argument("--stage", choices=["trial", "full"], default="trial")
+    p_run.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_run.add_argument("--seeds", nargs="+", type=int, default=None, help="default: config seeds (trial: the first one)")
+    p_run.add_argument("--only", nargs="+", default=None, help="configuration ids, e.g. M1-eps5 M3")
+    p_run.add_argument("--groups", nargs="+", choices=["matrix", "reference", "extension"], default=["matrix"])
+    p_run.add_argument("--workspace", choices=["main", "trial"], default=None, help="default: trial for stage trial, main for stage full")
+    p_run.add_argument("--dry-run", action="store_true", help="print the plan only")
+    p_run.add_argument("--no-resume", action="store_true")
+    p_run.add_argument("--approve-g4", action="store_true", help="the user has read results/reports/g4_trial.md and agrees to the full run")
+    p_run.add_argument("--report", action="store_true", help="only rewrite results/reports/g4_trial.md from the saved trial session (nothing is run)")
+    p_ag = sub.add_parser("aggregate", help="Summarise the run ledger: results/summary.csv, the six figures and results/reports/final_report.md")
+    p_ag.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_ag.add_argument("--runs-csv", default=None, help="ledger to summarise (default compute.runs_csv)")
+    p_ag.add_argument("--artifacts-dir", default=None, help="artifacts of that ledger (default compute.artifacts_dir)")
+    p_ag.add_argument("--out-dir", default=None, help="write summary.csv, figures/ and reports/ here instead of results/ (e.g. for a preview)")
     # Phase 13
     sub.add_parser("demo", help="Launch Streamlit demo")
 
@@ -267,6 +282,42 @@ def main(argv: list[str] | None = None) -> None:
             c["label_mode"] = a.label_mode
         logger.info("Phase 10 gate: %s", write_secagg_report(c, eps=a.eps, tuned=not a.untuned))
 
+    def cmd_run(a):
+        from ppfeddata.run_experiment import execute, load_matrix, write_trial_report
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        exps = load_matrix()
+        seeds = a.seeds if a.seeds is not None else list(c["seeds"])
+        if a.report:
+            from ppfeddata.run_experiment import status_path, workspace_cfg
+            import json as _json
+            session = _json.loads(status_path(workspace_cfg(c, "trial")).read_text(encoding="utf-8"))
+            logger.info("trial report: %s", write_trial_report(c, session, exps))
+            return
+        try:
+            session = execute(c, exps, seeds, stage=a.stage, workspace=a.workspace, approved=a.approve_g4, groups=tuple(a.groups), only=a.only,
+                              resume=not a.no_resume, dry_run=a.dry_run)
+        except PermissionError as e:
+            logger.error("%s", e)
+            raise SystemExit(3)
+        if a.stage == "trial" and not a.dry_run and session["workspace"] == "trial":
+            logger.info("trial report: %s", write_trial_report(c, session, exps))
+        if any(r["status"] in ("failed", "incomplete") for r in session["items"]):
+            raise SystemExit(1)
+
+    def cmd_aggregate(a):
+        from ppfeddata.aggregate import aggregate
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        if a.runs_csv:
+            c["compute"]["runs_csv"] = a.runs_csv
+        if a.artifacts_dir:
+            c["compute"]["artifacts_dir"] = a.artifacts_dir
+        out = aggregate(c, out_dir=a.out_dir)
+        logger.info("aggregate: %s", out)
+
     def cmd_benchmark(a):
         from ppfeddata.models.benchmark import run_benchmark
         c = load_config(a.config)
@@ -292,6 +343,8 @@ def main(argv: list[str] | None = None) -> None:
         "m3": cmd_m3,
         "secagg-check": cmd_secagg_check,
         "secagg-report": cmd_secagg_report,
+        "run": cmd_run,
+        "aggregate": cmd_aggregate,
         "benchmark": cmd_benchmark,
     }
     handler = dispatch.get(args.command)

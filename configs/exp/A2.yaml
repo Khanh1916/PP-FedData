@@ -1,0 +1,8 @@
+# Extension A2. Class imbalance of the train pool {10:1, 60:1, 200:1}: needs Phases 3-4 re-run per ratio, then B0..B3.
+id: A2
+title: Imbalance ratio of the train pool
+group: extension
+kind: needs_data
+params: {}
+est_minutes: null
+note: needs new quotas in Phase 3 and a re-run of Phase 4 for every ratio before any model run (no runner yet)

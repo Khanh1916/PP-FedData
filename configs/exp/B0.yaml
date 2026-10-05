@@ -1,0 +1,7 @@
+# Phase 6. Train on the real train split only; evaluate on the real test split.
+id: B0
+title: Real data only (RF and MLP)
+group: matrix
+kind: baseline
+params: {names: [B0-rf, B0-mlp]}
+est_minutes: 3

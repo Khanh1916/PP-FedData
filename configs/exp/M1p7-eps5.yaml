@@ -1,0 +1,7 @@
+# Phase 9. Same as M1-eps5 but with the Phase 7 hyper-parameters (tuned without DP). Reference family, not in the spec matrix.
+id: M1p7-eps5
+title: FedAvg + DP-SGD, epsilon 5 (Phase 7 hyper-parameters)
+group: reference
+kind: m1
+params: {eps: 5, family: phase7}
+est_minutes: 18
