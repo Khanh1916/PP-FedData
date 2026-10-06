@@ -204,7 +204,7 @@ def readme_commands(text: str | None) -> set[str]:
     return {c.split()[0] for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", text or "")}
 
 
-def check_readme(texts: dict[str, str | None], cli_commands: set[str]) -> Item:
+def check_readme(texts: dict[str, str | None], cli_commands: set[str], clean_record: str | None = None) -> Item:
     """`texts` maps each README (English and Vietnamese) to its text; each must have every section and a full command for every CLI command."""
     crit = "The README is enough for someone else to re-run everything from scratch"
     miss: list[str] = []
@@ -214,9 +214,11 @@ def check_readme(texts: dict[str, str | None], cli_commands: set[str]) -> Item:
             miss.append(f"{name} not found")
             continue
         miss += [f"{name}: {n}" for n in need if n not in text] + [f"{name}: command {c}" for c in sorted(cli_commands - readme_commands(text))]
+    tried = ("a clean-install record is in results/reports/clean_install.md (install from the lock, pytest, dry run in a new venv); the raw-data phases were not re-run there"
+             if clean_record and "pytest" in clean_record and "passed" in clean_record else "not tried on a clean machine (that is the only real test of 'enough')")
     return Item("D10", crit, "FAIL" if miss else "PARTIAL",
                 (f"missing: {miss}" if miss else f"both READMEs (English and Vietnamese) have install, data, every phase command ({len(cli_commands)} CLI commands), reproduction steps, layout, run times and limitations; "
-                 "not tried on a clean machine (that is the only real test of 'enough')"))
+                 + tried))
 
 
 # --------------------------------------------------------------------------------------------------
@@ -276,7 +278,7 @@ def run_all(cfg: dict[str, Any], regenerate: bool = True, root: Path = ROOT) -> 
     return [check_phase_tests(root / "tests"), check_counts(man, quota), check_group_split(man, gids, sha_ok, tun), check_leakage_report(_read(leak), cfg),
             check_seeds(done, seeds), check_epsilon(dp, f5), check_secagg(secagg), check_positive_control(R),
             check_report(report_text, regenerated, (R or {}).get("meta", {}).get("integrity_max_abs_diff_vs_ledger")),
-            check_compute_budget(_read(results / "reports" / "compute_budget.md")), check_limitations(items, report_text, readme, lim.SPEC_LIST), check_readme(readmes, cli)]
+            check_compute_budget(_read(results / "reports" / "compute_budget.md")), check_limitations(items, report_text, readme, lim.SPEC_LIST), check_readme(readmes, cli, _read(results / "reports" / "clean_install.md"))]
 
 
 def render(items: list[Item], cfg: dict[str, Any]) -> str:

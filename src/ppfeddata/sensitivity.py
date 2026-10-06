@@ -187,13 +187,13 @@ def _f(x: float | None, nd: int = 3) -> str:
 
 
 def verdicts(res: dict[str, Any]) -> list[dict[str, Any]]:
-    """For each comparison label: the verdict (better / worse / none) in every world, and whether the main study's verdict is the same in all of them."""
+    """For each comparison label: the verdict (better / worse / none) in every world that has it (the DP cost exists only where M1 was run), and whether it is the same in all of them."""
     worlds = res["worlds"]
     labels = [k for k in (worlds[0]["comparisons"] if worlds else {})]
     out = []
     for lab in labels:
         v = {w["tag"]: w["comparisons"][lab]["macro_f1"]["effect"] for w in worlds if lab in w["comparisons"]}
-        out.append({"label": lab, "what": worlds[0]["comparisons"][lab]["what"], "verdicts": v, "same_everywhere": len(set(v.values())) == 1 and len(v) == len(worlds)})
+        out.append({"label": lab, "what": worlds[0]["comparisons"][lab]["what"], "verdicts": v, "n_worlds": len(v), "same_everywhere": len(set(v.values())) == 1})
     return out
 
 
@@ -214,11 +214,11 @@ def render(res: dict[str, Any]) -> list[str]:
     cells = []
     for v in V:
         cells.append({"comparison": v["what"], **{w["tag"]: (f"{w['comparisons'][v['label']]['macro_f1']['delta']:+.4f} {w['comparisons'][v['label']]['macro_f1']['effect']}" if v["label"] in w["comparisons"] else "-") for w in W},
-                      "same verdict in every world": "yes" if v["same_everywhere"] else "NO"})
+                      "same verdict in every world that has it": "yes" if v["same_everywhere"] else "NO"})
     L += ["## Verdicts (delta of macro-F1 and the rule of the spec)", "", _table(cells), ""]
     changed = [v for v in V if not v["same_everywhere"]]
     n_w = len(W)
-    L += [f"**Reading.** {len(V) - len(changed)} of {len(V)} comparisons have the same verdict in all {n_w} worlds"
+    L += [f"**Reading.** {len(V) - len(changed)} of {len(V)} comparisons have the same verdict in every world that has them ({n_w} worlds in all)"
           + ("." if not changed else "; those that change: " + "; ".join(f"{v['what']} ({', '.join(f'{t} {e}' for t, e in v['verdicts'].items())})" for v in changed) + "."), ""]
     L += ["What this does and does not cover: it covers the choice of the capture groups of the validation and test splits (A4) and the cap on packets per stream (A5), with the same hyper-parameters (tuned once, on the main "
           "study's validation data) and 3 seeds per world. It does not cover other datasets, other quotas (A2), the 11-class mode (A3), or a different number of clients. Most sub-classes come from one capture file "
