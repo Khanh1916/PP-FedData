@@ -622,6 +622,7 @@ def interpret(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame, n_boot:
     R["guide"] = guide(ctx, R["R4"], R["R6"])
     R["fed_classifier"] = read_extra(cfg, "fed_classifier.json")         # follow-ups run after the main study (`fed-baseline`, `sensitivity`); None when not run
     R["sensitivity"] = read_extra(cfg, "sensitivity.json")
+    R["mia_model"] = read_extra(cfg, "mia_model.json")
     R["cost"] = {k: {x: v[x] for x in ("s_round", "ratio", "bytes", "bytes_per_param")} for k, v in cost.items()}
     return R
 

@@ -186,8 +186,11 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     c2st_txt = f"C2ST AUC is {min(c2st):.4f}-{max(c2st):.4f}" if c2st else "C2ST is close to 1"
     mia = (f" The attack did not detect an over-fitted CVAE (AUC {pc['overfit_cvae_auc']:.3f}), so the positive control the spec asks for is not met for the CVAE: an AUC near 0.5 does not show privacy."
            if pc.get("available") and not pc.get("overfit_cvae_detected") else " The membership-inference attack is weak, so an AUC near 0.5 does not show privacy by itself.")
+    from ppfeddata.interpret_report import _mia_clause
+    mm = _mia_clause(interp or {}) if interp else None
     add("Weak fidelity and privacy diagnostics",
-        f"{c2st_txt} for the generators (a classifier tells synthetic rows from real ones almost perfectly).{mia}", "b2_cvae.md; section 4 and 9.4")
+        f"{c2st_txt} for the generators (a classifier tells synthetic rows from real ones almost perfectly).{mia}" + (f" {mm} It tests one attack family at record level, not group privacy." if mm else ""),
+        "b2_cvae.md; section 4 and 9.4")
     add("Seed-to-seed spread",
         "Seed-to-seed spread includes the sensitivity of FL training to tiny perturbations: two runs that differ only by noise of 1e-5 differ by about 0.03 macro-F1 in TSTR. "
         "A standard deviation over three seeds is a rough estimate.", "SPEC_DEVIATIONS 10.4")
@@ -195,8 +198,8 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         "The intervals and verdicts of section 9 reflect the sampling of test rows (or of whole streams) and three training seeds only. They do not cover the choice of capture groups, "
         "the hyper-parameters or the data sampling.", "section 9")
     add("What was not compared",
-        ("The CVAE is the premise of the spec, not the result of a comparison of generators. Training the classifier itself by FL was tested after the main study (section 9.9). Not tested: federated SMOTE, a DP or "
-         "SecAgg version of the direct classifier, other generators, other ways to use the synthetic data."
+        ("The CVAE is the premise of the spec, not the result of a comparison of generators. Training the classifier itself by FL was tested after the main study, with and without the protections (section 9.9). Not tested: federated SMOTE, "
+         "other generators, other ways to use the synthetic data."
          if (interp or {}).get("fed_classifier") else
          "The CVAE is the premise of the spec, not the result of a comparison of generators. Not tested: federated training of the classifier itself, federated class weights or SMOTE, other "
          "generators, other ways to use the synthetic data (see section 9.9)."), "section 9.9; SPEC_DEVIATIONS 12.10")

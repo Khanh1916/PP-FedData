@@ -1,11 +1,9 @@
 # Machine-specific config
 configs/local.yaml
 
-# Data (large, not committed)
-data/inventory/
-data/interim/
-data/processed/
-data/partitions/
+# Data (large, not committed): everything under data/, including the sensitivity worlds (_sens) and the MIA runs (_mia)
+data/*
+!data/.gitkeep
 
 # Artifacts
 artifacts/*/

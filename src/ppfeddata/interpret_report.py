@@ -112,7 +112,8 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                   + (f"did not detect an over-fitted CVAE (AUC {pc['overfit_cvae_auc']:.3f}), so the positive control of the spec is not met for the CVAE" if pc.get("available") and not pc["overfit_cvae_detected"]
                      else "passed its positive control" if pc.get("available") else "has no positive control on file")
                   + ". What DP brings is the formal guarantee (record level, see 9.8).")
-        out.append(s)
+        mc = _mia_clause(R)
+        out.append(s + (" " + mc if mc else ""))
 
     # R5
     pr = R["R5"]["pairs"]
@@ -165,7 +166,8 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         fed = _fed_clause(R)
         tail = (" What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give "
                 f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. "
-                + (f"{fed} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators, a DP or SecAgg version of the direct classifier. See 9.9."
+                + (f"{fed} " + (f"{_fed_prot_clause(R)} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators. See 9.9." if _fed_prot(R)
+                                else "Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators, a DP or SecAgg version of the direct classifier. See 9.9.")
                    if fed else "Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
                    "federated class weights or SMOTE, other generators. See 9.9.") if tstr and b0 else " See 9.9.")
         out.append(head + tail)
@@ -236,6 +238,74 @@ def _r3(R: dict[str, Any]) -> list[str]:
             "", _table(rows), ""]
 
 
+def _mia_facts(R: dict[str, Any]) -> dict[str, Any] | None:
+    """The attack with access to the released model (`ppfeddata mia`): its positive controls and its AUC against B3 and the DP models; None when it was not run."""
+    M = R.get("mia_model")
+    if not M or not M.get("configs") or not M.get("controls") or "overfit_500" not in M["controls"]:
+        return None
+    det = float(M.get("detect_threshold", 0.55))
+    cal = lambda v: v["calibrated"]["auc_mean"]["mean"]                                                            # noqa: E731
+    ov = M["controls"]["overfit_500"]
+    order = [c for c in ("B3", "M1-eps10", "M1-eps5", "M1-eps1") if c in M["configs"]]
+    return {"M": M, "det": det, "cal": cal, "passes": cal(ov) >= det, "overfit": ov, "order": order,
+            "detected": [c for c in order if cal(M["configs"][c]) >= det], "old": (R.get("R4", {}).get("positive_control") or {}).get("overfit_cvae_auc")}
+
+
+def _mia_clause(R: dict[str, Any]) -> str | None:
+    f = _mia_facts(R)
+    if not f:
+        return None
+    M, cal = f["M"], f["cal"]
+    vals = ", ".join(f"{c} {cal(M['configs'][c]):.3f}" for c in f["order"])
+    s = (f"A second attack, with access to the released model (record fit under the model, calibrated by a reference model), "
+         + (f"passes its positive control (AUC {cal(f['overfit']):.3f} on the over-fitted CVAE" + (f" against {f['old']:.3f} for the attack on the synthetic data" if f["old"] is not None else "") + ")"
+            if f["passes"] else f"does not pass its positive control either (AUC {cal(f['overfit']):.3f} on the over-fitted CVAE)")
+         + f"; against the federated models it gives {vals}")
+    if f["passes"]:
+        s += ("; it detects leakage (AUC >= " + f"{f['det']:g}) in " + ", ".join(f["detected"]) if f["detected"] else f"; it detects nothing (AUC < {f['det']:g}) in any of them")
+    return s + "."
+
+
+def _mia_block(R: dict[str, Any]) -> list[str]:
+    f = _mia_facts(R)
+    if not f:
+        return []
+    M, cal, det = f["M"], f["cal"], f["det"]
+    ms = lambda d, k="auc_mean": f"{d[k]['mean']:.3f} ± {d[k]['std']:.3f}" if d.get(k) else "-"                      # noqa: E731
+    L = [f"**Membership inference with access to the released model (`ppfeddata mia`).** The attack of the Phase 6 sees only the synthetic data and did not pass its positive control. DP-SGD bounds what the "
+         f"released weights reveal, so this attack holds the weights: the score of a record is how well the class-conditioned model fits it (negative ELBO, {M['samples']} posterior samples); the calibrated score subtracts "
+         "the fit of a reference model trained with the same recipe on the other half of the train pool (the adversary's auxiliary data), which removes how hard a record is in itself. The train pool is split at random "
+         "into two halves; model A is trained on one half and model B on the other, with the federated recipe of the main study (for DP the same epsilon), and each model is attacked in turn; "
+         "AUC is taken inside each class and averaged (class-balanced), the rare classes are also given alone. Members and non-members come from the same capture groups.", ""]
+    crow = [{"positive control (centralised CVAE, same attack)": f"{k}: {v.get('n_per_model', '-')} rows per model, {v.get('epochs', '-')} epochs", "plain AUC": ms(v["plain"]), "calibrated AUC": ms(v["calibrated"]),
+             "calibrated AUC, rare classes": ms(v["calibrated"], "auc_rare_mean"), f"detected (>= {det:g})": "yes" if cal(v) >= det else "no"} for k, v in M["controls"].items()]
+    L += [_table(crow), ""]
+    mrow = []
+    for c in ["B3"] + [x for x in f["order"] if x != "B3"]:
+        v = M["configs"].get(c)
+        if not v:
+            continue
+        mrow.append({"released model": c, "epsilon (max)": f"{v['eps_max']:.3f}" if v.get("eps_max") is not None else "infinity", "plain AUC": ms(v["plain"]), "calibrated AUC": ms(v["calibrated"]),
+                     "calibrated AUC, rare classes": ms(v["calibrated"], "auc_rare_mean"), "TPR at 1 % FPR": ms(v["calibrated"], "tpr_at_1pct_fpr"), f"detected (>= {det:g})": "yes" if cal(v) >= det else "no"})
+    L += [_table(mrow), ""]
+    cls = M["classes"]
+    prow = [{"class": c, **{k: f"{M['configs'][k]['calibrated']['auc_by_class'].get(c, float('nan')):.3f}" for k in f["order"]}} for c in cls]
+    L += ["Calibrated AUC by class (mean over seeds):", "", _table(prow), ""]
+    seq = [cal(M["configs"][c]) for c in f["order"]]
+    mono = all(a >= b - 0.005 for a, b in zip(seq, seq[1:]))
+    L += ["**Reading.** " + (f"The attack passes its positive control: it detects the over-fitted CVAE (calibrated AUC {cal(f['overfit']):.3f}, threshold {det:g}) and the AUC falls as the training gets milder "
+                             f"({', '.join(f'{k} {cal(v):.3f}' for k, v in M['controls'].items())}), so it is able to see over-fitting where it exists. "
+                             if f["passes"] else f"The attack does not detect the over-fitted CVAE (calibrated AUC {cal(f['overfit']):.3f}, threshold {det:g}), so its numbers against the federated models cannot support a claim of no leakage. ")
+          + (f"Against the released federated models the calibrated AUC is {', '.join(f'{c} {cal(M['configs'][c]):.3f}' for c in f['order'])}: "
+             + ("the AUC does not rise above the threshold for any of them, " + ("so for this attack, this threat model (the weights, one record) and this recipe, "
+                                                                                      "no leakage is detected, including for the non-private model B3" if "B3" in f["order"] else "so no leakage is detected")
+                if not f["detected"] else f"leakage is detected in {', '.join(f['detected'])}" + ("; the AUC decreases with epsilon, as DP predicts" if mono else "; the AUC does not decrease monotonically with epsilon"))
+             + ". ")
+          + "Limits: one attack family (loss-based with a reference), 3 seeds, a reference trained on disjoint rows with the same recipe, record-level only (it does not test group privacy, "
+          "that is, all rows of a capture), SecAgg is not attacked separately (it does not change the released weights).", ""]
+    return L
+
+
 def _r4(R: dict[str, Any]) -> list[str]:
     r4 = R["R4"]
     L = ["### 9.4 R4 - What does DP cost, and what does it bring?", ""]
@@ -268,7 +338,7 @@ def _r4(R: dict[str, Any]) -> list[str]:
               + ("detects an over-fitted CVAE." if pc["overfit_cvae_detected"] else "**does not detect an over-fitted CVAE**; the spec's condition 'MIA AUC approaches 0.5 as epsilon shrinks, after passing the positive control' "
                  "cannot be established with this attack")
               + f". On a pure copier of the members it reaches ({cop}). An AUC near 0.5 therefore says only that no synthetic row is a near-copy of a training row.", ""]
-    return L
+    return L + _mia_block(R)
 
 
 def _r5(R: dict[str, Any]) -> list[str]:
@@ -433,6 +503,20 @@ def _fed_facts(R: dict[str, Any]) -> dict[str, Any] | None:
     return {"F": F, "cl": cl, "ref": ref, "vs": vs, "b3": ref.get("B3-TSTR-mlp"), "b0": ref.get("B0-mlp"), "smote": ref.get("B1b-mlp")}
 
 
+def _fed_prot(R: dict[str, Any]) -> dict[str, Any] | None:
+    P = (R.get("fed_classifier") or {}).get("protected")
+    return P if P and P.get("comparisons") else None
+
+
+def _fed_prot_clause(R: dict[str, Any]) -> str | None:
+    P = _fed_prot(R)
+    if not P:
+        return None
+    v = [c["macro_f1"]["effect"] for c in P["comparisons"].values()]
+    return (f"Given the same protections (SecAgg numerics, DP at epsilon 1, 5, 10, both) and a little tuning on validation, the direct classifier is above the CVAE route with the same protection in "
+            f"{v.count('better')} of {len(v)} cases, not different in {v.count('none')} and below in {v.count('worse')}.")
+
+
 def _fed_clause(R: dict[str, Any]) -> str | None:
     """One sentence: what the classifier trained by FL reaches against the synthetic-data route."""
     f = _fed_facts(R)
@@ -451,6 +535,40 @@ def _fed_clause(R: dict[str, Any]) -> str | None:
 
 def _cell(c: dict[str, Any] | None) -> str:
     return f"{c['delta']:+.3f} {c['effect']}" if c else "-"
+
+
+def _fed_protected(R: dict[str, Any]) -> list[str]:
+    """The direct classifier given the same protections and a little tuning, against the CVAE route with the same protection (`fed-baseline --protected`)."""
+    F = R.get("fed_classifier") or {}
+    P, tun = F.get("protected"), F.get("tuning")
+    if not P or not P.get("comparisons"):
+        return []
+    cl, ref, cmpx = P["classifiers"], P.get("references") or {}, P["comparisons"]
+    L = ["**The same detector with the same protections and a little tuning (`ppfeddata fed-baseline --protected`).** The first comparison gave the CVAE route protections and a tuned generator but the direct "
+         "classifier neither. Here the class-weighted federated MLP is tuned on validation data (learning rate and width"
+         + (f": {tun['non_dp']['chosen']['lr']:g}, {tun['non_dp']['chosen']['hidden']}" if tun else "") + "; with DP, learning rate and clipping bound at epsilon 5"
+         + (f": {tun['dp']['chosen']['lr']:g}, {tun['dp']['chosen']['clip']:g}" if tun and tun.get("dp", {}).get("chosen", {}).get("clip") is not None else "")
+         + f") and run with each protection: DP-SGD at the client (same accountant, delta {P['delta']:g}, one sigma per client for the whole run), the quantisation of SecAgg+ applied to the aggregation "
+         "(a numerical emulation: the masks cancel exactly, so this shows the effect of SecAgg on utility, not its protection or cost) and both. Each row is compared with the CVAE route with the same "
+         "protection (synthetic data alone train the same MLP, TSTR-MLP).", ""]
+    rows, verdicts = [], []
+    for lab, vs in cmpx.items():
+        v, m, r = cl[lab], vs["macro_f1"], vs["rare_recall"]
+        c = ref.get(vs["against"], {})
+        verdicts.append(m["effect"])
+        rows.append({"protection": (P.get("protection") or {}).get(lab, lab), "direct FedAvg MLP": f"{v['macro_f1_mean']:.3f} ± {v['macro_f1_std']:.3f}",
+                     "epsilon (max over seeds)": f"{v['dp']['eps_max_over_seeds']:.3f}" if v.get("dp") else "-", "rare-class recall": f"{v['rare_recall_mean']:.3f}",
+                     "CVAE route (TSTR-MLP)": f"{c['macro_f1_mean']:.3f} ± {c['macro_f1_std']:.3f}" if c else "-", "rare-class recall (CVAE route)": f"{c['rare_recall_mean']:.3f}" if c else "-",
+                     "direct minus CVAE [95% CI]": f"{m['delta']:+.3f} [{m['lo']:+.3f}, {m['hi']:+.3f}] {WORD[m['effect']]}", "rare-class recall: direct minus CVAE": f"{r['delta']:+.3f} {WORD[r['effect']]}"})
+    L += [_table(rows), ""]
+    n = len(verdicts)
+    cnt = {k: verdicts.count(k) for k in ("better", "none", "worse")}
+    L += [f"**Reading.** Across the {n} protection levels the direct classifier is above the CVAE route in {cnt['better']}, not different in {cnt['none']} and below in {cnt['worse']} (macro-F1, the rule of 9.1). "
+          + ("; ".join(f"{(P.get('protection') or {}).get(lab, lab)}: {cmpx[lab]['macro_f1']['delta']:+.3f}" for lab in cmpx) + ". ")
+          + "The DP rows spend the same epsilon on both routes; the SecAgg rows differ from the unprotected ones only by the quantisation noise. Limits: the same ones as above, the DP and clipping grid is small, the choice "
+            "of the round and of the hyper-parameters uses non-private validation data (as for the CVAE), epsilon is that of the whole plan and an upper bound for the round chosen, and a protected CVAE route produces data that "
+            "can be shared while the direct classifier produces a detector only.", ""]
+    return L
 
 
 def _fed_paragraph(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
@@ -483,9 +601,9 @@ def _fed_paragraph(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                  "what the CVAE route can still offer, and the direct route cannot, is a dataset that can be shared or inspected, whose value this study measures only through TSTR and whose privacy it cannot show (R4)."
                  if w["effect"] != "worse" else
                  "So the federated CVAE route is above the direct federated classifier in this comparison, which keeps part of the case for it when raw data cannot be pooled."), ""]
-    L += ["Limits of this comparison: one MLP architecture, untuned (the CVAE was tuned on validation data), 3 seeds, the class-weighted variant needs the class counts of every client, no DP or SecAgg version of the direct classifier "
-          "was run, and the CVAE route might use class balance too if its synthetic data were used differently (not tested).", ""]
-    return L
+    L += ["Limits of this comparison: one MLP architecture, untuned in this first comparison (the CVAE was tuned on validation data; the tuned version follows), 3 seeds, the class-weighted variant needs the class counts of every client, "
+          + ("" if _fed_prot(R) else "no DP or SecAgg version of the direct classifier was run, ") + "and the CVAE route might use class balance too if its synthetic data were used differently (not tested).", ""]
+    return L + _fed_protected(R)
 
 
 PROTECTS = {"gen": "nothing (no protection layer)", "ref": "nothing (epsilon = infinity, plain decoder)", "secagg": "each client's update, from the aggregation server",
@@ -615,7 +733,7 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         req.append({"requirement": "Raw data stay at the clients and the goal is only a detector: no synthetic data have to be shared", "choose": "FedAvg on the classifier itself, class-weighted (no CVAE; 9.9)",
                     "what it costs (measured)": f"MLP macro-F1 {cw['macro_f1_mean']:.3f} against {fed['b3']['macro_f1_mean']:.3f} for the CVAE route with synthetic data only: {WORD_VS[w['effect']] if w else 'see 9.9'}; "
                                                 f"without class weights {fed['cl']['FedMLP']['macro_f1_mean']:.3f}; the class weights need the clients' class counts",
-                    "what it does not give": "synthetic data to share or inspect; a DP or SecAgg version was not run, so nothing here says what protecting the classifier updates costs"})
+                    "what it does not give": "synthetic data to share or inspect" + ("; the protected versions are compared in 9.9" if _fed_prot(R) else "; a DP or SecAgg version was not run, so nothing here says what protecting the classifier updates costs")})
     s1, s2, s3, s4 = sc["S1"]["choose"], sc["S2"]["choose"], sc["S3"]["choose"], sc["S4"]["choose"]
     if s1 and "M2 / B3" in ov:
         o, u = ov["M2 / B3"], f["m2_utility"]
@@ -671,7 +789,9 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
               f"{_fmt_range(dpt, 1)}x the time per round of plain FL" + (f", SecAgg {m2['ratio']:.2f}x" if m2 else "") + (f"; the plain model sends {b3['bytes'] / 1e6:.1f} MB per round, SecAgg {m2['bytes'] / 1e6:.1f} MB" if b3 and m2 else "")
               + "; the DP-tuned model is smaller, so its messages are smaller in absolute terms even though SecAgg adds bytes per parameter (cost table above).", ""]
     L += ["- **The adversary of the threat model is the aggregation server.** SecAgg answers exactly that threat at a small measured cost; DP answers a different one (what the released model or the synthetic data reveal). "
-          "The study could not measure a privacy benefit for either: the membership-inference attack is at chance for every configuration, the non-private ones included, and did not pass its positive control (R4).", ""]
+          "The study could not measure a privacy benefit for either: the membership-inference attack is at chance for every configuration, the non-private ones included, and "
+          + ("the attack on the synthetic data did not pass its positive control, while the attack with access to the released model did and still finds no leakage in the non-private model, so there is nothing for DP to reduce at this scale (R4)."
+             if (_mia_facts(R) or {}).get("passes") else "did not pass its positive control (R4)."), ""]
     nc = cfg.get("fl", {}).get("num_clients")
     L += ["**Not tested here:** real devices or a real network; clients that drop out during SecAgg; "
           + (f"a number of clients other than {nc}" if nc else "a different number of clients") + "; M3 with an epsilon other than 5; a deployment whose rare classes are rarer or less rare than the quotas of this study (extension A2 was not run); "
@@ -787,9 +907,12 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
            "a generator with better fidelity might behave differently (not tested).") if c2 is not None else "- Fidelity: see section 5.",
           "- Privacy: the membership-inference check is " + ("at chance for every generator, the non-private B3 included" + (f" ({W['mia']['B3']:.3f})" if W['mia'].get('B3') == W['mia'].get('B3') else "") if near else "not at chance for every generator")
           + (", and it did not pass its positive control on an over-fitted CVAE" if pc.get("available") and not pc["overfit_cvae_detected"] else "")
+          + (f"; a second attack with access to the released model did pass its positive control (calibrated AUC {_mia_facts(R)['cal'](_mia_facts(R)['overfit']):.3f}) and "
+             + ("detected leakage in " + ", ".join(_mia_facts(R)["detected"]) if _mia_facts(R)["detected"] else "detected no leakage in B3 or in the DP models") if _mia_facts(R) and _mia_facts(R)["passes"] else "")
           + ", so the study cannot show that the synthetic data leak less than the real data. Only epsilon (M1, M3) gives a guarantee"
           + (f", and it costs {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % of the synthetic-only macro-F1 (R4)." if dpl else "."),
-          ("- Not tested: federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); a DP or SecAgg version of the direct federated classifier; other generators (the optional WGAN-GP, "
+          ("- Not tested: federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); "
+           + ("" if _fed_prot(R) else "a DP or SecAgg version of the direct federated classifier; ") + "other generators (the optional WGAN-GP, "
            "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)."
            if _fed_facts(R) else
            "- Not tested: federated training of the IDS classifier itself (for example FedAvg on the MLP), the obvious alternative when raw data cannot be pooled and no synthetic data have to be shared; federated "

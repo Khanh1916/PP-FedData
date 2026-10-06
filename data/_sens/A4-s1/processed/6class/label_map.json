@@ -1,8 +1,0 @@
-{
-  "NORMAL": 0,
-  "BCF": 1,
-  "DELAYED": 2,
-  "SYN": 3,
-  "INVALID": 4,
-  "WILL": 5
-}

@@ -131,6 +131,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_fc.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     p_fc.add_argument("--seeds", nargs="+", type=int, default=None, help="default: config seeds")
     p_fc.add_argument("--only", nargs="+", default=None, help="subset of FedMLP FedMLPcw CentMLP CentMLPcw")
+    p_fc.add_argument("--protected", action="store_true", help="instead: tune the class-weighted FedAvg MLP on validation and run it with SecAgg numerics, DP (eps 1, 5, 10) and both -> adds `tuning` and `protected` to results/fed_classifier.json (run after the plain baseline)")
+    p_mi = sub.add_parser("mia", help="Membership inference with access to the released model (loss-based, calibrated by a reference model) with positive controls: B3 and M1 on random halves of the train pool -> results/mia_model.json")
+    p_mi.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_mi.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_mi.add_argument("--configs", nargs="+", default=None, help="subset of B3 M1-eps1 M1-eps5 M1-eps10")
+    p_mi.add_argument("--controls-only", action="store_true", help="only the centralised positive controls")
     p_se = sub.add_parser("sensitivity", help="Extensions A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
     p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default A4-s1 A4-s2 A5-cap20")
     p_se.add_argument("--report-only", action="store_true", help="do not run anything, only rewrite the report from the worlds that exist")
@@ -374,9 +380,25 @@ def main(argv: list[str] | None = None) -> None:
         c = load_config(a.config)
         if a.label_mode:
             c["label_mode"] = a.label_mode
+        if a.protected:
+            from ppfeddata.fed_protected import run_all as run_protected
+            r = run_protected(c, seeds=a.seeds)
+            for n, v in r["protected"]["classifiers"].items():
+                logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f%s", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"],
+                            f", epsilon max {v['dp']['eps_max_over_seeds']:.3f}" if "dp" in v else "")
+            return
         r = run_all(c, seeds=a.seeds, names=tuple(a.only) if a.only else NAMES)
         for n, v in r["classifiers"].items():
             logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"])
+
+    def cmd_mia(a):
+        from ppfeddata.mia_model import CONFIGS, run_all
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        r = run_all(c, seeds=a.seeds, configs=() if a.controls_only else tuple(a.configs or CONFIGS))
+        for n, v in {**r["controls"], **r["configs"]}.items():
+            logger.info("%s: calibrated AUC %.3f (rare %.3f), plain %.3f", n, v["calibrated"]["auc_mean"]["mean"], v["calibrated"].get("auc_rare_mean", {}).get("mean", float("nan")), v["plain"]["auc_mean"]["mean"])
 
     def cmd_sensitivity(a):
         from ppfeddata.sensitivity import SCENARIOS, report, run_world
@@ -431,6 +453,7 @@ def main(argv: list[str] | None = None) -> None:
         "package": cmd_package,
         "fed-baseline": cmd_fed_baseline,
         "sensitivity": cmd_sensitivity,
+        "mia": cmd_mia,
         "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)

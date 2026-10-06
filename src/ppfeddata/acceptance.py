@@ -153,6 +153,13 @@ def check_positive_control(R: dict[str, Any] | None) -> Item:
     cop_auc = (pc.get("copier_auc") or {}).get("0.0")
     if pc.get("overfit_cvae_detected"):
         return Item("D6c", crit, "PASS", f"over-fitted CVAE detected (AUC {pc['overfit_cvae_auc']:.3f}, threshold {pc['threshold']})")
+    m = (R or {}).get("mia_model") or {}
+    ov = (m.get("controls") or {}).get("overfit_500")
+    if ov and m.get("configs") and ov["calibrated"]["auc_mean"]["mean"] >= float(m.get("detect_threshold", 0.55)):
+        det = [c for c, v in m["configs"].items() if v["calibrated"]["auc_mean"]["mean"] >= float(m.get("detect_threshold", 0.55))]
+        return Item("D6c", crit, "PASS", f"the attack on the synthetic data does NOT (over-fitted CVAE AUC {pc['overfit_cvae_auc']:.3f} < {pc['threshold']}), but the attack with access to the released model does: "
+                    f"calibrated AUC {ov['calibrated']['auc_mean']['mean']:.3f} on the over-fitted CVAE (threshold {m.get('detect_threshold', 0.55)}), applied to {', '.join(m['configs'])} "
+                    f"({'leakage detected in ' + ', '.join(det) if det else 'no leakage detected in any'}); `results/mia_model.json`, section 9.4")
     return Item("D6c", crit, "FAIL", f"NOT MET for the CVAE: the attack did not detect an over-fitted CVAE (AUC {pc['overfit_cvae_auc']:.3f}, threshold {pc['threshold']}); "
                 f"it does detect a verbatim copier (AUC {cop_auc:.3f}{'' if cop else ', below the threshold'}) and loses it as noise grows. An AUC near 0.5 therefore does not show privacy "
                 "(section 9.4, SPEC_DEVIATIONS 7.7)")
