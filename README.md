@@ -151,6 +151,7 @@ Every command runs from the root of the repository. Every long process writes ch
 | 13+ | the IDS classifier itself trained by FedAvg on the same clients (the alternative to the CVAE route); run `aggregate` after it (with `--protected`: tune it and add SecAgg numerics and DP) | `python -m ppfeddata.cli fed-baseline` (then `python -m ppfeddata.cli fed-baseline --protected`) | `results/fed_classifier.json` |
 | 13+ | extensions A4 (other test groups) and A5 (cap on packets per stream): re-run Phase 3-4, B0, B3 (and M1-eps5) in separate worlds | `python -m ppfeddata.cli sensitivity` | `results/sensitivity.json`, `results/reports/sensitivity.md` |
 | 13+ | membership inference with access to the released model, with positive controls (B3 and M1 on random halves of the train pool; hours of CPU) | `python -m ppfeddata.cli mia` | `results/mia_model.json` |
+| O0 | optimisation round: scorecard of B3, M1, M2, M3 on every metric (macro-F1, binary F1, rare-class recall, TAug gain, epsilon, SecAgg, MIA, cost) and their Pareto front; `--freeze-baseline` once, as the reference of the later stages | `python -m ppfeddata.cli scorecard` | `results/scorecard.json`, `results/reports/scorecard.md` |
 
 `configs/best_cvae.yaml` and `configs/best_cvae_dp.yaml` are committed: you can skip `tune`, `tune-dp` and `verify-dp` and use the selected hyper-parameters directly. The configurations of the matrix are in
 `configs/exp/*.yaml` (`python -m ppfeddata.cli run --stage trial --dry-run` prints the plan without running anything).

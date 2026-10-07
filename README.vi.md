@@ -149,6 +149,7 @@ Mọi lệnh chạy từ thư mục gốc của repo. Mọi tiến trình dài g
 | 13+ | huấn luyện chính bộ phân loại IDS bằng FedAvg trên cùng các client (phương án thay cho route CVAE); chạy `aggregate` sau đó (với `--protected`: tune và thêm SecAgg số học và DP) | `python -m ppfeddata.cli fed-baseline` (rồi `python -m ppfeddata.cli fed-baseline --protected`) | `results/fed_classifier.json` |
 | 13+ | mở rộng A4 (nhóm test khác) và A5 (giới hạn packet mỗi stream): chạy lại Phase 3-4, B0, B3 (và M1-eps5) trong các thế giới riêng | `python -m ppfeddata.cli sensitivity` | `results/sensitivity.json`, `results/reports/sensitivity.md` |
 | 13+ | suy luận thành viên có truy cập mô hình đã phát hành, kèm đối chứng dương (B3 và M1 trên hai nửa ngẫu nhiên của train pool; nhiều giờ CPU) | `python -m ppfeddata.cli mia` | `results/mia_model.json` |
+| O0 | vòng tối ưu: bảng điểm B3, M1, M2, M3 trên mọi chỉ số (macro-F1, F1 nhị phân, recall lớp hiếm, mức lợi TAug, epsilon, SecAgg, MIA, chi phí) và mặt Pareto; `--freeze-baseline` một lần, làm mốc cho các giai đoạn sau | `python -m ppfeddata.cli scorecard` | `results/scorecard.json`, `results/reports/scorecard.md` |
 
 `configs/best_cvae.yaml` và `configs/best_cvae_dp.yaml` được commit: có thể bỏ qua `tune`, `tune-dp`, `verify-dp` và dùng thẳng siêu tham số đã chọn. Các cấu hình của ma trận nằm ở `configs/exp/*.yaml`
 (`python -m ppfeddata.cli run --stage trial --dry-run` in kế hoạch mà không chạy gì).

@@ -137,6 +137,9 @@ def build_parser() -> argparse.ArgumentParser:
     p_mi.add_argument("--seeds", nargs="+", type=int, default=None)
     p_mi.add_argument("--configs", nargs="+", default=None, help="subset of B3 M1-eps1 M1-eps5 M1-eps10")
     p_mi.add_argument("--controls-only", action="store_true", help="only the centralised positive controls")
+    p_sc = sub.add_parser("scorecard", help="Optimisation round O0: scorecard of B3, M1, M2, M3 on every metric and their Pareto front -> results/scorecard.json, results/reports/scorecard.md (run after `aggregate`)")
+    p_sc.add_argument("--label-mode", choices=["6class", "11class"], default=None)
+    p_sc.add_argument("--freeze-baseline", action="store_true", help="also save it as results/scorecard_baseline.json, the reference of the later stages (refused when it exists)")
     p_se = sub.add_parser("sensitivity", help="Extensions A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
     p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default A4-s1 A4-s2 A5-cap20")
     p_se.add_argument("--report-only", action="store_true", help="do not run anything, only rewrite the report from the worlds that exist")
@@ -400,6 +403,14 @@ def main(argv: list[str] | None = None) -> None:
         for n, v in {**r["controls"], **r["configs"]}.items():
             logger.info("%s: calibrated AUC %.3f (rare %.3f), plain %.3f", n, v["calibrated"]["auc_mean"]["mean"], v["calibrated"].get("auc_rare_mean", {}).get("mean", float("nan")), v["plain"]["auc_mean"]["mean"])
 
+    def cmd_scorecard(a):
+        from ppfeddata.scorecard import run
+        c = load_config(a.config)
+        if a.label_mode:
+            c["label_mode"] = a.label_mode
+        sc = run(c, freeze_baseline=a.freeze_baseline)
+        logger.info("scorecard: front %s", ", ".join(sc["front"]))
+
     def cmd_sensitivity(a):
         from ppfeddata.sensitivity import SCENARIOS, report, run_world
         c = load_config(a.config)
@@ -454,6 +465,7 @@ def main(argv: list[str] | None = None) -> None:
         "fed-baseline": cmd_fed_baseline,
         "sensitivity": cmd_sensitivity,
         "mia": cmd_mia,
+        "scorecard": cmd_scorecard,
         "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)

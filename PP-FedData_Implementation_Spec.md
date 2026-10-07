@@ -1,6 +1,6 @@
-# PP-FedData — Đặc tả triển khai cho coding agent (v1.3)
+# PP-FedData — Đặc tả triển khai cho coding agent (v1.4)
 
-> Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt. v1.2 gộp các thay đổi rút ra khi thực hiện Phase 0-5; **v1.3 gộp tiếp các thay đổi của Phase 6-13** (các đoạn bắt đầu bằng "**v1.3:**"). Bằng chứng chi tiết và số đo nằm ở `SPEC_DEVIATIONS.md` (nhật ký bằng chứng, vẫn được giữ; spec này chỉ ghi luật, không ghi kết quả); các mục 🔶 và quyết định G1-G4 đã được người dùng chốt ghi rõ trong từng Phase.
+> Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt. v1.2 gộp các thay đổi rút ra khi thực hiện Phase 0-5; **v1.3 gộp tiếp các thay đổi của Phase 6-13** (các đoạn bắt đầu bằng "**v1.3:**"); **v1.4 thêm Phase 14, vòng tối ưu M1, M2, M3**. Bằng chứng chi tiết và số đo nằm ở `SPEC_DEVIATIONS.md` (nhật ký bằng chứng, vẫn được giữ; spec này chỉ ghi luật, không ghi kết quả); các mục 🔶 và quyết định G1-G4 đã được người dùng chốt ghi rõ trong từng Phase.
 
 **Đề tài:** Khung sinh dữ liệu bảo toàn quyền riêng tư trong học liên kết (FL) để tăng cường phát hiện tấn công MQTT DoS/DDoS trên IoT.
 **Ý tưởng:** CVAE có điều kiện nhãn, huấn luyện bằng FL trên dữ liệu non-IID; so sánh ba cơ chế bảo vệ: **DP** (DP-SGD tại client), **SecAgg** (Flower), và **DP + SecAgg**; dữ liệu sinh ra dùng để cân bằng lớp cho bộ phân loại IDS (Random Forest, MLP).
@@ -76,7 +76,7 @@ ppfeddata/
 ├── requirements.txt, requirements-lock.txt, README.md, README.vi.md, BLOCKERS.md (nếu có), SPEC_DEVIATIONS.md (nhật ký bằng chứng cho các thay đổi spec)
 ```
 
-CLI thống nhất: `python -m ppfeddata.cli <lệnh> --config ...` với lệnh ∈ {`inventory`, `harmonize`, `sample`, `preprocess`, `check`, `baseline`, `tune`, `b2`, `benchmark`, `b3`, `m1`, `tune-dp`, `verify-dp`, `m2`, `m3`, `secagg-check`, `secagg-report`, `run`, `aggregate`, `demo`, `package`, `accept`, `fed-baseline`, `sensitivity`, `mia`} (**v1.3**; the last three are the follow-ups after Phase 13: the classifier trained directly by FL, the extensions A4/A5, and membership inference with access to the released model).
+CLI thống nhất: `python -m ppfeddata.cli <lệnh> --config ...` với lệnh ∈ {`inventory`, `harmonize`, `sample`, `preprocess`, `check`, `baseline`, `tune`, `b2`, `benchmark`, `b3`, `m1`, `tune-dp`, `verify-dp`, `m2`, `m3`, `secagg-check`, `secagg-report`, `run`, `aggregate`, `demo`, `package`, `accept`, `fed-baseline`, `sensitivity`, `mia`, `scorecard`} (**v1.3**, `scorecard` **v1.4**; the last three are the follow-ups after Phase 13: the classifier trained directly by FL, the extensions A4/A5, and membership inference with access to the released model).
 
 ---
 
@@ -480,6 +480,26 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
   - `ppfeddata package` ghi `results/repro/` (`pip_freeze.txt`, bản sao `configs/` không có `local.yaml`, `environment.json`, `MANIFEST.json` với SHA-256) và chép `feature_schema.json` sang `results/manifests/feature_schema_<mode>.json`; `requirements-lock.txt` cùng nội dung với `pip_freeze.txt`.
   - `ppfeddata accept` đối chiếu từng ô Definition of Done với các file và ghi `results/reports/dod_checklist.md` (PASS / PARTIAL / MANUAL / FAIL; file thiếu là FAIL, không bao giờ là PASS).
 
+## Phase 14 — Vòng tối ưu M1, M2, M3 (O0-O5) (**v1.4**)
+
+Mục tiêu (người dùng, 2026-10-07): tối ưu M1, M2, M3 để khung sinh dữ liệu bảo toàn quyền riêng tư tăng cường phát hiện tấn công IoT/MQTT, **trên mọi chỉ số cùng lúc**, và "linh hoạt" theo nghĩa **chọn được cấu hình theo yêu cầu triển khai**. Được phép: tune lại, kỹ thuật DP tốt hơn, thêm hoặc đổi bộ sinh, đổi giao thức đánh giá. Ngân sách: vài ngày máy. Mỗi giai đoạn một lượt, dừng ở Gate.
+
+**Luật chung (mọi giai đoạn O0-O5):**
+- Test thật vẫn khoá: chỉ đọc khi đánh giá cuối một cấu hình đã chốt; mọi lựa chọn (siêu tham số, bộ phân loại, vòng, biến thể) dùng **val**. Tune dùng val không riêng tư, như Phase 7 và 9 (hạn chế đã ghi).
+- **Bảng điểm** (`ppfeddata scorecard`, `scorecard.py`): với mỗi cấu hình có bảo vệ (B3, M1, M2, M3 và các biến thể mới), utility trên test thật gồm macro-F1 TSTR 6 lớp, F1 nhị phân, recall trung bình các lớp hiếm, mức lợi TAug (macro-F1 thật + sinh trừ B0 cùng bộ phân loại); bộ phân loại (RF hay MLP) của mỗi giao thức **chọn theo macro-F1 val**. Quyền riêng tư: ε đạt (max theo client), có SecAgg hay không, AUC của MIA có truy cập mô hình (đã hiệu chỉnh). Chi phí: byte mỗi vòng, thời gian FL.
+- **Hợp lệ:** một dòng chỉ được tính khi con số đúng với tên của nó. Cấu hình DP có thành phần tính từ dữ liệu train ngoài ε (ví dụ `residual_std` của nhiễu phần dư) được liệt kê nhưng **không hợp lệ**: không vào mặt Pareto, không được khuyến nghị.
+- **Mặt Pareto:** a trội b khi a không kém b trên mọi trục và hơn trên ít nhất một trục. Utility: khác biệt chỉ tính khi lớn hơn std giữa seed của cả hai (trong khoảng đó là bằng); ε so với dung sai 2 %, chi phí 5 %; có SecAgg hơn không có. Bộ phân loại huấn luyện trực tiếp bằng FL (`fed_classifier.json`, khoá `protected`) là **tham chiếu**: không phát hành dữ liệu nên không vào mặt Pareto.
+- **Mốc:** `scorecard --freeze-baseline` chạy một lần ở O0 (`results/scorecard_baseline.json`, không ghi đè); các giai đoạn sau so với mốc theo cùng luật seed. Kết luận cuối (O5) dùng luật đầy đủ của R1/R2 (bootstrap ghép cặp + std giữa seed).
+- Thay đổi phương pháp ghi vào `SPEC_DEVIATIONS.md` (mục O); spec chỉ ghi luật.
+
+**Các giai đoạn:**
+- **O0** — bảng điểm, mặt Pareto, mốc. **Gate O0:** bảng điểm sinh từ `results/`, test xanh, người dùng duyệt.
+- **O1** — cải tiến DP trên CVAE: (a) `residual_std` theo lớp tính **bằng DP** (cơ chế Gauss; phần ε này cộng vào ε tổng theo kế toán) để biến thể có nhiễu thành hợp lệ; (b) tune DP **ở quy mô thật** (đủ client, không proxy 20 %) **riêng cho từng ε**, thêm số vòng, số epoch cục bộ, tỉ lệ lấy mẫu, mở rộng các tham số chạm biên; (c) cân bằng lớp ở client. Không làm: giữ encoder ở client để chỉ decoder chịu DP (encoder không DP làm rò dữ liệu vào gradient của decoder, ε không còn đúng).
+- **O2** — M3 hai biến thể, báo cáo cả hai: **M3-local** (mỗi client tự đủ nhiễu, như hiện tại) và **M3-distributed** (DP phân tán qua SecAgg: mỗi client thêm một phần nhiễu, tổng sau SecAgg đạt ε mục tiêu khi ít nhất t client trung thực; báo cáo cả ε khi chỉ một client trung thực). Tối ưu băng thông của M2/M3 (số bit lượng tử hoá).
+- **O3** — bộ sinh thứ hai: tổng hợp dựa trên biên phân bố có DP theo kiểu liên bang (AIM/MST; bảng đếm biên có nhiễu cộng được qua SecAgg); tuỳ thời gian thêm DP-CTGAN. Kiểm tra tính mới so với các nghiên cứu đã có.
+- **O4** — `ppfeddata recommend` (và trang demo): đầu vào là yêu cầu triển khai (mức tin server, ngân sách ε, băng thông và sức tính của broker/gateway MQTT, lớp tấn công cần bắt), đầu ra là cấu hình trên mặt Pareto kèm số đo.
+- **O5** — chạy lại cấu hình tốt nhất 3 seed, cập nhật báo cáo cuối, README hai bản, `accept`.
+
 ---
 
 ## Danh mục nghiệm thu cuối (Definition of Done)
@@ -505,6 +525,7 @@ Thêm cho quyết định G2: mô hình tham chiếu (không trọng số và c�
 
 ## Lịch sử thay đổi
 
+- **v1.4 (2026-10-07):** thêm Phase 14 (vòng tối ưu M1, M2, M3: O0-O5) theo mục tiêu của người dùng: bảng điểm nhiều chỉ số với bộ phân loại chọn theo val, luật hợp lệ (thành phần ngoài ε làm dòng DP không hợp lệ), mặt Pareto theo luật seed, mốc đóng băng, kế hoạch O1-O5, lệnh `scorecard`.
 - **v1.3 (2026-10-05):** gộp các thay đổi rút ra khi làm Phase 6-13 (chi tiết và bằng chứng: `SPEC_DEVIATIONS.md` các mục 6-13, giữ làm nhật ký). Cấu hình: `patience`, `generate.residual_noise`, `secagg.clipping_range` 16 và `max_weight`, `eval.smote`, `compute.runs_csv`, 4 ngưỡng Phase 12. Phase 6: B1a chỉ RF, `run_id` gồm bộ phân loại, sổ chạy từ Phase 6. Phase 7: nhiễu phần dư theo lớp, hạng mục chết, tune qua đường sinh cuối, C2ST không chặn. Phase 8: cách chạy Flower 1.39 (Ray, thứ tự gộp theo mã client, dừng khi thiếu phản hồi). Phase 9: số bước Opacus, decoder `plain` là số chính, tune DP riêng (`tune-dp`, `verify-dp`), ε tính lại độc lập. Phase 10: dùng nguyên bản `SecAggPlusWorkflow` (không cần `secagg_sim.py`), `max_weight`, `clipping_range`, T-SA1-3 trên dữ liệu thật. Phase 11: họ DP chính, nhóm reference/extension, G4 mã hoá vào công cụ. Phase 12: định nghĩa R1-R6 và cờ đỏ, bootstrap theo stream, mục 9.9 (vì sao CVAE) và 9.10 (cấu hình nào cho yêu cầu nào). Phase 13: demo, README hai bản, `limitations.py`, `package`, `accept`. Đã sửa: nhận định "gói tin cùng stream tương quan mạnh" chỉ đúng ở mức capture (mẫu có ~1,0-1,2 dòng mỗi stream). `SPEC_DEVIATIONS.md` có ghi chú đầu file nói các dòng nào đã được gộp.
 - **v1.2 (2026-10-03):** gộp các thay đổi rút ra khi làm Phase 0-5 (chi tiết và bằng chứng: `SPEC_DEVIATIONS.md`). Phase 2: kiểm toán token, cặp cột trùng, header; ánh xạ nhãn chữ↔mã số; luật SUSPECT sinh từ số liệu (sự kiện cha, ngưỡng đếm); `first_only` thay cho first+count/sum và bỏ `n_mqtt_msgs`; lọc `protocol`; quyết định người dùng lưu ở config (`user_overrides`, `g1_log`, `g2_log`). Phase 3: chọn trước chỉ số dòng thay cho reservoir, `interim/<mode>/`, nhóm `#blkNN`, bỏ stream vắt qua nhiều khối, manifest có phiên bản và bản sao commit được. Phase 4: cột siêu thưa, bố cục khối, cột `diagnostic`, `processed/<mode>/`. Phase 5: C3 cân bằng lớp + F1 theo lớp, C4 thêm chia theo stream và chỉ cờ theo nhóm/stream, ablation; 3 ngưỡng mới; quyết định G1, G2; `configs/local.yaml` và `config_hash` bỏ `paths`; hạn chế bổ sung. Sau G2: `numeric_scale` cho `time_delta`, `requirements.txt` bỏ ràng buộc `numpy<2.0` (kiểm tra bằng dry-run cài `torch`, `flwr`, `opacus`: không xung đột), cho phép commit báo cáo `.md` và hình `.png` trong `results/`.
 - **v1.1:** thêm mục 1.1 (Colab/Drive, chống mất phiên) và 1.2 (ngân sách tính toán); thêm bước 7.4 benchmark; bảng quota 11 lớp và bỏ mode `binary` riêng; kiểm tra đặc trưng thời gian (Phase 2); giữ `stream_id` và tuỳ chọn `max_rows_per_stream`; quy tắc báo cáo ε theo từng client (max_i); checkpoint/resume cho FL và DP; nhãn 🔶 và khối `thresholds` trong config; độ nhạy A4 (đổi nhóm test) và A5; cập nhật Definition of Done.
