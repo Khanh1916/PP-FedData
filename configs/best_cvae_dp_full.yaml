@@ -30,3 +30,65 @@ searches:
     fitness: val macro-F1 of RF on syn_per_class rows per class, better of plain decoder
       and DP residual noise; full FL run, seed 0
     limitation: tuned on real non-private validation data, one seed per trial
+  eps1:
+    epsilon: 1.0
+    n_trials: 28
+    best_trial: 33
+    val_macro_f1: 0.23411601378466007
+    variant: plain
+    anchor_val_macro_f1: 0.20581490867266586
+    params:
+      latent_dim: 8
+      width: 128
+      batch_size: 256
+      beta: 0.36852151318753534
+      lr: 0.002440328349915626
+      max_grad_norm: 0.6382414475558826
+      rounds: 30
+      local_epochs: 4
+      cw_power: 1.0
+      stat_frac: 0.02
+      res_clip: 4.0
+    val:
+      dps_bin_f1: 0.8063958513396714
+      dps_macro_f1: 0.19561949544695165
+      dps_rare_recall: 0.08625
+      eps_max: 0.999964069284709
+      fl_total_s: 364.71288019999884
+      plain_bin_f1: 0.748620228896764
+      plain_macro_f1: 0.23411601378466007
+      plain_rare_recall: 0.152
+    fitness: val macro-F1 of RF on syn_per_class rows per class, better of plain decoder
+      and DP residual noise; full FL run, seed 0
+    limitation: tuned on real non-private validation data, one seed per trial
+  eps10:
+    epsilon: 10.0
+    n_trials: 12
+    best_trial: 12
+    val_macro_f1: 0.277096623515504
+    variant: dps
+    anchor_val_macro_f1: 0.26702939462298664
+    params:
+      latent_dim: 8
+      width: 128
+      batch_size: 256
+      beta: 0.21181925546224925
+      lr: 0.0053109581028205075
+      max_grad_norm: 5.298368431199112
+      rounds: 30
+      local_epochs: 2
+      cw_power: 0.0
+      stat_frac: 0.05
+      res_clip: 1.0
+    val:
+      dps_bin_f1: 0.8701843881183909
+      dps_macro_f1: 0.277096623515504
+      dps_rare_recall: 0.17425
+      eps_max: 9.997000012328886
+      fl_total_s: 223.53030289999515
+      plain_bin_f1: 0.8234782135668823
+      plain_macro_f1: 0.25355660952758036
+      plain_rare_recall: 0.181125
+    fitness: val macro-F1 of RF on syn_per_class rows per class, better of plain decoder
+      and DP residual noise; full FL run, seed 0
+    limitation: tuned on real non-private validation data, one seed per trial

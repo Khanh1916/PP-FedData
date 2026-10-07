@@ -145,6 +145,33 @@ def build_parser() -> argparse.ArgumentParser:
     p_tf.add_argument("--n-trials", type=int, default=30, help="trials per epsilon (resumable)")
     p_tf.add_argument("--final", action="store_true", help="instead: train the best trial of each epsilon with every seed as M1o-t<n>-eps<e> and M3o-... (with SecAgg) into the run ledger; run `aggregate` and `scorecard` after it")
     p_tf.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_tg = sub.add_parser("tune-fedsgd", help="Optimisation O2(a): M3-distributed = DP-FedSGD with the noise split over SecAgg (in-process simulation); search per epsilon on validation (seed 0) -> configs/best_cvae_fedsgd.yaml")
+    p_tg.add_argument("--eps", nargs="+", type=float, default=None, help="default dp.epsilons")
+    p_tg.add_argument("--n-trials", type=int, default=12, help="trials per epsilon (resumable; 12 by the budget cut of O1.8)")
+    p_tg.add_argument("--final", action="store_true", help="instead: train the best trial of each epsilon with every seed as M3f-t<n>-eps<e> into the run ledger; run `aggregate` and `scorecard` after it")
+    p_tg.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_tg.add_argument("--threads", type=int, default=4, help="torch threads")
+    p_sb = sub.add_parser("secagg-bits", help="Optimisation O2 (bandwidth): M2 with the masked vectors sent as uint32 (c32, same aggregate) or uint16 (c16, 2^13 quantisation levels) instead of Flower's int64 -> results/runs.csv (M2-c32, M2-c16); `--m3-eps` also runs the O1 winner at that epsilon with SecAgg+ and the level")
+    p_sb.add_argument("--levels", nargs="+", choices=["c32", "c16"], default=None)
+    p_sb.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_sb.add_argument("--m3-eps", type=float, default=None, help="also M3o at this epsilon (needs configs/best_cvae_dp_full.yaml)")
+    p_tm = sub.add_parser("tune-marginal", help="Optimisation O3: second generator = federated DP marginals + Chow-Liu tree; grid (coarse bins x budget split) per epsilon on validation (seed 0) -> configs/best_marginal.yaml; `--final`: every seed as MGd-eps<e> (distributed noise via SecAgg) and MGl-eps<e> (local DP)")
+    p_tm.add_argument("--eps", nargs="+", type=float, default=None, help="default dp.epsilons")
+    p_tm.add_argument("--final", action="store_true")
+    p_tm.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_tm.add_argument("--jobs", type=int, default=-1, help="RF jobs of the validation scoring")
+    p_rc = sub.add_parser("recommend", help="Optimisation O4: configurations of the scorecard that meet a deployment requirement and their front; without options: the example IoT scenarios -> results/recommend.json, results/reports/recommend.md, results/reports/recommend.html (run after `scorecard`)")
+    p_rc.add_argument("--untrusted-server", action="store_true", help="the aggregator must not see a client's update in the clear")
+    p_rc.add_argument("--untrusted-clients", action="store_true", help="clients may collude: distributed DP counts with a single honest client")
+    p_rc.add_argument("--max-eps", type=float, default=None)
+    p_rc.add_argument("--max-mb-round", type=float, default=None)
+    p_rc.add_argument("--max-mb-total", type=float, default=None)
+    p_rc.add_argument("--max-rounds", type=int, default=None)
+    p_rc.add_argument("--priority", choices=["macro", "binary", "rare"], default="macro")
+    p_rc.add_argument("--min-rare-recall", type=float, default=None)
+    p_tr = sub.add_parser("taug-rare", help="Optimisation round: TAugR = real data + synthetic rows for the rare classes only, ratio chosen on validation (seed 0), from the saved synthetic sets of the scorecard generators -> results/runs.csv (`<prefix>-TAugR-<clf>`); run `aggregate` and `scorecard` after it")
+    p_tr.add_argument("--prefixes", nargs="+", default=None, help="generator prefixes, default the valid rows of the scorecard")
+    p_tr.add_argument("--seeds", nargs="+", type=int, default=None)
     p_se = sub.add_parser("sensitivity", help="Extensions A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
     p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default A4-s1 A4-s2 A5-cap20")
     p_se.add_argument("--report-only", action="store_true", help="do not run anything, only rewrite the report from the worlds that exist")
@@ -427,6 +454,55 @@ def main(argv: list[str] | None = None) -> None:
             s = y.get("searches", {}).get(f"eps{float(e):g}", {})
             logger.info("eps %g: best trial %s, val macro-F1 %s (%s; anchor %s)", e, s.get("best_trial"), s.get("val_macro_f1"), s.get("variant"), s.get("anchor_val_macro_f1"))
 
+    def cmd_tune_fedsgd(a):
+        import torch
+
+        from ppfeddata.tune_fedsgd import run_final, run_search
+        torch.set_num_threads(int(a.threads))
+        c = load_config(a.config)
+        if a.final:
+            logger.info("O2 DP-FedSGD final runs: %s", run_final(c, a.eps, a.seeds))
+            return
+        for e in (a.eps or c["dp"]["epsilons"]):
+            y = run_search(c, float(e), n_trials=a.n_trials)
+            s = y.get("searches", {}).get(f"eps{float(e):g}", {})
+            logger.info("fedsgd eps %g: best trial %s, val macro-F1 %s (%s; anchor %s)", e, s.get("best_trial"), s.get("val_macro_f1"), s.get("variant"), s.get("anchor_val_macro_f1"))
+
+    def cmd_secagg_bits(a):
+        from ppfeddata.fl.bandwidth import run_m2_levels, run_m3o_level
+        c = load_config(a.config)
+        logger.info("O2 bandwidth: %s", run_m2_levels(c, a.levels, a.seeds))
+        if a.m3_eps is not None:
+            for lv in a.levels or ["c16"]:
+                logger.info("O2 bandwidth: %s", run_m3o_level(c, a.m3_eps, lv, a.seeds))
+
+    def cmd_tune_marginal(a):
+        from ppfeddata.tune_marginal import run_final, search
+        c = load_config(a.config)
+        if a.final:
+            logger.info("O3 final runs: %s", run_final(c, a.eps, a.seeds))
+            return
+        for e, s in search(c, a.eps, n_jobs=a.jobs)["searches"].items():
+            logger.info("MG %s: best %s, val macro-F1 %.4f", e, s["best"], s["val_macro_f1"])
+
+    def cmd_recommend(a):
+        from ppfeddata.recommend import Requirement, run
+        c = load_config(a.config)
+        custom = any([a.untrusted_server, a.untrusted_clients, a.max_eps is not None, a.max_mb_round is not None, a.max_mb_total is not None,
+                      a.max_rounds is not None, a.priority != "macro", a.min_rare_recall is not None])
+        req = Requirement("custom", not a.untrusted_server, not a.untrusted_clients, a.max_eps, a.max_mb_round, a.max_mb_total, a.max_rounds,
+                          a.priority, a.min_rare_recall) if custom else None
+        for r in run(c, req):
+            b = r["best"]
+            logger.info("%s: %s", r["requirement"]["name"], f"{b['label']} ({r['priority_metric']} {b.get(r['priority_metric']):.3f}, epsilon {b['eps_eff']:.3g}); "
+                        f"front {[x['label'] for x in r['front']]}; command: {r['command']}" if b else "no valid configuration meets it")
+
+    def cmd_taug_rare(a):
+        from ppfeddata.eval.taug_rare import run
+        c = load_config(a.config)
+        for p, r in run(c, a.prefixes, a.seeds).items():
+            logger.info("TAugR %s: ratio %s", p, r or "(already done)")
+
     def cmd_sensitivity(a):
         from ppfeddata.sensitivity import SCENARIOS, report, run_world
         c = load_config(a.config)
@@ -483,6 +559,11 @@ def main(argv: list[str] | None = None) -> None:
         "mia": cmd_mia,
         "scorecard": cmd_scorecard,
         "tune-dp-full": cmd_tune_dp_full,
+        "taug-rare": cmd_taug_rare,
+        "tune-fedsgd": cmd_tune_fedsgd,
+        "secagg-bits": cmd_secagg_bits,
+        "tune-marginal": cmd_tune_marginal,
+        "recommend": cmd_recommend,
         "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)

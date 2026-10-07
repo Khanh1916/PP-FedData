@@ -107,6 +107,7 @@ secagg_client_app = ClientApp()
 def train_secagg(msg: Message, context: Context) -> Message:
     sp = _spec()
     torch.set_num_threads(int(sp.get("torch_threads", 2)))
+    secagg.set_compact(bool(sp["secagg"].get("compact")))      # O2: uint16 / uint32 masked vectors (this actor process)
     pid = int(context.node_config["partition-id"])
     fitins = compat.recorddict_to_fitins(msg.content, keep_input=True)
     rnd = int(fitins.config["round"])
@@ -236,6 +237,7 @@ def main(grid: Grid, context: Context) -> None:
         (rdir / "rounds.jsonl").unlink(missing_ok=True)
     last = int(sp["stop_after"]) if sp.get("stop_after") else int(sp["rounds"])    # stop_after = simulated interruption
     if sp.get("secagg"):
+        secagg.set_compact(bool(sp["secagg"].get("compact")))
         if offset == 0:                                      # fresh run: drop the diagnostics of any earlier attempt
             import shutil
             shutil.rmtree(secagg.debug_dir(rdir), ignore_errors=True)

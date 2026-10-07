@@ -6866,36 +6866,36 @@
       "value": 0.00076667
      },
      {
-      "config": "B3-plain-TSTR-rf",
-      "seed": 2,
-      "value": 0.0004
+      "config": "MGd-eps1-TSTR-rf",
+      "seed": 0,
+      "value": 0.00053333
      },
      {
-      "config": "B2-TSTR-rf",
-      "seed": 0,
-      "value": 0.00036667
+      "config": "MGd-eps1-TSTR-rf",
+      "seed": 2,
+      "value": 0.0004
      }
     ],
     "min_dcr_ratio": [
      {
-      "config": "B3-TSTR-rf",
-      "seed": 1,
-      "value": 0.92702206
-     },
-     {
-      "config": "B3-plain-TSTR-rf",
+      "config": "MGd-eps10-TSTR-rf",
       "seed": 2,
-      "value": 0.92974959
+      "value": 0.87389806
      },
      {
-      "config": "M1d-t17-eps5-plain-TSTR-rf",
-      "seed": 0,
-      "value": 0.92993618
+      "config": "MGd-eps1-TSTR-rf",
+      "seed": 1,
+      "value": 0.87506629
+     },
+     {
+      "config": "MGd-eps10-TSTR-rf",
+      "seed": 1,
+      "value": 0.88261256
      }
     ],
     "dup_rate_max": 0.01,
     "dcr_ratio_min": 0.5,
-    "n_generators_checked": 62
+    "n_generators_checked": 116
    },
    "notes": []
   },
@@ -6908,47 +6908,77 @@
    "evidence": {
     "largest": [
      {
+      "config": "M3o-t12-eps10-plain-TSTR-mlp",
+      "std": 0.07274579,
+      "mean": 0.26341286,
+      "in_matrix": false
+     },
+     {
+      "config": "M1o-t12-eps10-plain-TSTR-rf",
+      "std": 0.06147179,
+      "mean": 0.27073882,
+      "in_matrix": false
+     },
+     {
+      "config": "M3o-t12-eps10-TSTR-mlp",
+      "std": 0.0588588,
+      "mean": 0.26110918,
+      "in_matrix": false
+     },
+     {
       "config": "M1-eps1-TSTR-mlp",
       "std": 0.05754133,
       "mean": 0.21538546,
       "in_matrix": false
      },
      {
-      "config": "M1-eps10-plain-TSTR-mlp",
-      "std": 0.05106789,
-      "mean": 0.19667426,
+      "config": "M1o-t12-eps10-plain-TSTR-mlp",
+      "std": 0.05677399,
+      "mean": 0.25113797,
       "in_matrix": false
      },
      {
-      "config": "M1-eps10-plain-TSTR-rf",
-      "std": 0.04652754,
-      "mean": 0.19780698,
-      "in_matrix": false
-     },
-     {
-      "config": "M1-eps1-TSTR-rf",
-      "std": 0.04450161,
-      "mean": 0.19425072,
-      "in_matrix": false
-     },
-     {
-      "config": "M1-eps1-plain-TSTR-mlp",
-      "std": 0.04407931,
-      "mean": 0.20055683,
-      "in_matrix": false
-     },
-     {
-      "config": "M1-eps1-plain-TSTR-rf",
-      "std": 0.04176475,
-      "mean": 0.20094221,
+      "config": "M1o-t33-eps1-plain-TSTR-mlp",
+      "std": 0.05211583,
+      "mean": 0.19547698,
       "in_matrix": false
      }
     ],
     "above_redflag": [
      {
+      "config": "M3o-t12-eps10-plain-TSTR-mlp",
+      "std": 0.07274579,
+      "mean": 0.26341286,
+      "in_matrix": false
+     },
+     {
+      "config": "M1o-t12-eps10-plain-TSTR-rf",
+      "std": 0.06147179,
+      "mean": 0.27073882,
+      "in_matrix": false
+     },
+     {
+      "config": "M3o-t12-eps10-TSTR-mlp",
+      "std": 0.0588588,
+      "mean": 0.26110918,
+      "in_matrix": false
+     },
+     {
       "config": "M1-eps1-TSTR-mlp",
       "std": 0.05754133,
       "mean": 0.21538546,
+      "in_matrix": false
+     },
+     {
+      "config": "M1o-t12-eps10-plain-TSTR-mlp",
+      "std": 0.05677399,
+      "mean": 0.25113797,
+      "in_matrix": false
+     },
+     {
+      "config": "M1o-t33-eps1-plain-TSTR-mlp",
+      "std": 0.05211583,
+      "mean": 0.19547698,
       "in_matrix": false
      },
      {
@@ -6960,46 +6990,68 @@
     ],
     "soft_breakdown": {
      "by_method": {
-      "M1": 14,
-      "M3": 3,
+      "M1": 25,
+      "M3": 12,
+      "MG": 3,
       "A1": 2
      },
      "by_protocol": {
-      "TSTR": 19
+      "TSTR": 42
      }
     },
-    "n_above_redflag": 2,
+    "n_above_redflag": 7,
     "n_above_redflag_in_matrix": 0,
-    "n_above_seed_std_max": 19,
-    "n_configurations": 85,
+    "n_above_seed_std_max": 42,
+    "n_configurations": 157,
     "n_in_matrix": 49,
     "max_std_in_matrix": 0.03696463,
     "redflag": 0.05,
     "seed_std_max": 0.02,
     "above_seed_std_max": [
+     "M3o-t12-eps10-plain-TSTR-mlp",
+     "M1o-t12-eps10-plain-TSTR-rf",
+     "M3o-t12-eps10-TSTR-mlp",
      "M1-eps1-TSTR-mlp",
+     "M1o-t12-eps10-plain-TSTR-mlp",
+     "M1o-t33-eps1-plain-TSTR-mlp",
      "M1-eps10-plain-TSTR-mlp",
+     "M3o-t12-eps10-plain-TSTR-rf",
+     "M1o-t12-eps10-TSTR-rf",
      "M1-eps10-plain-TSTR-rf",
      "M1-eps1-TSTR-rf",
+     "M3o-t33-eps1-plain-TSTR-mlp",
      "M1-eps1-plain-TSTR-mlp",
+     "M3o-t12-eps10-TSTR-rf",
      "M1-eps1-plain-TSTR-rf",
+     "M1o-t12-eps10-TSTR-mlp",
      "M1d-t21-eps1-TSTR-rf",
      "M1d-t21-eps10-plain-TSTR-mlp",
+     "MGl-eps1-TSTR-mlp",
+     "M3o-t27-eps5-TSTR-rf",
+     "M3o-t33-eps1-plain-TSTR-rf",
+     "M1o-t33-eps1-TSTR-rf",
      "M1d-t21-eps10-plain-TSTR-rf",
+     "M1o-t33-eps1-plain-TSTR-rf",
      "M3d-t21-eps5-plain-TSTR-rf",
      "M1d-t21-eps1-plain-TSTR-rf",
      "M3d-t21-eps5-plain-TSTR-mlp",
      "M1d-t21-eps5-TSTR-rf",
+     "MGl-eps1-TSTR-rf",
+     "M1o-t27-eps5-TSTR-rf",
      "M3d-t21-eps5-TSTR-rf",
      "A1-a0.1-TSTR-mlp",
+     "M1o-t27-eps5-plain-TSTR-rf",
+     "M1o-t27-eps5-plain-TSTR-mlp",
+     "MGd-eps1-TSTR-rf",
+     "M1o-t27-eps5-TSTR-mlp",
      "M1d-t21-eps1-TSTR-mlp",
      "M1-eps10-TSTR-mlp",
-     "M1d-t21-eps5-TSTR-mlp",
-     "A1-a0.1-TSTR-rf"
+     "M3o-t33-eps1-TSTR-rf",
+     "M1d-t21-eps5-TSTR-mlp"
     ]
    },
    "notes": [
-    "19 of 85 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
+    "42 of 157 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
    ]
   },
   {
@@ -7216,11 +7268,173 @@
       "rel_diff": -0.0,
       "steps_match_plan": false,
       "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t33-eps1_0",
+      "target": 1.0,
+      "reported": 0.99996407,
+      "independent": 0.99996407,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t33-eps1_1",
+      "target": 1.0,
+      "reported": 0.99996407,
+      "independent": 0.99996407,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t33-eps1_2",
+      "target": 1.0,
+      "reported": 0.9999239,
+      "independent": 0.9999239,
+      "rel_diff": -0.0,
+      "steps_match_plan": false,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t33-eps1_0",
+      "target": 1.0,
+      "reported": 0.99996407,
+      "independent": 0.99996407,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t33-eps1_1",
+      "target": 1.0,
+      "reported": 0.99996407,
+      "independent": 0.99996407,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t33-eps1_2",
+      "target": 1.0,
+      "reported": 0.9999239,
+      "independent": 0.9999239,
+      "rel_diff": -0.0,
+      "steps_match_plan": false,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t27-eps5_0",
+      "target": 5.0,
+      "reported": 4.99980305,
+      "independent": 4.99980305,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t27-eps5_1",
+      "target": 5.0,
+      "reported": 4.99993493,
+      "independent": 5.00113028,
+      "rel_diff": 0.00023907,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t27-eps5_2",
+      "target": 5.0,
+      "reported": 4.99839821,
+      "independent": 4.99839821,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t27-eps5_0",
+      "target": 5.0,
+      "reported": 4.99980305,
+      "independent": 4.99980305,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t27-eps5_1",
+      "target": 5.0,
+      "reported": 4.99993493,
+      "independent": 5.00113028,
+      "rel_diff": 0.00023907,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t27-eps5_2",
+      "target": 5.0,
+      "reported": 4.99839821,
+      "independent": 4.99839821,
+      "rel_diff": -0.0,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t12-eps10_0",
+      "target": 10.0,
+      "reported": 9.99700001,
+      "independent": 10.03690602,
+      "rel_diff": 0.0039918,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t12-eps10_1",
+      "target": 10.0,
+      "reported": 9.99573255,
+      "independent": 10.04627878,
+      "rel_diff": 0.00505678,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M1o-t12-eps10_2",
+      "target": 10.0,
+      "reported": 9.99789416,
+      "independent": 10.03136683,
+      "rel_diff": 0.00334797,
+      "steps_match_plan": false,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t12-eps10_0",
+      "target": 10.0,
+      "reported": 9.99700001,
+      "independent": 10.03690602,
+      "rel_diff": 0.0039918,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t12-eps10_1",
+      "target": 10.0,
+      "reported": 9.99573255,
+      "independent": 10.04627878,
+      "rel_diff": 0.00505678,
+      "steps_match_plan": true,
+      "steps_match_loader": true
+     },
+     {
+      "run": "M3o-t12-eps10_2",
+      "target": 10.0,
+      "reported": 9.99789416,
+      "independent": 10.03136683,
+      "rel_diff": 0.00334797,
+      "steps_match_plan": false,
+      "steps_match_loader": true
      }
     ],
     "max_abs_rel_diff": 0.00691275,
     "rtol": 0.1,
-    "n_runs": 23,
+    "n_runs": 41,
     "n_far": 0,
     "n_counters_unexplained": 0,
     "signed_rel_diff_range": [
@@ -7230,7 +7444,7 @@
     "missing_specs": []
    },
    "notes": [
-    "7 runs have fewer counted DP steps than rounds x epochs x ceil(n/B) for one client: Opacus' Poisson loader has int(1 / sample_rate) batches per epoch and 1 / (1 / 99) = 98.99999999999999 truncates to 98. The report uses the counted steps (and the true sampling rate), so epsilon is right; only the noise calibration was one step per epoch more conservative than needed for that client."
+    "11 runs have fewer counted DP steps than rounds x epochs x ceil(n/B) for one client: Opacus' Poisson loader has int(1 / sample_rate) batches per epoch and 1 / (1 / 99) = 98.99999999999999 truncates to 98. The report uses the counted steps (and the true sampling rate), so epsilon is right; only the noise calibration was one step per epoch more conservative than needed for that client."
    ]
   }
  ],

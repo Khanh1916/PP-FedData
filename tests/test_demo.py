@@ -310,7 +310,7 @@ def test_limitations_cover_every_item_of_the_spec_list(tmp_path):
     for what, phrase in lim.SPEC_LIST.items():
         assert any(phrase.lower() in t for t in low), what
     assert [i["id"] for i in items] == [f"L{n:02d}" for n in range(1, len(items) + 1)] and all(i["source"] for i in items)
-    assert not re.search(r"None|nan|[{}]", " ".join(i["text"] for i in items))
+    assert not re.search(r"\bNone\b|\bnan\b|[{}]", " ".join(i["text"] for i in items))
 
 
 def test_limitation_numbers_are_read_from_the_manifest_and_the_schema(tmp_path):

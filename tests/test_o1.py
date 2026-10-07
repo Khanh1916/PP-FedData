@@ -126,6 +126,8 @@ def test_search_prunes_width_256_and_keeps_the_space():
     from ppfeddata import tune_dp_full as t
     assert t.skip_reason(t.ANCHOR) is None
     assert "width 256" in t.skip_reason({**t.ANCHOR, "width": 256})
+    assert "batch 2048" in t.skip_reason({**t.ANCHOR, "width": 128, "batch_size": 2048})
+    assert t.skip_reason({**t.ANCHOR, "width": 64, "batch_size": 2048}) is None
     assert 256 in t.SPACE["width"]  # unchanged: existing studies reject a different categorical distribution
 
 

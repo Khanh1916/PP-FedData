@@ -28,14 +28,15 @@ from ppfeddata.eval.runs import RunLedger, artifacts_dir, run_id, runs_csv_path
 logger = logging.getLogger("ppfeddata.aggregate")
 
 BASELINES = {"B0-rf": ("B0", "rf"), "B0-mlp": ("B0", "mlp"), "B1a-rf": ("B1a", "rf"), "B1b-rf": ("B1b", "rf"), "B1b-mlp": ("B1b", "mlp")}
-_GEN = re.compile(r"^(?P<prefix>.+)-(?P<proto>TSTR|TAug)-(?P<clf>rf|mlp)$")
+_GEN = re.compile(r"^(?P<prefix>.+)-(?P<proto>TSTR|TAugR|TAug)-(?P<clf>rf|mlp)$")
 _EPS = re.compile(r"-eps(?P<eps>[0-9.]+)$")
+_LEVEL = re.compile(r"-(?P<lv>c16|c32)$")
 _ALPHA = re.compile(r"^A1-a(?P<alpha>[0-9.]+)$")
 COLORS = {"baseline": "#8c8c8c", "gen": "#1f77b4", "dp": "#ff7f0e", "secagg": "#2ca02c", "dpsa": "#9467bd", "ref": "#bcbd22"}
 SUMMARY_METRICS = ["macro_f1", "balanced_acc", "pr_auc_macro", "bin_f1", "val_macro_f1", "wasserstein_mean", "js_mean", "corr_dist_mean", "c2st_auc_mean",
                    "dup_rate", "dcr_ratio_mean", "mia_auc_mean", "dp_eps_max", "dp_eps_median", "dp_sigma_min", "dp_sigma_max", "dp_ratio_to_target", "bytes_per_round",
                    "fl_total_s", "cvae_train_s", "fit_time_s", "peak_rss_gb", "fl_final_val_loss", "cvae_val_loss", "cvae_params", "sa_bytes_per_round", "sa_max_abs_w",
-                   "round_s_median"]
+                   "round_s_median", "taugr_ratio", "rounds", "dp_eps_one_honest"]
 
 
 # --------------------------------------------------------------------------------------------------
@@ -54,6 +55,9 @@ def parse_config(name: str) -> dict[str, Any]:
     prefix, plain = g["prefix"], g["prefix"].endswith("-plain")
     base = prefix[:-6] if plain else prefix
     out.update(protocol=g["proto"], classifier=g["clf"], prefix=prefix, variant="plain" if plain else "standard")
+    lv = _LEVEL.search(base)                                    # optimisation O2: compact SecAgg+ encoding (fl/bandwidth.py)
+    if lv:
+        base = base[:lv.start()]
     m = _EPS.search(base)
     if m:
         out["eps"] = float(m["eps"])
@@ -67,12 +71,19 @@ def parse_config(name: str) -> dict[str, Any]:
     elif base.startswith(("M1o-t", "M3o-t")):                  # optimisation O1: tuned per epsilon at full scale, DP residual statistics
         trial = int(re.match(r"M[13]o-t(\d+)", base)[1])
         out.update(method=base[:2], family=f"o1 t{trial}", fl_run=base)
+    elif base.startswith("M3f-t"):                              # optimisation O2(a): M3-distributed, DP-FedSGD with the noise split over SecAgg
+        trial = int(re.match(r"M3f-t(\d+)", base)[1])
+        out.update(method="M3", family=f"o2 fedsgd t{trial}", fl_run=base)
+    elif base.startswith(("MGd-", "MGl-")):                     # optimisation O3: federated DP marginals + Chow-Liu tree (models/marginal.py)
+        out.update(method="MG", family=f"o3 marginal {'distributed' if base[2] == 'd' else 'local'}", fl_run=None)
     elif base.startswith(("M1-", "M3-")):
         out.update(method=base[:2], family="phase7 hyper-parameters", fl_run=base)
     elif _ALPHA.match(base):
         out.update(method="A1", family="extension", alpha=float(_ALPHA.match(base)["alpha"]), fl_run=base)
     if base == "B3":
         out["fl_run"] = "B3"
+    if lv:
+        out.update(family=f"o2 bandwidth {lv['lv']}" + (f" ({out['family']})" if out["family"] else ""), fl_run=f"{base}-{lv['lv']}")
     return out
 
 

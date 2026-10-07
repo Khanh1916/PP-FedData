@@ -37,10 +37,10 @@ from ppfeddata import aggregate as ag
 
 logger = logging.getLogger("ppfeddata.scorecard")
 
-UTILITY = ("tstr_f1", "bin_f1", "rare_recall", "taug_gain")
+UTILITY = ("tstr_f1", "bin_f1", "rare_recall", "taug_gain", "taugr_gain")
 EPS_TOL = 0.02
 COST_TOL = 0.05
-COST = ("bytes_per_round", "fl_total_s")
+COST = ("bytes_per_round", "bytes_total", "fl_total_s")
 PROTECTED = ("B3", "M1", "M2", "M3")
 DIRECT = {"FedMLPcwT": (math.inf, False), "FedMLPcwT-sa": (math.inf, True), "FedMLPcwT-dp1": (1.0, False), "FedMLPcwT-dp5": (5.0, False),
           "FedMLPcwT-dp10": (10.0, False), "FedMLPcwT-dp5-sa": (5.0, True)}
@@ -96,18 +96,27 @@ def _mia(mia: dict[str, Any] | None, label: str) -> float:
 
 
 def optimised_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
-    """Entries of the optimisation round (`M1o-t<n>-eps<e>`, `M3o-...`): the variant with residual noise uses the DP statistics of O1(a),
-    so it is valid, and so is the plain decoder."""
+    """Entries of the optimisation round (`M1o-t<n>-eps<e>`, `M3o-...`, and `M3f-...` = M3-distributed of O2): the variant with residual noise
+    uses the DP statistics of O1(a), so it is valid, and so is the plain decoder."""
     gen = lambda prefix: {(p, c): f"{prefix}-{p}-{c}" for p in ("TSTR", "TAug") for c in ("rf", "mlp")}      # noqa: E731
-    prefixes = sorted({ag.parse_config(n)["prefix"] for n in summ["config"] if str(ag.parse_config(n)["family"]).startswith("o1 ")})
+    prefixes = sorted({ag.parse_config(n)["prefix"] for n in summ["config"] if str(ag.parse_config(n)["family"]).startswith(("o1 ", "o2 ", "o3 "))})
     out = []
     for p in prefixes:
         base = p[:-len("-plain")] if p.endswith("-plain") else p
-        m = re.match(r"(M[13])o-t\d+-eps(?P<eps>[0-9.]+)$", base)
+        g = re.match(r"MG(?P<kind>[dl])-eps(?P<eps>[0-9.]+)$", base)
+        if g:                                                    # O3: marginal generator, distributed (SecAgg) or local DP
+            out.append(dict(label=base, eps=float(g["eps"]), cfgs=gen(p), optimised=True, plain=False, method="MG", secagg=g["kind"] == "d",
+                            dp_mode="distributed" if g["kind"] == "d" else "local"))
+            continue
+        if re.match(r"M2-c(16|32)$", base):                     # O2 bandwidth: M2 with the compact SecAgg+ encoding (no DP)
+            out.append(dict(label=base, eps=None, cfgs=gen(p), optimised=True, plain=False, method="M2"))
+            continue
+        m = re.match(r"(M[13])(?P<kind>[of])-t\d+-eps(?P<eps>[0-9.]+)(?P<lv>-c16|-c32)?$", base)
         if not m:
             continue
-        label = f"{m[1]}o-eps{float(m['eps']):g}" + (" (plain)" if p.endswith("-plain") else "")
-        out.append(dict(label=label, eps=float(m["eps"]), cfgs=gen(p), optimised=True, plain=p.endswith("-plain")))
+        label = f"{m[1]}{m['kind']}-eps{float(m['eps']):g}{m['lv'] or ''}" + (" (plain)" if p.endswith("-plain") else "")
+        out.append(dict(label=label, eps=float(m["eps"]), cfgs=gen(p), optimised=True, plain=p.endswith("-plain"),
+                        dp_mode="distributed" if m["kind"] == "f" else "local"))
     return out
 
 
@@ -122,14 +131,14 @@ def candidate_rows(summ: pd.DataFrame, df: pd.DataFrame | None = None, mia: dict
             twins.append(dict(e, label=f"{e['label']} (residual noise)", twin=True, cfgs={k: v.replace("-plain-", "-") for k, v in e["cfgs"].items()}))
     rows = []
     for e in ents + twins + optimised_entries(summ):
-        method = e["label"][:2] if e.get("optimised") else e["label"].split("-")[0]
+        method = e.get("method") or (e["label"][:2] if e.get("optimised") else e["label"].split("-")[0])
         tstr, taug = _pick(summ, e["cfgs"], "TSTR"), _pick(summ, e["cfgs"], "TAug")
         if tstr is None:
             continue
         rt = _row(summ, tstr[1])
         r = {"label": e["label"], "method": method, "variant": ("plain" if e["plain"] else "standard") if e.get("optimised") else ("standard" if e.get("twin") else ("plain" if e.get("eps") else "standard")),
              "optimised": bool(e.get("optimised")),
-             "dp": bool(e.get("eps")), "secagg": method in ("M2", "M3"), "dp_mode": "local" if e.get("eps") else None,
+             "dp": bool(e.get("eps")), "secagg": e.get("secagg", method in ("M2", "M3")), "dp_mode": e.get("dp_mode", "local") if e.get("eps") else None,
              "eps_target": float(e["eps"]) if e.get("eps") else math.inf,
              "eps": float(rt.get("dp_eps_max_mean", math.nan)) if e.get("eps") else math.inf,
              "tstr_config": tstr[1], "tstr_classifier": tstr[0], "n_seeds": int(rt["n_seeds"])}
@@ -142,9 +151,21 @@ def candidate_rows(summ: pd.DataFrame, df: pd.DataFrame | None = None, mia: dict
             r.update(taug_config=taug[1], taug_classifier=taug[0], taug_gain=m - bm, taug_gain_std=max(s, bs))
         else:
             r.update(taug_config=None, taug_classifier=None, taug_gain=math.nan, taug_gain_std=math.nan)
+        # TAugR (eval/taug_rare.py): synthetic rows for the rare classes only, ratio chosen on validation
+        prefix = tstr[1].rsplit("-TSTR-", 1)[0]
+        taugr = _pick(summ, {("TAugR", c): f"{prefix}-TAugR-{c}" for c in ("rf", "mlp")}, "TAugR")
+        if taugr is not None:
+            ra, b0 = _row(summ, taugr[1]), _row(summ, f"B0-{taugr[0]}")
+            (m, s), (bm, bs) = _val(ra, "macro_f1"), _val(b0, "macro_f1")
+            r.update(taugr_config=taugr[1], taugr_classifier=taugr[0], taugr_gain=m - bm, taugr_gain_std=max(s, bs),
+                     taugr_ratio=float(ra.get("taugr_ratio_mean", math.nan)))
+        else:
+            r.update(taugr_config=None, taugr_classifier=None, taugr_gain=math.nan, taugr_gain_std=math.nan, taugr_ratio=math.nan)
         r["mia_auc"] = math.nan if e.get("twin") else _mia(mia, e["label"])
-        for c in COST:
+        for c in ("bytes_per_round", "fl_total_s", "rounds"):
             r[c] = _val(rt, c)[0]
+        r["bytes_total"] = r["bytes_per_round"] * r["rounds"]          # one round of DP-FedSGD is one step: compare the whole run too
+        r["eps_one_honest"] = float(rt.get("dp_eps_one_honest_mean", math.nan)) if r["dp_mode"] == "distributed" else r["eps"]
         r["valid"] = not (e.get("twin") and r["dp"])
         r["invalid_reason"] = "per-class residual std from train data without DP" if not r["valid"] else None
         rows.append(r)
@@ -215,15 +236,29 @@ def pareto(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
 # --------------------------------------------------------------------------------------------------
 # Baseline and deltas
 # --------------------------------------------------------------------------------------------------
+def counterpart(r: dict[str, Any], b: dict[str, dict[str, Any]]) -> str | None:
+    """Baseline label to compare a row with: the same label, or for an entry of the optimisation round (`M1o-eps5`, `M3o-eps1 (plain)`, ...) the
+    valid baseline row of the same method and epsilon, else M1 at that epsilon (the baseline has M3 at epsilon 5 only)."""
+    if r["label"] in b:
+        return r["label"]
+    if not r.get("optimised"):
+        return None
+    for name in (f"{r['method']}-eps{r['eps_target']:g}", f"M1-eps{r['eps_target']:g}"):
+        if name in b and b[name].get("valid"):
+            return name
+    return None
+
+
 def deltas(cur: list[dict[str, Any]], base: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    """Per label present in both: the change of every utility metric and whether it passes the seed rule."""
+    """Per label present in both (or with a `counterpart`): the change of every utility metric and whether it passes the seed rule."""
     b = {r["label"]: r for r in base}
     out = []
     for r in cur:
-        o = b.get(r["label"])
-        if o is None:
+        name = counterpart(r, b)
+        if name is None:
             continue
-        d = {"label": r["label"]}
+        o = b[name]
+        d = {"label": r["label"], "baseline": name}
         for m in UTILITY:
             x, y = r.get(m, math.nan), o.get(m, math.nan)
             d[m] = None if pd.isna(x) or pd.isna(y) else float(x - y)
@@ -277,21 +312,31 @@ def _fmt(x: Any, s: Any = None, d: int = 3) -> str:
     return f"{x:.{d}f}" + (f" ± {s:.{d}f}" if s is not None and not (isinstance(s, float) and math.isnan(s)) else "")
 
 
+def _ratio(r: dict[str, Any]) -> str:
+    x = r.get("taugr_ratio")
+    return "" if x is None or (isinstance(x, float) and math.isnan(x)) else f" ({x:g})"
+
+
+def _mb(x: Any) -> float | None:
+    return None if x is None or (isinstance(x, float) and math.isnan(x)) else x / 1e6
+
+
 def render(sc: dict[str, Any]) -> str:
     L = ["# Scorecard of the protected configurations (optimisation round O0)", "",
          "Generated by `ppfeddata scorecard` from `results/summary.csv`, `results/runs.csv`, `results/mia_model.json` and `results/fed_classifier.json`; do not edit.",
          "Utility on the real test split, mean ± std over seeds; the classifier of each protocol is the one with the higher validation macro-F1. "
-         "`taug_gain` = macro-F1 of real + synthetic minus B0 with the same classifier. ε = max over clients (∞ = no DP). "
+         "`taug_gain` = macro-F1 of real + synthetic minus B0 with the same classifier; `TAugR gain` = the same with synthetic rows for the rare classes only, ratio x their real count chosen on validation (in brackets). ε = max over clients (∞ = no DP); for M3-distributed (`M3f`, O2) ε with every client honest, and in brackets with a single honest client. MB total = MB / round × rounds (DP-FedSGD needs many more, smaller rounds; its MB are estimated from M2). "
          "Front = not dominated by a valid configuration on any axis (utility within the seed std counts as equal; ε within 2 %, cost within 5 %).", "",
-         "| configuration | valid | front | TSTR macro-F1 | binary F1 | rare recall | TAug gain | ε | SecAgg | MIA AUC (model) | MB / round | FL time (s) |",
-         "|---|---|---|---|---|---|---|---|---|---|---|---|"]
+         "| configuration | valid | front | TSTR macro-F1 | binary F1 | rare recall | TAug gain | TAugR gain (ratio) | ε | SecAgg | MIA AUC (model) | MB / round | rounds | MB total | FL time (s) |",
+         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in sc["rows"]:
         if r.get("reference"):
             continue
-        mb = r.get("bytes_per_round")
+        mb, mbt = _mb(r.get("bytes_per_round")), _mb(r.get("bytes_total"))
+        e1 = f" ({_fmt(r['eps_one_honest'], d=1)})" if r.get("dp_mode") == "distributed" else ""
         L.append(f"| {r['label']} ({r['tstr_classifier']}) | {'yes' if r['valid'] else 'no'} | {'**yes**' if r['pareto'] else 'no'} | {_fmt(r['tstr_f1'], r['tstr_f1_std'])} | "
-                 f"{_fmt(r['bin_f1'], r['bin_f1_std'])} | {_fmt(r['rare_recall'], r['rare_recall_std'])} | {_fmt(r['taug_gain'], r['taug_gain_std'])} | {_fmt(r['eps'], d=2)} | "
-                 f"{'yes' if r['secagg'] else 'no'} | {_fmt(r['mia_auc'])} | {_fmt(mb / 1e6 if mb is not None and not (isinstance(mb, float) and math.isnan(mb)) else None, d=2)} | {_fmt(r['fl_total_s'], d=0)} |")
+                 f"{_fmt(r['bin_f1'], r['bin_f1_std'])} | {_fmt(r['rare_recall'], r['rare_recall_std'])} | {_fmt(r['taug_gain'], r['taug_gain_std'])} | {_fmt(r.get('taugr_gain'), r.get('taugr_gain_std'))}{_ratio(r)} | {_fmt(r['eps'], d=2)}{e1} | "
+                 f"{'yes' if r['secagg'] else 'no'} | {_fmt(r['mia_auc'])} | {_fmt(mb, d=2)} | {_fmt(r.get('rounds'), d=0)} | {_fmt(mbt, d=0)} | {_fmt(r['fl_total_s'], d=0)} |")
     bad = [r for r in sc["rows"] if not r["valid"]]
     if bad:
         L += ["", "Not valid (kept out of the front): " + "; ".join(f"{r['label']}: {r['invalid_reason']}" for r in bad) + "."]
@@ -303,9 +348,11 @@ def render(sc: dict[str, Any]) -> str:
         L += ["", "## Reference: the classifier trained directly by FL (releases no data)", "", "| configuration | macro-F1 | rare recall | ε | SecAgg |", "|---|---|---|---|---|"]
         L += [f"| {r['label']} | {_fmt(r['tstr_f1'], r['tstr_f1_std'])} | {_fmt(r['rare_recall'])} | {_fmt(r['eps'], d=2)} | {'yes' if r['secagg'] else 'no'} |" for r in ref]
     if sc.get("vs_baseline"):
-        L += ["", "## Change against the baseline scorecard (`results/scorecard_baseline.json`)", "", "| configuration | " + " | ".join(UTILITY) + " |", "|---|" + "---|" * len(UTILITY)]
+        L += ["", "## Change against the baseline scorecard (`results/scorecard_baseline.json`)", "",
+              "An entry of the optimisation round is compared with the baseline row of the same method and ε (M1 when the baseline has no such M3 row).", "",
+              "| configuration | baseline | " + " | ".join(UTILITY) + " |", "|---|---|" + "---|" * len(UTILITY)]
         for d in sc["vs_baseline"]:
-            L.append(f"| {d['label']} | " + " | ".join("n/a" if d[m] is None else f"{d[m]:+.3f} ({d[m + '_effect']})" for m in UTILITY) + " |")
+            L.append(f"| {d['label']} | {d.get('baseline', d['label'])} | " + " | ".join("n/a" if d[m] is None else f"{d[m]:+.3f} ({d[m + '_effect']})" for m in UTILITY) + " |")
     return "\n".join(L) + "\n"
 
 

@@ -128,3 +128,15 @@ def test_optimised_families_are_parsed_and_both_variants_are_valid():
     assert by["M3o-eps5"]["secagg"] and by["M3o-eps5"]["dp"] and not by["M1o-eps5"]["secagg"]
     assert "M1-eps5" in by["M1o-eps5"].get("dominated_by", []) or by["M1o-eps5"]["pareto"]
     assert "M1o-eps5" in by["M1-eps5"]["dominated_by"]                 # better utility at the same epsilon and cost
+
+
+def test_optimised_entries_are_compared_with_the_baseline_of_the_same_method_and_epsilon():
+    base = sc.build(_summary(), rare=RARE)
+    s = pd.concat([_summary(), pd.DataFrame(_gen("M1o-t7-eps5-plain", 0.30, 0.30, eps=5.0) + _gen("M3o-t7-eps5", 0.33, 0.33, eps=5.0)
+                                            + _gen("M3o-t2-eps1", 0.26, 0.26, eps=1.0))], ignore_index=True)
+    d = {x["label"]: x for x in sc.build(s, rare=RARE, base=base)["vs_baseline"]}
+    assert d["M1o-eps5 (plain)"]["baseline"] == "M1-eps5" and d["M1o-eps5 (plain)"]["tstr_f1_effect"] == "better"
+    assert d["M3o-eps5"]["baseline"] == "M3-eps5"
+    assert d["M3o-eps1"]["baseline"] == "M1-eps1" and d["M3o-eps1"]["tstr_f1_effect"] == "no change"   # no M3 at epsilon 1 in the baseline
+    assert d["B3"]["baseline"] == "B3"
+    assert "| M3o-eps1 | M1-eps1 |" in sc.render(sc.build(s, rare=RARE, base=base))

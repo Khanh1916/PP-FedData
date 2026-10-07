@@ -40,18 +40,65 @@ RESEED_XOR = 0x5EC466
 
 
 def secagg_spec(cfg: dict[str, Any], diagnostics: bool = False, debug_rounds: tuple[int, ...] = (), drop: dict[str, int] | None = None,
-                allow_dropout: bool = False, **overrides) -> dict[str, Any]:
+                allow_dropout: bool = False, compact: bool = False, **overrides) -> dict[str, Any]:
     """Run description for the SecAgg part of a spec. Flower's defaults for `quantization_range` and `modulus_range` are kept.
     Two parameters differ from Flower's defaults, both decided by checks (SPEC_DEVIATIONS 10.2, 10.3): `max_weight` must exceed
     the largest client (default 1000 is below the client sizes, 500 to ~70,000 rows; it is a public upper bound for n_i), and
-    `clipping_range` is 16 instead of 8 because the weights of the trained CVAE reach 11.4."""
+    `clipping_range` is 16 instead of 8 because the weights of the trained CVAE reach 11.4. `compact` (O2): send the masked vectors as
+    uint16 / uint32 instead of int64 (`set_compact`); needs modulus_range 2^16 or 2^32."""
     params = {**DEFAULTS, **{k: v for k, v in cfg.get("secagg", {}).items() if k in DEFAULTS}, **overrides}
     params["clipping_range"] = float(params["clipping_range"])
     params["max_weight"] = float(params["max_weight"])
     for k in ("num_shares", "reconstruction_threshold", "quantization_range", "modulus_range"):
         params[k] = int(params[k])
+    if compact:
+        check_compact(params, int(cfg["fl"]["num_clients"]))
     return {"params": params, "diagnostics": bool(diagnostics), "debug_rounds": sorted(int(r) for r in debug_rounds),
-            "drop": drop, "allow_dropout": bool(allow_dropout)}
+            "drop": drop, "allow_dropout": bool(allow_dropout), "compact": bool(compact)}
+
+
+# --------------------------------------------------------------------------------------------------
+# Compact encoding of the masked vectors (optimisation O2, bandwidth)
+# --------------------------------------------------------------------------------------------------
+# Flower's SecAgg+ client sends the masked vector as int64 whatever the modulus (8 bytes per parameter). When the modulus is 2^16 or 2^32,
+# the values fit in uint16 / uint32: the client casts them after its final `mod`, and the server's sum of the uint arrays wraps around
+# exactly modulo 2^16 / 2^32, which is the arithmetic of the protocol. NumPy 2 refuses `uint16 % 65536` (the Python int is out of range for
+# the dtype), so the server-side `mod` casts to int64 first. Nothing else of the protocol changes. Enabled per run (`secagg.compact`).
+COMPACT_DTYPES = {2 ** 16: np.uint16, 2 ** 32: np.uint32}
+_ORIGINAL: dict[str, Any] = {}
+
+
+def _client_mod(params, mod_range):
+    out = _ORIGINAL["client"](params, mod_range)
+    dt = COMPACT_DTYPES.get(int(mod_range))
+    return [np.asarray(o).astype(dt) for o in out] if dt is not None else out
+
+
+def _server_mod(params, mod_range):
+    return _ORIGINAL["server"]([np.asarray(p).astype(np.int64) for p in params], mod_range)
+
+
+def set_compact(on: bool) -> None:
+    """Install (or remove) the compact encoding in this process (the client mod and the server workflow)."""
+    import importlib
+
+    # the packages re-export functions with the modules' names, so take the modules themselves
+    cm = importlib.import_module("flwr.client.mod.secure_aggregation.secaggplus_mod")
+    sw = importlib.import_module("flwr.server.workflow.secure_aggregation.secaggplus_workflow")
+    _ORIGINAL.setdefault("client", cm.parameters_mod)
+    _ORIGINAL.setdefault("server", sw.parameters_mod)
+    cm.parameters_mod = _client_mod if on else _ORIGINAL["client"]
+    sw.parameters_mod = _server_mod if on else _ORIGINAL["server"]
+
+
+def check_compact(params: dict[str, Any], n_clients: int) -> None:
+    """The modulus must be a compact width and hold the sum of the clients' quantised values (each < quantization_range, plus the
+    quantised weight factor) without wrapping."""
+    m = int(params["modulus_range"])
+    if m not in COMPACT_DTYPES:
+        raise ValueError(f"compact encoding needs modulus_range 2^16 or 2^32, got {m}")
+    if n_clients * int(params["quantization_range"]) >= m:
+        raise ValueError(f"{n_clients} clients x quantization_range {params['quantization_range']} >= modulus {m}: the sum would wrap")
 
 
 def quantization_error_bound(n_clients: int, params: dict[str, Any], total_rows: int) -> float:

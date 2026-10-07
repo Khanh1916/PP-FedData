@@ -19,6 +19,7 @@ results/figures/*
 !results/figures/*.png
 results/reports/*
 !results/reports/*.md
+!results/reports/recommend.html
 
 # Python
 __pycache__/

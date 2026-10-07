@@ -47,6 +47,8 @@ def skip_reason(p: dict[str, Any]) -> str | None:
     study rejects a categorical distribution that differs from its earlier trials; such trials are pruned instead."""
     if int(p["width"]) == 256:
         return "width 256: out of memory with 5 Ray actors (O1.4)"
+    if int(p["width"]) == 128 and int(p["batch_size"]) == 2048:
+        return "width 128 with batch 2048: out of memory with 5 Ray actors (O1.8)"
     return None
 
 
@@ -70,10 +72,15 @@ def run_kwargs(base: dict[str, Any], p: dict[str, Any], eps: float) -> dict[str,
 
 
 def val_scores(cfg: dict[str, Any], model, schema, data, stats, seed: int, rare: list[int]) -> dict[str, float]:
+    Xs, ys = generate(model, schema, [int(cfg["tune"]["syn_per_class"])] * len(schema["label_map"]), seed, stats=stats)
+    return val_scores_xy(cfg, Xs, ys, schema, data, seed, rare)
+
+
+def val_scores_xy(cfg: dict[str, Any], Xs, ys, schema, data, seed: int, rare: list[int], n_jobs: int = -1) -> dict[str, float]:
+    """Validation macro-F1, binary F1 and rare-class recall of a RF trained on the synthetic rows (Xs, ys)."""
     k, t = len(schema["label_map"]), cfg["tune"]
     classes = [c for c, _ in sorted(schema["label_map"].items(), key=lambda kv: kv[1])]
-    Xs, ys = generate(model, schema, [int(t["syn_per_class"])] * k, seed, stats=stats)
-    rf = make_classifier("rf", {"eval": {"rf": {"n_estimators": int(t["rf_trees"])}}}, seed).fit(Xs, ys)
+    rf = make_classifier("rf", {"eval": {"rf": {"n_estimators": int(t["rf_trees"])}}}, seed).set_params(n_jobs=n_jobs).fit(Xs, ys)
     Xv, yv = data["val"]["X"], data["val"]["y"]
     m = compute_metrics(yv, rf.predict(Xv), full_proba(rf, Xv, k), classes)
     rec = [m["per_class"][classes[c]]["recall"] for c in rare]
@@ -86,11 +93,12 @@ def rare_labels(cfg: dict[str, Any], schema: dict[str, Any], limit: int = 5000) 
     return sorted(r) or sorted(lm.values())[-4:]
 
 
-def score_run(cfg: dict[str, Any], run: dict[str, Any], schema, data, seed: int = 0) -> dict[str, Any]:
+def score_run(cfg: dict[str, Any], run: dict[str, Any], schema, data, seed: int = 0, noise_share: float = 1.0) -> dict[str, Any]:
+    """`noise_share` < 1: the statistics release with its noise split over the clients (distributed DP, O2)."""
     model = load_fl_model(cfg, run, schema)
     rare = rare_labels(cfg, schema)
     plain = val_scores(cfg, model, schema, data, None, seed, rare)
-    st = dp_stats.stats_for_run(model, run, data["train"]["X"], data["train"]["y"])
+    st = dp_stats.stats_for_run(model, run, data["train"]["X"], data["train"]["y"], noise_share)
     dps = val_scores(cfg, model, schema, data, st, seed, rare) if st is not None else None
     best = "dps" if dps is not None and dps["macro_f1"] > plain["macro_f1"] else "plain"
     return {"plain": plain, "dps": dps, "variant": best, "value": (dps if best == "dps" else plain)["macro_f1"],

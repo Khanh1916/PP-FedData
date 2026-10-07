@@ -70,7 +70,12 @@ def calibrate_sigma(target_eps: float, delta: float, n: int, batch_size: int, ro
     if not sigma_stat:
         return float(get_noise_multiplier(target_epsilon=float(target_eps), target_delta=float(delta), sample_rate=sample_rate(n, batch_size),
                                           steps=planned_steps(n, batch_size, rounds, local_epochs), accountant="rdp"))
-    q, T = sample_rate(n, batch_size), planned_steps(n, batch_size, rounds, local_epochs)
+    return calibrate_noise(target_eps, delta, sample_rate(n, batch_size), planned_steps(n, batch_size, rounds, local_epochs), sigma_stat)
+
+
+def calibrate_noise(target_eps: float, delta: float, q: float, T: int, sigma_stat: float | None = None) -> float:
+    """Smallest noise multiplier (to 1e-3 relative) whose epsilon over `T` steps at sampling rate `q`, composed with the statistics release
+    `sigma_stat` if any, is <= target (also used by DP-FedSGD, `fl/dpfedsgd.py`, where one step is one round)."""
     if epsilon(1e6, q, T, delta, sigma_stat) > target_eps:
         raise ValueError(f"the statistics release alone (sigma_stat {sigma_stat}) exceeds epsilon {target_eps}")
     lo, hi = 0.05, 1.0
