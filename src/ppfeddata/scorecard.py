@@ -26,6 +26,7 @@ from __future__ import annotations
 import json
 import logging
 import math
+import re
 from pathlib import Path
 from typing import Any
 
@@ -94,8 +95,25 @@ def _mia(mia: dict[str, Any] | None, label: str) -> float:
         return math.nan
 
 
+def optimised_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
+    """Entries of the optimisation round (`M1o-t<n>-eps<e>`, `M3o-...`): the variant with residual noise uses the DP statistics of O1(a),
+    so it is valid, and so is the plain decoder."""
+    gen = lambda prefix: {(p, c): f"{prefix}-{p}-{c}" for p in ("TSTR", "TAug") for c in ("rf", "mlp")}      # noqa: E731
+    prefixes = sorted({ag.parse_config(n)["prefix"] for n in summ["config"] if str(ag.parse_config(n)["family"]).startswith("o1 ")})
+    out = []
+    for p in prefixes:
+        base = p[:-len("-plain")] if p.endswith("-plain") else p
+        m = re.match(r"(M[13])o-t\d+-eps(?P<eps>[0-9.]+)$", base)
+        if not m:
+            continue
+        label = f"{m[1]}o-eps{float(m['eps']):g}" + (" (plain)" if p.endswith("-plain") else "")
+        out.append(dict(label=label, eps=float(m["eps"]), cfgs=gen(p), optimised=True, plain=p.endswith("-plain")))
+    return out
+
+
 def candidate_rows(summ: pd.DataFrame, df: pd.DataFrame | None = None, mia: dict[str, Any] | None = None, rare: list[str] | None = None) -> list[dict[str, Any]]:
-    """One scorecard row per protected entry of the matrix, plus the residual-noise twin of each DP entry (not valid, see the module doc)."""
+    """One scorecard row per protected entry of the matrix, plus the residual-noise twin of each DP entry (not valid, see the module doc),
+    plus the entries of the optimisation round."""
     rare = rare or [c[len("recall_"):-len("_mean")] for c in summ.columns if c.startswith("recall_") and c.endswith("_mean")][-4:]
     ents = [e for e in ag.entries(summ) if e["label"].split("-")[0] in PROTECTED]
     twins = []
@@ -103,13 +121,14 @@ def candidate_rows(summ: pd.DataFrame, df: pd.DataFrame | None = None, mia: dict
         if e.get("eps"):
             twins.append(dict(e, label=f"{e['label']} (residual noise)", twin=True, cfgs={k: v.replace("-plain-", "-") for k, v in e["cfgs"].items()}))
     rows = []
-    for e in ents + twins:
-        method = e["label"].split("-")[0]
+    for e in ents + twins + optimised_entries(summ):
+        method = e["label"][:2] if e.get("optimised") else e["label"].split("-")[0]
         tstr, taug = _pick(summ, e["cfgs"], "TSTR"), _pick(summ, e["cfgs"], "TAug")
         if tstr is None:
             continue
         rt = _row(summ, tstr[1])
-        r = {"label": e["label"], "method": method, "variant": "standard" if e.get("twin") else ("plain" if e.get("eps") else "standard"),
+        r = {"label": e["label"], "method": method, "variant": ("plain" if e["plain"] else "standard") if e.get("optimised") else ("standard" if e.get("twin") else ("plain" if e.get("eps") else "standard")),
+             "optimised": bool(e.get("optimised")),
              "dp": bool(e.get("eps")), "secagg": method in ("M2", "M3"), "dp_mode": "local" if e.get("eps") else None,
              "eps_target": float(e["eps"]) if e.get("eps") else math.inf,
              "eps": float(rt.get("dp_eps_max_mean", math.nan)) if e.get("eps") else math.inf,

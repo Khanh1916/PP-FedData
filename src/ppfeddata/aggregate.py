@@ -64,6 +64,9 @@ def parse_config(name: str) -> dict[str, Any]:
     elif base.startswith(("M1d-t", "M3d-t")):
         trial = int(re.match(r"M[13]d-t(\d+)", base)[1])
         out.update(method=base[:2], family=f"dp-tuned t{trial}", fl_run=base)
+    elif base.startswith(("M1o-t", "M3o-t")):                  # optimisation O1: tuned per epsilon at full scale, DP residual statistics
+        trial = int(re.match(r"M[13]o-t(\d+)", base)[1])
+        out.update(method=base[:2], family=f"o1 t{trial}", fl_run=base)
     elif base.startswith(("M1-", "M3-")):
         out.update(method=base[:2], family="phase7 hyper-parameters", fl_run=base)
     elif _ALPHA.match(base):

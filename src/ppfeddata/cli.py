@@ -140,6 +140,11 @@ def build_parser() -> argparse.ArgumentParser:
     p_sc = sub.add_parser("scorecard", help="Optimisation round O0: scorecard of B3, M1, M2, M3 on every metric and their Pareto front -> results/scorecard.json, results/reports/scorecard.md (run after `aggregate`)")
     p_sc.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     p_sc.add_argument("--freeze-baseline", action="store_true", help="also save it as results/scorecard_baseline.json, the reference of the later stages (refused when it exists)")
+    p_tf = sub.add_parser("tune-dp-full", help="Optimisation O1: DP search at full scale (real FL runs, seed 0), one Optuna study per epsilon, also over rounds, local epochs, class weights and the DP residual statistics; validation only -> configs/best_cvae_dp_full.yaml")
+    p_tf.add_argument("--eps", nargs="+", type=float, default=None, help="default dp.epsilons")
+    p_tf.add_argument("--n-trials", type=int, default=30, help="trials per epsilon (resumable)")
+    p_tf.add_argument("--final", action="store_true", help="instead: train the best trial of each epsilon with every seed as M1o-t<n>-eps<e> and M3o-... (with SecAgg) into the run ledger; run `aggregate` and `scorecard` after it")
+    p_tf.add_argument("--seeds", nargs="+", type=int, default=None)
     p_se = sub.add_parser("sensitivity", help="Extensions A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
     p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default A4-s1 A4-s2 A5-cap20")
     p_se.add_argument("--report-only", action="store_true", help="do not run anything, only rewrite the report from the worlds that exist")
@@ -411,6 +416,17 @@ def main(argv: list[str] | None = None) -> None:
         sc = run(c, freeze_baseline=a.freeze_baseline)
         logger.info("scorecard: front %s", ", ".join(sc["front"]))
 
+    def cmd_tune_dp_full(a):
+        from ppfeddata.tune_dp_full import run_final, run_search
+        c = load_config(a.config)
+        if a.final:
+            logger.info("O1 final runs: %s", run_final(c, a.eps, a.seeds))
+            return
+        for e in (a.eps or c["dp"]["epsilons"]):
+            y = run_search(c, float(e), n_trials=a.n_trials)
+            s = y.get("searches", {}).get(f"eps{float(e):g}", {})
+            logger.info("eps %g: best trial %s, val macro-F1 %s (%s; anchor %s)", e, s.get("best_trial"), s.get("val_macro_f1"), s.get("variant"), s.get("anchor_val_macro_f1"))
+
     def cmd_sensitivity(a):
         from ppfeddata.sensitivity import SCENARIOS, report, run_world
         c = load_config(a.config)
@@ -466,6 +482,7 @@ def main(argv: list[str] | None = None) -> None:
         "sensitivity": cmd_sensitivity,
         "mia": cmd_mia,
         "scorecard": cmd_scorecard,
+        "tune-dp-full": cmd_tune_dp_full,
         "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)

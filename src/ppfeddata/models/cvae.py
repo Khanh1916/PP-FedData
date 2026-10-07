@@ -106,12 +106,13 @@ def recon_terms(out: torch.Tensor, x: torch.Tensor, layout: Layout) -> dict[str,
     return {"num": num, "bin": bce, "cat": cat}
 
 
-def loss_terms(out, x, mu, logvar, beta: float, layout: Layout) -> dict[str, torch.Tensor]:
-    """loss = mean over samples of (recon_num + recon_bin + recon_cat + beta * KL)."""
+def loss_terms(out, x, mu, logvar, beta: float, layout: Layout, weights: torch.Tensor | None = None) -> dict[str, torch.Tensor]:
+    """loss = mean over samples of (recon_num + recon_bin + recon_cat + beta * KL), each sample times `weights` when given
+    (class weights of optimisation O1; under DP-SGD the weighted per-sample gradient is still clipped, so epsilon is unchanged)."""
     r = recon_terms(out, x, layout)
     kl = -0.5 * (1 + logvar - mu.pow(2) - logvar.exp()).sum(1)
     total = r["num"] + r["bin"] + r["cat"] + beta * kl
-    return {"loss": total.mean(), "recon_num": r["num"].mean(), "recon_bin": r["bin"].mean(),
+    return {"loss": (total * weights).mean() if weights is not None else total.mean(), "recon_num": r["num"].mean(), "recon_bin": r["bin"].mean(),
             "recon_cat": r["cat"].mean(), "kl": kl.mean()}
 
 

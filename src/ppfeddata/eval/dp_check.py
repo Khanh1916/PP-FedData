@@ -34,15 +34,17 @@ def rdp_int(q: float, sigma: float, alpha: int) -> float:
     return log_a_int(q, sigma, alpha) / (alpha - 1)
 
 
-def epsilon_independent(sigma: float, q: float, steps: int, delta: float, orders: Iterable[int] = ORDERS) -> float:
-    """eps of `steps` Sampled-Gaussian steps; 0 steps -> 0, sigma = 0 -> infinity."""
-    if steps <= 0:
+def epsilon_independent(sigma: float, q: float, steps: int, delta: float, orders: Iterable[int] = ORDERS, sigma_stat: float | None = None) -> float:
+    """eps of `steps` Sampled-Gaussian steps; 0 steps -> 0, sigma = 0 -> infinity. `sigma_stat` adds one Gaussian release without
+    subsampling (RDP a / (2 sigma_stat^2), the residual statistics of optimisation O1)."""
+    if steps <= 0 and not sigma_stat:
         return 0.0
-    if sigma <= 0:
+    if (steps > 0 and sigma <= 0) or (sigma_stat is not None and sigma_stat <= 0):
         return float("inf")
     best = float("inf")
     for a in orders:
-        eps = steps * rdp_int(q, sigma, int(a)) + math.log((a - 1) / a) - (math.log(delta) + math.log(a)) / (a - 1)
+        rdp = (steps * rdp_int(q, sigma, int(a)) if steps > 0 else 0.0) + (a / (2.0 * sigma_stat ** 2) if sigma_stat else 0.0)
+        eps = rdp + math.log((a - 1) / a) - (math.log(delta) + math.log(a)) / (a - 1)
         best = min(best, eps)
     return max(best, 0.0)
 
@@ -64,6 +66,7 @@ def recompute_run(spec: Mapping[str, Any], counted_steps: Mapping[Any, int] | No
     sizes, sigmas, bs = spec["partition_sizes"], dp["sigmas"], int(spec["hp"]["batch_size"])
     delta, rounds, epochs = float(dp["delta"]), int(spec["rounds"]), int(spec["local_epochs"])
     counted_steps = counted_steps or {}
+    ss = dp.get("sigma_stat")
     rows = []
     for i, (n, s) in enumerate(zip(sizes, sigmas)):
         per_epoch = math.ceil(int(n) / bs)
@@ -72,7 +75,7 @@ def recompute_run(spec: Mapping[str, Any], counted_steps: Mapping[Any, int] | No
         loader = rounds * epochs * loader_steps_per_epoch(int(n), bs)
         counted = int(counted_steps.get(str(i), counted_steps.get(i, 0)))
         rows.append({"client": i, "n": int(n), "sigma": float(s), "q": q, "planned_steps": planned, "loader_steps": loader, "counted_steps": counted,
-                     "eps_planned": epsilon_independent(float(s), q, planned, delta), "eps_counted": epsilon_independent(float(s), q, counted, delta)})
+                     "eps_planned": epsilon_independent(float(s), q, planned, delta, sigma_stat=ss), "eps_counted": epsilon_independent(float(s), q, counted, delta, sigma_stat=ss)})
     eps = max(r["eps_counted"] for r in rows)
     rel = (eps - float(reported_eps_max)) / float(reported_eps_max) if reported_eps_max else float("nan")
     return {"rows": rows, "eps_independent": float(eps), "eps_reported": float(reported_eps_max), "rel_diff": float(rel),

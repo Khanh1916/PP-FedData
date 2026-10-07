@@ -58,6 +58,23 @@ def local_train(state: dict[str, torch.Tensor], X: np.ndarray, y: np.ndarray, la
             "loss": float(last.get("loss", float("nan"))), "steps": int(steps), "seconds": time.perf_counter() - t0}
 
 
+CW_MAX = 10.0
+
+
+def class_weights(y: np.ndarray, n_classes: int, power: float, cap: float = CW_MAX) -> torch.Tensor | None:
+    """Per-class loss weights of one client (optimisation O1): (n / (classes present x n_c)) ** power, capped at `cap`, then scaled so the
+    mean weight over the client's records is 1 (the learning rate keeps its meaning). power 0 -> None (unweighted, as before O1).
+    Computed from the client's own labels (labels are not protected in this study)."""
+    if not power:
+        return None
+    cnt = np.bincount(np.asarray(y, dtype=np.int64), minlength=n_classes).astype(np.float64)
+    present = cnt > 0
+    w = np.zeros(n_classes)
+    w[present] = np.minimum((cnt.sum() / (present.sum() * cnt[present])) ** float(power), cap)
+    w /= (w * cnt).sum() / cnt.sum()
+    return torch.as_tensor(w, dtype=torch.float32)
+
+
 def local_train_dp(state: dict[str, torch.Tensor], X: np.ndarray, y: np.ndarray, layout: Layout, n_classes: int,
                    hp: dict[str, Any], local_epochs: int, round_idx: int, seed: int, client_id: int, sigma: float,
                    max_grad_norm: float) -> dict[str, Any]:
@@ -81,6 +98,7 @@ def local_train_dp(state: dict[str, torch.Tensor], X: np.ndarray, y: np.ndarray,
     g_sample, g_noise = torch.Generator().manual_seed(s), torch.Generator().manual_seed(s + 1)
     loader = DataLoader(TensorDataset(numpy_to_tensor(X), torch.as_tensor(y, dtype=torch.long)), batch_size=bs, shuffle=True,
                         generator=g_sample)
+    cw = class_weights(y, n_classes, float(hp.get("cw_power", 0.0)))
     t0 = time.perf_counter()
     with warnings.catch_warnings():
         warnings.simplefilter("ignore")           # "Secure RNG turned off" and the full-backward-hook notice
@@ -96,7 +114,7 @@ def local_train_dp(state: dict[str, torch.Tensor], X: np.ndarray, y: np.ndarray,
                 if len(xb) == 0:
                     continue
                 out, mu, logvar = gs(xb, one_hot(yb, n_classes))
-                loss = loss_terms(out, xb, mu, logvar, b, layout)["loss"]
+                loss = loss_terms(out, xb, mu, logvar, b, layout, None if cw is None else cw[yb])["loss"]
                 dopt.zero_grad(set_to_none=True)
                 loss.backward()
                 dopt.step()

@@ -32,7 +32,7 @@ def build_spec(cfg: dict[str, Any], seed: int, name: str = "B3", alpha: float | 
                torch_threads: int = 2, target_eps: float | None = None, sigma: float | None = None,
                max_grad_norm: float | None = None, delta: float | None = None, stop_after: int | None = None,
                secagg: dict[str, Any] | None = None, save_states: bool = False, agg_noise: float = 0.0,
-               agg_noise_seed: int = 0) -> dict[str, Any]:
+               agg_noise_seed: int = 0, stat_frac: float = 0.0, res_clip: float = 1.0) -> dict[str, Any]:
     """Partition the train pool (stored on disk) and describe the run."""
     fl = cfg["fl"]
     ddir = Path(data_dir) if data_dir is not None else processed_dir(cfg)
@@ -53,11 +53,15 @@ def build_spec(cfg: dict[str, Any], seed: int, name: str = "B3", alpha: float | 
         dcfg = cfg["dp"]
         delta_ = float(dcfg["delta"] if delta is None else delta)
         clip = float(dcfg["max_grad_norm"] if max_grad_norm is None else max_grad_norm)
+        # O1(a): part of epsilon for the DP residual statistics (dp_stats.py), composed with the training
+        sigma_stat = dp_utils.stat_noise_multiplier(target_eps, stat_frac, delta_) if (stat_frac and target_eps is not None) else None
         if sigma is not None:                                   # explicit noise (sanity runs, e.g. sigma = 0)
             sigmas = [float(sigma)] * k
         else:
-            sigmas = dp_utils.calibrate_clients(meta["sizes"], target_eps, delta_, int(hp_["batch_size"]), rounds_, le_)
+            sigmas = dp_utils.calibrate_clients(meta["sizes"], target_eps, delta_, int(hp_["batch_size"]), rounds_, le_, sigma_stat)
         dp = {"target_eps": None if target_eps is None else float(target_eps), "delta": delta_, "max_grad_norm": clip, "sigmas": sigmas}
+        if sigma_stat:
+            dp.update(stat_frac=float(stat_frac), sigma_stat=float(sigma_stat), res_clip=float(res_clip))
     return {"run_id": rid, "dp": dp, "secagg": secagg, "save_states": bool(save_states), "agg_noise": float(agg_noise),
             "agg_noise_seed": int(agg_noise_seed),
             "stop_after": None if stop_after is None else int(stop_after), "name": name, "seed": int(seed), "num_clients": k, "alpha": alpha,
@@ -99,7 +103,7 @@ def summarize(spec: dict[str, Any], wall_s: float | None = None) -> dict[str, An
     if spec.get("dp") and rows:
         dp = spec["dp"]
         dp_info = dp_utils.epsilon_table(spec["partition_sizes"], dp["sigmas"], rows[-1].get("client_dp_steps", {}),
-                                         int(spec["hp"]["batch_size"]), dp["delta"], dp["target_eps"])
+                                         int(spec["hp"]["batch_size"]), dp["delta"], dp["target_eps"], dp.get("sigma_stat"))
     sa_info = None
     if spec.get("secagg") and rows:
         from ppfeddata.fl import secagg

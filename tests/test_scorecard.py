@@ -115,3 +115,16 @@ def test_run_writes_files_and_freezes_the_baseline_once(tmp_path):
     again = sc.run(cfg)
     assert again["vs_baseline"] and all(d["tstr_f1_effect"] == "no change" for d in again["vs_baseline"])
     assert "Change against the baseline" in (tmp_path / "reports" / "scorecard.md").read_text(encoding="utf-8")
+
+
+def test_optimised_families_are_parsed_and_both_variants_are_valid():
+    from ppfeddata import aggregate as ag
+    p = ag.parse_config("M3o-t7-eps5-plain-TSTR-rf")
+    assert p["method"] == "M3" and p["family"] == "o1 t7" and p["variant"] == "plain" and p["eps"] == 5.0
+    s = pd.concat([_summary(), pd.DataFrame(_gen("M1o-t7-eps5-plain", 0.30, 0.30, eps=5.0, bytes_=1.5e6, t=280) + _gen("M1o-t7-eps5", 0.33, 0.33, eps=5.0, bytes_=1.5e6, t=280)
+                                            + _gen("M3o-t7-eps5", 0.33, 0.33, eps=5.0, bytes_=2.2e6, t=280))], ignore_index=True)
+    by = _by_label(sc.build(s, rare=RARE))
+    assert by["M1o-eps5"]["valid"] and by["M1o-eps5"]["variant"] == "standard" and by["M1o-eps5 (plain)"]["variant"] == "plain"
+    assert by["M3o-eps5"]["secagg"] and by["M3o-eps5"]["dp"] and not by["M1o-eps5"]["secagg"]
+    assert "M1-eps5" in by["M1o-eps5"].get("dominated_by", []) or by["M1o-eps5"]["pareto"]
+    assert "M1o-eps5" in by["M1-eps5"]["dominated_by"]                 # better utility at the same epsilon and cost

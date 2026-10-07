@@ -150,6 +150,7 @@ Mọi lệnh chạy từ thư mục gốc của repo. Mọi tiến trình dài g
 | 13+ | mở rộng A4 (nhóm test khác) và A5 (giới hạn packet mỗi stream): chạy lại Phase 3-4, B0, B3 (và M1-eps5) trong các thế giới riêng | `python -m ppfeddata.cli sensitivity` | `results/sensitivity.json`, `results/reports/sensitivity.md` |
 | 13+ | suy luận thành viên có truy cập mô hình đã phát hành, kèm đối chứng dương (B3 và M1 trên hai nửa ngẫu nhiên của train pool; nhiều giờ CPU) | `python -m ppfeddata.cli mia` | `results/mia_model.json` |
 | O0 | vòng tối ưu: bảng điểm B3, M1, M2, M3 trên mọi chỉ số (macro-F1, F1 nhị phân, recall lớp hiếm, mức lợi TAug, epsilon, SecAgg, MIA, chi phí) và mặt Pareto; `--freeze-baseline` một lần, làm mốc cho các giai đoạn sau | `python -m ppfeddata.cli scorecard` | `results/scorecard.json`, `results/reports/scorecard.md` |
+| O1 | vòng tối ưu: tìm siêu tham số DP ở quy mô đầy đủ (chạy FL thật, seed 0), một study cho mỗi epsilon, tìm cả số vòng, số epoch cục bộ, trọng số lớp và thống kê phần dư có DP; chỉ dùng val. Với `--final`: thử nghiệm tốt nhất của mỗi epsilon chạy với mọi seed thành `M1o-...` và `M3o-...` | `python -m ppfeddata.cli tune-dp-full` (sau đó `python -m ppfeddata.cli tune-dp-full --final`) | `configs/best_cvae_dp_full.yaml`, `results/runs.csv` |
 
 `configs/best_cvae.yaml` và `configs/best_cvae_dp.yaml` được commit: có thể bỏ qua `tune`, `tune-dp`, `verify-dp` và dùng thẳng siêu tham số đã chọn. Các cấu hình của ma trận nằm ở `configs/exp/*.yaml`
 (`python -m ppfeddata.cli run --stage trial --dry-run` in kế hoạch mà không chạy gì).
