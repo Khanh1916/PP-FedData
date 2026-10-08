@@ -1,6 +1,6 @@
 {
   "label_mode": "6class",
-  "git_commit": "ace14eec9bb55cd206027920583fb68f77d4d10b",
+  "git_commit": "2802c2d2a885a02c2091da391d50410a26f0a7bd",
   "files": {
     "results/runs.csv": {
       "sha256": "91e999b888c5f7c8c83d685d0bde4f2277489bb4b4254e520b0a6db243ca12ef",
@@ -15,7 +15,7 @@
       "bytes": 392780
     },
     "results/reports/final_report.md": {
-      "sha256": "5e320bb8bc5a15cd240c8ff581f45d8ddf11c04876a6dceb1289da0f18f297b1",
+      "sha256": "989cfe48930c85b8ba7d92aaac1ceca57686cd626cf86c4529bf3845f14625c3",
       "bytes": 101011
     },
     "results/manifests/split_manifest_6class.json": {
@@ -35,7 +35,7 @@
       "bytes": 3485
     },
     "results/repro/environment.json": {
-      "sha256": "70d00b87f9dd478f8b7156827063dc0b0dc98974f4ac6c8f7b7384f725c3e098",
+      "sha256": "29c436e7c6b7ff12a02780518862de94d81661b73bc485a57d4716cd73727b75",
       "bytes": 807
     },
     "results/repro/configs/best_cvae.yaml": {
