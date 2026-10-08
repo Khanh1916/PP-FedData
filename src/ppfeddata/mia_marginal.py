@@ -35,8 +35,8 @@ def fit_score(X, y, idx_fit, schema, eps, delta, setting: dict[str, Any], K: int
     opts = dict(setting.get("options") or {})
     kw = {"bins": int(opts.pop("bins", setting["bins"])), "split": opts.pop("split", setting["split"])}
     parts = _split(idx_fit, K, seed)
-    if setting.get("options") is None:                       # the tree of O2 (with the post-processing of O3.3 for MGr)
-        m = mg.fit(X, y, parts, schema, eps, delta, seed=seed, mechanism="skellam", **kw)
+    if setting.get("options") is None:                       # the tree of O2 (with the post-processing of O3.3 for MGr; threshold t of P1.2)
+        m = mg.fit(X, y, parts, schema, eps, delta, seed=seed, mechanism="skellam", honest_t=setting.get("honest_t"), **kw)
         if setting.get("refine"):
             m = mg.refine(m, **setting["refine"])
         return bn.loglik_tree(m, X, y, alpha=m.info.get("alpha", 1.0))
@@ -78,6 +78,20 @@ def default_settings(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
         opts = (bnb.get(f"eps{float(e):g}") or {}).get("chosen_options")
         if opts is not None:
             out[f"MGb-eps{float(e):g}"] = {"eps": float(e), "bins": int(b["bins"]), "split": list(b["split"]), "options": dict(opts)}
+    out.update(threshold_settings(cfg))
+    return out
+
+
+def threshold_settings(cfg: dict[str, Any], ts: tuple[int, ...] = (3, 2)) -> dict[str, dict[str, Any]]:
+    """The framework's configurations with the honest-client threshold t (P1.2): every client adds 1/t of the noise, so the released model
+    (all clients honest) carries K/t times the calibrated variance. Same bins / split / post-processing as `privacy_units.final`."""
+    from ppfeddata.privacy_units import _setting, name
+
+    out = {}
+    for e in cfg["dp"]["epsilons"]:
+        s, ref, v = _setting(float(e))
+        for t in ts:
+            out[name(v, float(e), t=t)] = {"eps": float(e), **s, "options": None, "honest_t": int(t), **({"refine": dict(ref)} if ref else {})}
     return out
 
 

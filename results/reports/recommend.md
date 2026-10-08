@@ -111,15 +111,34 @@ brokers of 5 operators, at most 2 may collude with the aggregator; the released 
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 10.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**, at least 3 honest clients, MIA AUC < 0.55.
 
-**Recommended: MGs-eps5**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
+**Recommended: MGs-t3-eps10**. Command: `python -m ppfeddata.cli privacy-units --stage final`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
+| MGs-t3-eps10 | 0.428 | 0.903 | 0.318 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
+| MGs-t2-eps10 | 0.418 | 0.908 | 0.310 | 7.57 | yes | distributed | 0.16 | 3 | 0.5 |
 | MGs-eps5 | 0.408 | 0.901 | 0.293 | 6.83 | yes | distributed | 0.15 | 3 | 0.4 |
-| MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.32 | yes | distributed | 0.20 | 3 | 0.6 |
-| M1-eps1 | 0.227 | 0.805 | 0.132 | 1.00 | no | local | 1.46 | 30 | 43.7 |
+| MGs-t2-eps5 | 0.396 | 0.891 | 0.260 | 3.94 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
+| MGr-t2-eps1 | 0.341 | 0.843 | 0.194 | 0.80 | yes | distributed | 0.21 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP, membership attack not measured); M3-eps5 (membership attack not measured); M1o-eps10 (membership attack not measured); M1o-eps10 (plain) (membership attack not measured); M1o-eps5 (membership attack not measured); M1o-eps5 (plain) (membership attack not measured); M1o-eps1 (membership attack not measured); M1o-eps1 (plain) (membership attack not measured); M3o-eps10 (membership attack not measured); M3o-eps10 (plain) (membership attack not measured); M3o-eps5 (membership attack not measured); M3o-eps5 (plain) (membership attack not measured); M3o-eps1 (membership attack not measured); M3o-eps1 (plain) (membership attack not measured); MGb-eps10 (epsilon 14.1 > 10); MGd-eps1 (membership attack not measured); MGd-eps10 (epsilon 26.6 > 10, membership attack not measured); MGd-eps5 (epsilon 12.4 > 10, membership attack not measured); MGl-eps1 (membership attack not measured); MGl-eps10 (membership attack not measured); MGl-eps5 (membership attack not measured); MGr-cap25-eps1 (membership attack not measured); MGr-eps10 (epsilon 14.1 > 10); MGr-strm1-eps1 (membership attack not measured); MGr-t2-eps1 (membership attack not measured); MGr-t3-eps1 (membership attack not measured); MGs-cap25-eps10 (epsilon 13.5 > 10, membership attack not measured); MGs-cap25-eps5 (membership attack not measured); MGs-eps10 (epsilon 14.1 > 10); MGs-strm1-eps10 (epsilon 14.1 > 10, membership attack not measured); MGs-strm2-eps5 (membership attack not measured); MGs-t2-eps10 (membership attack not measured); MGs-t2-eps5 (membership attack not measured); MGs-t3-eps10 (membership attack not measured); MGs-t3-eps5 (membership attack not measured).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP, membership attack not measured); M3-eps5 (membership attack not measured); M1o-eps10 (membership attack not measured); M1o-eps10 (plain) (membership attack not measured); M1o-eps5 (membership attack not measured); M1o-eps5 (plain) (membership attack not measured); M1o-eps1 (membership attack not measured); M1o-eps1 (plain) (membership attack not measured); M3o-eps10 (membership attack not measured); M3o-eps10 (plain) (membership attack not measured); M3o-eps5 (membership attack not measured); M3o-eps5 (plain) (membership attack not measured); M3o-eps1 (membership attack not measured); M3o-eps1 (plain) (membership attack not measured); MGb-eps10 (epsilon 14.1 > 10); MGd-eps1 (membership attack not measured); MGd-eps10 (epsilon 26.6 > 10, membership attack not measured); MGd-eps5 (epsilon 12.4 > 10, membership attack not measured); MGl-eps1 (membership attack not measured); MGl-eps10 (membership attack not measured); MGl-eps5 (membership attack not measured); MGr-cap25-eps1 (membership attack not measured); MGr-eps10 (epsilon 14.1 > 10); MGr-strm1-eps1 (membership attack not measured); MGs-cap25-eps10 (epsilon 13.5 > 10, membership attack not measured); MGs-cap25-eps5 (membership attack not measured); MGs-eps10 (epsilon 14.1 > 10); MGs-strm1-eps10 (epsilon 14.1 > 10, membership attack not measured); MGs-strm2-eps5 (membership attack not measured).
+
+## gateway-dropout
+
+as cloud-aggregator, but up to 2 of the 5 gateways may drop out of a round or leak their noise share: epsilon <= 5 must hold with 3 clients adding their share
+
+Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**, at least 3 honest clients.
+
+**Recommended: MGs-t2-eps5** (ties within the seed std: MGr-t3-eps1). Command: `python -m ppfeddata.cli privacy-units --stage final`.
+
+| configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
+|---|---|---|---|---|---|---|---|---|---|
+| MGs-t2-eps5 | 0.396 | 0.891 | 0.260 | 3.94 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
+| MGr-t2-eps1 | 0.341 | 0.843 | 0.194 | 0.80 | yes | distributed | 0.21 | 3 | 0.6 |
+
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 14.1 > 5); MGd-eps10 (epsilon 26.6 > 5); MGd-eps5 (epsilon 12.4 > 5); MGl-eps10 (epsilon 10 > 5); MGr-eps10 (epsilon 14.1 > 5); MGs-cap25-eps10 (epsilon 13.5 > 5); MGs-cap25-eps5 (epsilon 6.75 > 5); MGs-eps10 (epsilon 14.1 > 5); MGs-eps5 (epsilon 6.83 > 5); MGs-strm1-eps10 (epsilon 14.1 > 5); MGs-strm2-eps5 (epsilon 6.77 > 5); MGs-t2-eps10 (epsilon 7.57 > 5); MGs-t3-eps10 (epsilon 10 > 5).
 
 ## session-privacy
 

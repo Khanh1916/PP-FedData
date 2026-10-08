@@ -56,6 +56,8 @@ SCENARIOS = [
     Requirement("rare-attacks", False, True, 5.0, priority="rare", note="the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most"),
     Requirement("honest-majority", False, True, 10.0, honest_clients=3, max_mia=0.55,
                 note="brokers of 5 operators, at most 2 may collude with the aggregator; the released model must resist the membership attack (AUC < 0.55)"),
+    Requirement("gateway-dropout", False, True, 5.0, honest_clients=3,
+                note="as cloud-aggregator, but up to 2 of the 5 gateways may drop out of a round or leak their noise share: epsilon <= 5 must hold with 3 clients adding their share"),
     Requirement("session-privacy", False, True, 5.0, unit="stream",
                 note="epsilon must cover a whole TCP session of a device, not one packet"),
     Requirement("capture-privacy", False, True, 10.0, unit="capture",

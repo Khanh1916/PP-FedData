@@ -942,8 +942,10 @@ def _followup_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
     eps_of = lambda r: round(float(r["eps"]))                                                            # noqa: E731
     units = {(r.get("unit"), eps_of(r)): r for r in pu.get("units") or [] if r.get("eps") is not None}
     thr = {(int(r["t"]), eps_of(r)): r for r in pu.get("thresholds") or [] if r.get("eps") is not None}
+    rec = {r["requirement"]["name"]: r for r in (rd("recommend.json") or []) if r.get("requirement")}
     return {"units": units, "thr": thr, "eps": sorted({e for _, e in list(units) + list(thr)}),
-            "item5": ids.get("item5") or {}, "item6": (ids.get("item6") or {}).get("summary") or {}, "n6": (ids.get("item6") or {}).get("n")}
+            "item5": ids.get("item5") or {}, "item6": (ids.get("item6") or {}).get("summary") or {}, "n6": (ids.get("item6") or {}).get("n"),
+            "rec": {k: rec[k] for k in ("gateway-dropout", "honest-majority") if k in rec}}
 
 
 def _best5(r: dict[str, Any]) -> tuple[str, dict[str, Any]]:
@@ -1014,6 +1016,14 @@ def _followup(cfg: dict[str, Any]) -> list[str]:
                                  "ε if all clients honest": num(r.get("eps_all_honest", r.get("eps")), 2), "ε if one client honest": num(r.get("eps_one_honest"), 1)})
         L += [f"**Honest-client threshold (P1.2).** Each of the {k} clients adds 1/t of the noise, so the target epsilon holds while at least t clients add their share "
               "(the others may collude with the server or drop out):", "", _table(rows), ""]
+        picks = []
+        for scen, r in f["rec"].items():
+            q, b = r["requirement"], r.get("best")
+            picks.append(f"`{scen}` (ε ≤ {q['max_eps']:g} with {q.get('honest_clients')} clients adding their share" + (f", MIA AUC < {q['max_mia']:g}" if q.get("max_mia") else "")
+                         + ") → " + (f"{b['label']} (TSTR macro-F1 {num(b.get('tstr_f1'))}, ε {num(b.get('eps_eff'), 2)})" if b else "none"))
+        L += [f"The default stays t = K = {k}: that t = 3 costs no utility was measured at K = {k} only, and a fixed t would cost more with more clients. "
+              "The threshold is an option that `recommend` picks per requirement"
+              + (": " + "; ".join(picks) + " (section 9.10b). The membership attack of the released tables was run for every t (`results/mia_marginal.json`)." if picks else "."), ""]
     i5 = f["item5"]
     if i5:
         rows = []

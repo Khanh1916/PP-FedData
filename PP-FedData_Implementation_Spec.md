@@ -510,6 +510,12 @@ Mục tiêu (người dùng, 2026-10-07): tối ưu M1, M2, M3 để khung sinh 
 - **Độ bền (O4):** α Dirichlet, số client, chế độ 11 lớp (`robustness`). **Khuyến nghị:** `recommend` lọc các dòng hợp lệ của bảng điểm theo yêu cầu (tin server, số client trung thực, ε, MB/vòng, MB tổng, số vòng, ưu tiên, recall lớp hiếm tối thiểu, MIA tối đa), lấy mặt Pareto trên các trục triển khai.
 - **Báo cáo:** mục 9.9b (vì sao đổi bộ sinh, so với CVAE, tính mới so với FLAIM/MST/AIM) và 9.10b (cấu hình theo yêu cầu) sinh từ JSON; hạn chế mới trong `limitations.py`.
 
+**Bổ sung cho v1.5 — vòng tiếp theo P1-P2 (người dùng duyệt 2026-10-08):**
+- **ε mức nhóm (tuỳ chọn, `privacy-units`):** đơn vị bảo vệ là TCP stream hoặc capture. Hai điều kiện: mỗi đơn vị do một client giữ trọn (phân hoạch Dirichlet theo đơn vị, `group_dp.py`) và mỗi client dùng tối đa m dòng của mỗi đơn vị; độ nhạy một lần công bố T bảng: Δ1 = m·T, Δ2 = m·√T. m chọn trên val bằng 3 seed. Cấu hình mặc định của khung giữ ε mức bản ghi; `recommend` loại cấu hình có đơn vị nhỏ hơn yêu cầu.
+- **Ngưỡng client trung thực t (tuỳ chọn):** mỗi client thêm 1/t phương sai đã hiệu chỉnh, nên ε đích đúng khi ít nhất t client thêm phần của mình (số còn lại có thể thông đồng hoặc rớt mạng); báo cáo thêm ε khi mọi client trung thực. **Mặc định t = K.** `recommend` chọn t theo yêu cầu (số client trung thực tối thiểu); tấn công MIA lên bảng đã công bố đo cho mọi t được đưa vào bảng điểm.
+- **Phía IDS (ngoài bộ sinh, `ids-followup`):** trọng số xác suất lớp chọn trên val (trung bình 3 seed) và dùng toàn bộ dòng sinh; báo cáo riêng, không đổi bảng điểm. **Tăng cường cục bộ:** mỗi client thêm dòng sinh cho các lớp nó có dưới 5.000 dòng.
+- **Báo cáo:** mục 9.11 sinh từ `results/privacy_units.json`, `results/ids_followup.json`, `results/recommend.json`.
+
 ---
 
 ## Danh mục nghiệm thu cuối (Definition of Done)
@@ -535,6 +541,7 @@ Mục tiêu (người dùng, 2026-10-07): tối ưu M1, M2, M3 để khung sinh 
 
 ## Lịch sử thay đổi
 
+- **v1.5, bổ sung (2026-10-08):** vòng tiếp theo P1-P2: ε mức nhóm (stream, capture), ngưỡng client trung thực t (mặc định t = K, chọn theo yêu cầu trong `recommend`), tuỳ chọn phía IDS, tăng cường cục bộ, mục 9.11; lệnh mới `privacy-units`, `ids-followup`.
 - **v1.5 (2026-10-08):** đổi bộ sinh chính sang FedDP-Marginal sau Gate O1 (CVAE tune lại không hơn mốc); thêm luật DP phân tán (Skellam, SecAgg+ thật, ε theo số client trung thực), chọn trên val bằng 3 seed, độ bền, `recommend` mở rộng, mục 9.9b và 9.10b; lệnh mới `tune-marginal`, `mia-marginal`, `robustness` (cùng `taug-rare`, `tune-fedsgd`, `secagg-bits` viết ở O1-O2).
 - **v1.4 (2026-10-07):** thêm Phase 14 (vòng tối ưu M1, M2, M3: O0-O5) theo mục tiêu của người dùng: bảng điểm nhiều chỉ số với bộ phân loại chọn theo val, luật hợp lệ (thành phần ngoài ε làm dòng DP không hợp lệ), mặt Pareto theo luật seed, mốc đóng băng, kế hoạch O1-O5, lệnh `scorecard`.
 - **v1.3 (2026-10-05):** gộp các thay đổi rút ra khi làm Phase 6-13 (chi tiết và bằng chứng: `SPEC_DEVIATIONS.md` các mục 6-13, giữ làm nhật ký). Cấu hình: `patience`, `generate.residual_noise`, `secagg.clipping_range` 16 và `max_weight`, `eval.smote`, `compute.runs_csv`, 4 ngưỡng Phase 12. Phase 6: B1a chỉ RF, `run_id` gồm bộ phân loại, sổ chạy từ Phase 6. Phase 7: nhiễu phần dư theo lớp, hạng mục chết, tune qua đường sinh cuối, C2ST không chặn. Phase 8: cách chạy Flower 1.39 (Ray, thứ tự gộp theo mã client, dừng khi thiếu phản hồi). Phase 9: số bước Opacus, decoder `plain` là số chính, tune DP riêng (`tune-dp`, `verify-dp`), ε tính lại độc lập. Phase 10: dùng nguyên bản `SecAggPlusWorkflow` (không cần `secagg_sim.py`), `max_weight`, `clipping_range`, T-SA1-3 trên dữ liệu thật. Phase 11: họ DP chính, nhóm reference/extension, G4 mã hoá vào công cụ. Phase 12: định nghĩa R1-R6 và cờ đỏ, bootstrap theo stream, mục 9.9 (vì sao CVAE) và 9.10 (cấu hình nào cho yêu cầu nào). Phase 13: demo, README hai bản, `limitations.py`, `package`, `accept`. Đã sửa: nhận định "gói tin cùng stream tương quan mạnh" chỉ đúng ở mức capture (mẫu có ~1,0-1,2 dòng mỗi stream). `SPEC_DEVIATIONS.md` có ghi chú đầu file nói các dòng nào đã được gộp.

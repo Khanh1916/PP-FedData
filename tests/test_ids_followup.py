@@ -51,3 +51,18 @@ def test_render_has_both_items():
     md = idf.render(out)
     assert "| MG-eps5 | rf | 0.400 ± 0.010 | 0.450 ± 0.010 |" in md and "| local + MG-eps5 |" in md and "| 14 |" in md
     assert "| MG-eps5 only (same model for every client) | 0.410 ± 0.000 |" in md and "| 12 |" in md
+
+
+def test_section_9_11_names_the_threshold_picked_by_recommend(tmp_path):
+    import json
+
+    from ppfeddata import interpret_report as ir
+    cfg = {"compute": {"runs_csv": str(tmp_path / "runs.csv")}}
+    row = lambda c, t, f: {"config": c, "eps": 5.0, "tstr_f1": f, "tstr_f1_std": 0.01, "t": t}      # noqa: E731
+    (tmp_path / "privacy_units.json").write_text(json.dumps({"thresholds": [row("MGs-eps5", 5, 0.41), row("MGs-t3-eps5", 3, 0.41)]}), encoding="utf-8")
+    rec = [{"requirement": {"name": "gateway-dropout", "max_eps": 5.0, "honest_clients": 3}, "best": {"label": "MGs-t3-eps5", "tstr_f1": 0.41, "eps_eff": 5.0}},
+           {"requirement": {"name": "lab", "max_eps": None}, "best": {"label": "B3"}}]
+    (tmp_path / "recommend.json").write_text(json.dumps(rec), encoding="utf-8")
+    md = "\n".join(ir._followup(cfg))
+    assert "The default stays t = K = 5" in md and "`gateway-dropout` (ε ≤ 5 with 3 clients adding their share) → MGs-t3-eps5 (TSTR macro-F1 0.410, ε 5.00)" in md
+    assert "`lab`" not in md

@@ -101,3 +101,20 @@ def test_unit_rows_in_the_scorecard_and_the_unit_requirement():
     assert {x["label"] for x in r["meets"]} == {"MGs-cap50-eps10"}
     assert "privacy-units" in rc.command("MGs-strm2-eps5", 5.0) and "privacy-units" in rc.command("MGr-t3-eps1", 1.0)
     assert "tune-marginal" in rc.command("MGs-eps5", 5.0)
+
+
+def test_gateway_dropout_needs_the_epsilon_with_three_honest_clients():
+    from ppfeddata import recommend as rc
+    req = next(s for s in rc.SCENARIOS if s.name == "gateway-dropout")
+    base = {"dp": True, "dp_mode": "distributed", "secagg": True, "eps": 5.0, "eps_one_honest": 14.2}
+    t5 = rc.effective({**base, "label": "MGs-eps5", "eps_honest": {"3": 6.83, "5": 5.0}}, req)
+    t3 = rc.effective({**base, "label": "MGs-t3-eps5", "eps_honest": {"3": 5.0, "5": 3.72}}, req)
+    assert rc.reasons(t5, req) == ["epsilon 6.83 > 5"] and rc.reasons(t3, req) == []
+    assert req.honest_clients == 3 and not req.trust_server
+
+
+def test_membership_attack_covers_the_threshold_configurations():
+    from ppfeddata import mia_marginal as mm
+    s = mm.threshold_settings({"dp": {"epsilons": [1.0, 5.0]}})
+    assert set(s) == {"MGr-t3-eps1", "MGr-t2-eps1", "MGs-t3-eps5", "MGs-t2-eps5"}
+    assert s["MGs-t2-eps5"]["honest_t"] == 2 and "refine" in s["MGr-t3-eps1"] and "refine" not in s["MGs-t3-eps5"]

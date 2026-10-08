@@ -724,7 +724,8 @@ The optimisation round replaced the CVAE by FedDP-Marginal (federated DP margina
 | strict-privacy | server untrusted, clients trusted, ε ≤ 1; priority macro | MGr-t3-eps1 | 0.392 | 0.251 | 1.00 | 0.61 | MGr-eps1 |
 | low-bandwidth | server untrusted, clients trusted, ε ≤ 10, ≤ 100 MB in total; priority macro | MGr-eps10 | 0.433 | 0.318 | 10.00 | 0.47 | MGs-eps10 |
 | rare-attacks | server untrusted, clients trusted, ε ≤ 5; priority rare | MGs-eps5 | 0.408 | 0.293 | 5.00 | 0.45 | - |
-| honest-majority | server untrusted, ≥ 3 honest clients, ε ≤ 10, MIA AUC < 0.55; priority macro | MGs-eps5 | 0.408 | 0.293 | 6.83 | 0.45 | - |
+| honest-majority | server untrusted, ≥ 3 honest clients, ε ≤ 10, MIA AUC < 0.55; priority macro | MGs-t3-eps10 | 0.428 | 0.318 | 10.00 | 0.48 | - |
+| gateway-dropout | server untrusted, ≥ 3 honest clients, ε ≤ 5; priority macro | MGs-t2-eps5 | 0.396 | 0.260 | 3.94 | 0.45 | MGr-t3-eps1 |
 | session-privacy | server untrusted, clients trusted, ε ≤ 5; priority macro | MGs-strm2-eps5 | 0.371 | 0.249 | 5.00 | 0.45 | - |
 | capture-privacy | server untrusted, clients trusted, ε ≤ 10; priority macro | MGs-cap25-eps5 | 0.203 | 0.082 | 5.00 | 0.47 | - |
 
@@ -761,6 +762,8 @@ A TCP stream is a cheap unit (90 % of the streams have one row); a capture is no
 | 10 | 5 (as before) | 0.429 ± 0.008 | 10.00 | 36.0 |
 | 10 | 3 | 0.428 ± 0.008 | 7.10 | 23.3 |
 | 10 | 2 | 0.418 ± 0.003 | 5.52 | 16.3 |
+
+The default stays t = K = 5: that t = 3 costs no utility was measured at K = 5 only, and a fixed t would cost more with more clients. The threshold is an option that `recommend` picks per requirement: `gateway-dropout` (ε ≤ 5 with 3 clients adding their share) → MGs-t2-eps5 (TSTR macro-F1 0.396, ε 3.94); `honest-majority` (ε ≤ 10 with 3 clients adding their share, MIA AUC < 0.55) → MGs-t3-eps10 (TSTR macro-F1 0.428, ε 10.00) (section 9.10b). The membership attack of the released tables was run for every t (`results/mia_marginal.json`).
 
 **IDS-side options (P2.1).** The IDS trained on synthetic data only, with all 20,000 rows per class and / or class-probability weights chosen on validation (mean of 3 seeds). Validation and test are class-balanced, so the weights correct the IDS's over-prediction of NORMAL, not a class prior; they need labelled real validation data and must be chosen again for another class mix. 'Best option' is read on test, for information only:
 
