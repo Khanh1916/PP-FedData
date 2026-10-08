@@ -174,6 +174,9 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     pv = _pivot_facts(cfg)
     if pv:
         out.append(_pivot_bullet(pv))
+    fu = _followup_facts(cfg)
+    if fu and _followup_bullet(fu):
+        out.append(_followup_bullet(fu))
     bits = [f"{f['id']} ({f['title']}): {f['status']}" for f in R["flags"]]
     out.append("**Red flags** (spec Phase 12): " + "; ".join(bits) + ". Details in 9.7.")
     return out
@@ -926,6 +929,116 @@ def _guide_o4(cfg: dict[str, Any]) -> list[str]:
     return L
 
 
+def _followup_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
+    """Numbers of the follow-up round (9.11): results/privacy_units.json (P1) and results/ids_followup.json (P2); None before both ran."""
+    import json as _json
+    from pathlib import Path as _P
+
+    res = _P(cfg["compute"]["runs_csv"]).parent
+    rd = lambda n: _json.loads((res / n).read_text(encoding="utf-8")) if (res / n).exists() else {}      # noqa: E731
+    pu, ids = rd("privacy_units.json"), rd("ids_followup.json")
+    if not pu and not ids:
+        return None
+    eps_of = lambda r: round(float(r["eps"]))                                                            # noqa: E731
+    units = {(r.get("unit"), eps_of(r)): r for r in pu.get("units") or [] if r.get("eps") is not None}
+    thr = {(int(r["t"]), eps_of(r)): r for r in pu.get("thresholds") or [] if r.get("eps") is not None}
+    return {"units": units, "thr": thr, "eps": sorted({e for _, e in list(units) + list(thr)}),
+            "item5": ids.get("item5") or {}, "item6": (ids.get("item6") or {}).get("summary") or {}, "n6": (ids.get("item6") or {}).get("n")}
+
+
+def _best5(r: dict[str, Any]) -> tuple[str, dict[str, Any]]:
+    """Best IDS-side option of item 5 by test macro-F1 (reported, not used to choose anything)."""
+    c = {"weights": r["base"]["weighted"], "all rows": r["rows"]["plain"], "all rows + weights": r["rows"]["weighted"]}
+    k = max(c, key=lambda x: c[x]["macro_f1"][0])
+    return k, c[k]
+
+
+def _followup_bullet(f: dict[str, Any]) -> str | None:
+    parts = []
+    u, t = f["units"], f["thr"]
+    st = [(e, u[("packet", e)]["tstr_f1"] - u[("stream", e)]["tstr_f1"]) for e in f["eps"] if ("stream", e) in u and ("packet", e) in u]
+    cap = [u[("capture", e)]["tstr_f1"] for e in f["eps"] if ("capture", e) in u]
+    if st:
+        parts.append(f"epsilon for a whole TCP stream costs FedDP-Marginal {min(d for _, d in st):.2f}-{max(d for _, d in st):.2f} TSTR macro-F1"
+                     + (f", for a whole capture it falls to {min(cap):.2f}-{max(cap):.2f}" if cap else ""))
+    k = max((x for x, _ in t), default=0)
+    d3 = [t[(3, e)]["tstr_f1"] - t[(k, e)]["tstr_f1"] for e in f["eps"] if (3, e) in t and (k, e) in t]
+    if d3:
+        parts.append(f"calibrating the noise for 3 honest clients of {k} changes it by {min(d3):+.3f} to {max(d3):+.3f}")
+    i5 = f["item5"]
+    g5 = [(key, r) for key, r in i5.items() if key.startswith("MG-eps5|")]
+    if g5:
+        parts.append("class-probability weights chosen on validation raise the TSTR of the IDS (" + ", ".join(
+            f"MG-eps5 {key.split('|')[1].upper()} {r['base']['plain']['macro_f1'][0]:.3f} → {r['base']['weighted']['macro_f1'][0]:.3f}" for key, r in g5) + ")")
+    s6 = f["item6"]
+    if "local" in s6 and "MG-eps5" in s6:
+        m = s6["MG-eps5"]
+        parts.append(f"a client that adds FedDP-Marginal rows for the classes it lacks gains {m['gain_macro_f1'][0]:+.3f} macro-F1 on average "
+                     f"({s6['local']['macro_f1'][0]:.3f} → {m['macro_f1'][0]:.3f}, {m['clients_better']} of {f['n6']} client models better)")
+    if not parts:
+        return None
+    return "**Follow-up round (9.11).** On this data, " + "; ".join(parts) + "."
+
+
+def _followup(cfg: dict[str, Any]) -> list[str]:
+    """Section 9.11: follow-up round P1 (unit-level epsilon, honest-client threshold) and P2 (IDS-side options, local augmentation)."""
+    f = _followup_facts(cfg)
+    if not f:
+        return []
+    num = lambda x, d=3: "n/a" if x is None or x != x else f"{x:.{d}f}"      # noqa: E731
+    L = ["### 9.11 Follow-up round: privacy unit, honest-client threshold, IDS side, local augmentation", "",
+         "After the optimisation round, four open points were tested (SPEC_DEVIATIONS P1.1-P2.2). TSTR on the real test split, mean ± std over 3 seeds; "
+         "details in `results/reports/privacy_units.md` and `results/reports/ids_followup.md`.", ""]
+    u, t = f["units"], f["thr"]
+    if u:
+        rows = []
+        for e in f["eps"]:
+            row = {"ε": f"{e:g}"}
+            for unit, lab in (("packet", "packet (as before)"), ("stream", "TCP stream"), ("capture", "capture")):
+                r = u.get((unit, e))
+                row[lab] = "n/a" if not r else f"{r['tstr_f1']:.3f} ± {r.get('tstr_f1_std') or 0:.3f}" + (f" (m {r['m']})" if unit != "packet" else "")
+            rows.append(row)
+        L += ["**Protected unit (P1.1).** Record-level epsilon protects one packet; with every unit held by one client and at most m of its rows used, the "
+              "same noise calibration gives epsilon for the whole unit (m chosen on validation). FedDP-Marginal, distributed Skellam noise, TSTR macro-F1:", "",
+              _table(rows), "",
+              "A TCP stream is a cheap unit (90 % of the streams have one row); a capture is not usable on this data (up to 1,277 rows each, only a few thousand rows kept). "
+              "The CVAE routes keep record-level epsilon.", ""]
+    if t:
+        k = max(x for x, _ in t)
+        rows = []
+        for e in f["eps"]:
+            for x in sorted({x for x, _ in t}, reverse=True):
+                r = t.get((x, e))
+                if r:
+                    rows.append({"ε (target)": f"{e:g}", "t": f"{x}" + (" (as before)" if x == k else ""), "TSTR macro-F1": f"{r['tstr_f1']:.3f} ± {r.get('tstr_f1_std') or 0:.3f}",
+                                 "ε if all clients honest": num(r.get("eps_all_honest", r.get("eps")), 2), "ε if one client honest": num(r.get("eps_one_honest"), 1)})
+        L += [f"**Honest-client threshold (P1.2).** Each of the {k} clients adds 1/t of the noise, so the target epsilon holds while at least t clients add their share "
+              "(the others may collude with the server or drop out):", "", _table(rows), ""]
+    i5 = f["item5"]
+    if i5:
+        rows = []
+        for key, r in i5.items():
+            g, c = key.split("|")
+            opt, b = _best5(r)
+            rows.append({"generator": g, "classifier": c.upper(), "TSTR macro-F1": num(r["base"]["plain"]["macro_f1"][0]), "+ weights": num(r["base"]["weighted"]["macro_f1"][0]),
+                         "best option": f"{num(b['macro_f1'][0])} ({opt})", "rare recall: base → best": f"{num(r['base']['plain']['rare_recall'][0])} → {num(b['rare_recall'][0])}"})
+        L += ["**IDS-side options (P2.1).** The IDS trained on synthetic data only, with all 20,000 rows per class and / or class-probability weights chosen on "
+              "validation (mean of 3 seeds). Validation and test are class-balanced, so the weights correct the IDS's over-prediction of NORMAL, not a class prior; "
+              "they need labelled real validation data and must be chosen again for another class mix. 'Best option' is read on test, for information only:", "",
+              _table(rows), ""]
+    s6 = f["item6"]
+    if s6:
+        rows = []
+        for lab, v in s6.items():
+            name = "local real rows only" if lab == "local" else (f"{lab[5:]} only" if lab.startswith("only:") else f"local + {lab}")
+            rows.append({"training data of a client": name, "macro-F1": f"{v['macro_f1'][0]:.3f} ± {v['macro_f1'][1]:.3f}", "rare recall": num(v["rare_recall"][0]),
+                         "gain over local": "-" if lab == "local" else f"{v['gain_macro_f1'][0]:+.3f}", "client models better": "-" if lab == "local" else f"{v['clients_better']} / {f['n6']}"})
+        L += ["**Local augmentation (P2.2).** Each client (non-IID partition) trains its own IDS (RF) on its own rows, then adds synthetic rows of the federation's "
+              "generator for every class it holds fewer than 5,000 rows of. Unlike TAug (9.1), the client receives classes it rarely sees, so the synthetic rows add information:", "",
+              _table(rows), ""]
+    return L
+
+
 def _protection() -> list[str]:
     return ["### 9.8 What secure aggregation and differential privacy each protect", "",
             "- **SecAgg** (M2, M3) hides each client's model update from the aggregation server: an honest-but-curious server sees only the sum of the updates of the clients that took part. "
@@ -1066,5 +1179,5 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
          f"(the macro-F1 recomputed from the predictions equals the ledger's to {m['integrity_max_abs_diff_vs_ledger']:.0e}); `results/interpretation.json` holds the same numbers in machine-readable form.", ""]
     L += _how_judged(R)
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
-    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg) + _guide(R, cfg)
+    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg) + _guide(R, cfg) + _followup(cfg)
     return L
