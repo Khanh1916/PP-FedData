@@ -76,7 +76,8 @@ ppfeddata/
 ├── artifacts/     {run_id}/ model.pt, synthetic.parquet, preds/
 ├── results/       runs.csv, summary.csv, figures/, reports/, manifests/   (manifests/split_manifest_<mode>.json được commit: chỉ có mã nhóm, số lượng, hash, phiên bản thư viện)
 ├── demo/          app.py
-├── requirements.txt, requirements-lock.txt, README.md, README.vi.md, BLOCKERS.md (nếu có), SPEC_DEVIATIONS.md (nhật ký bằng chứng cho các thay đổi spec)
+├── docs/          PP-FedData_Implementation_Spec.md (tệp này), SPEC_DEVIATIONS.md (nhật ký bằng chứng cho các thay đổi spec), ARCHITECTURE.md / .vi.md   # chuyển vào docs/ ngày 2026-10-09
+├── requirements.txt, requirements-lock.txt, README.md, README.vi.md, BLOCKERS.md (nếu có)
 ```
 
 CLI thống nhất: `python -m ppfeddata.cli <lệnh> --config ...` với lệnh ∈ {`inventory`, `harmonize`, `sample`, `preprocess`, `check`, `baseline`, `tune`, `b2`, `benchmark`, `b3`, `m1`, `tune-dp`, `verify-dp`, `m2`, `m3`, `secagg-check`, `secagg-report`, `run`, `aggregate`, `demo`, `package`, `accept`, `fed-baseline`, `sensitivity`, `mia`, `scorecard`, `tune-dp-full`, `taug-rare`, `tune-fedsgd`, `secagg-bits`, `tune-marginal`, `recommend`, `mia-marginal`, `robustness`, `privacy-units`, `ids-followup`} (**v1.3**, `scorecard`, `tune-dp-full`, `taug-rare`, `tune-fedsgd`, `secagg-bits`, `tune-marginal`, `recommend`, `mia-marginal` và `robustness` **v1.4**; the last three are the follow-ups after Phase 13: the classifier trained directly by FL, the extensions A4/A5, and membership inference with access to the released model).

@@ -70,8 +70,8 @@ The CVAE routes (B2, B3, M1-M3) go through the same steps 1, 2, 4 and 5. Diagram
 | understand the design and the code | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), then the README of each folder ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md)) |
 | see every result and its interpretation | [results/reports/final_report.md](results/reports/final_report.md): 9.0 summary, 9.9b why FedDP-Marginal, 9.10b per requirement, 9.11 follow-up round |
 | choose a configuration for a deployment | [results/reports/recommend.md](results/reports/recommend.md), the interactive page `results/reports/recommend.html` (download and open it), demo page 3 |
-| know the rules the work follows | [PP-FedData_Implementation_Spec.md](PP-FedData_Implementation_Spec.md) |
-| know why something differs from the spec, with the evidence | [SPEC_DEVIATIONS.md](SPEC_DEVIATIONS.md) (in Vietnamese) |
+| know the rules the work follows | [docs/PP-FedData_Implementation_Spec.md](docs/PP-FedData_Implementation_Spec.md) |
+| know why something differs from the spec, with the evidence | [docs/SPEC_DEVIATIONS.md](docs/SPEC_DEVIATIONS.md) (in Vietnamese) |
 | re-run everything | Installation, Data, Running each phase, Reproducing the results (below) |
 
 ## Results and how to read them
@@ -264,14 +264,15 @@ PP-FedData/
 ├── configs/              default.yaml (every parameter), best_*.yaml (settings chosen on validation), exp/ (experiment matrix),
 │                         feature_decisions.yaml, label_map.yaml; local.yaml (machine paths, not committed)
 ├── results/              committed results: reports/, figures/, *.json, manifests/, repro/; runs.csv and summary.csv not committed
-├── docs/                 ARCHITECTURE.md, ARCHITECTURE.vi.md: components, data flow, privacy mechanics, code map
+├── docs/
+│   ├── ARCHITECTURE.md, ARCHITECTURE.vi.md   components, data flow, privacy mechanics, code map
+│   ├── PP-FedData_Implementation_Spec.md     the rules (spec v1.5)
+│   └── SPEC_DEVIATIONS.md                    every deviation from the spec, with evidence (Vietnamese)
 ├── tests/                pytest for every stage
 ├── demo/                 app.py (Streamlit)
 ├── notebooks/            empty; reserved for view-only notebooks (no logic)
 ├── data/, artifacts/     written by the runs: processed data, partitions, models, synthetic data, predictions (not committed)
-├── PP-FedData_Implementation_Spec.md   the rules (spec v1.5)
-├── SPEC_DEVIATIONS.md    every deviation from the spec, with evidence (Vietnamese)
-└── pyproject.toml, requirements.txt, requirements-lock.txt
+└── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
 Each folder with code, settings or results has a README that lists its files and how they are produced: [src/ppfeddata](src/ppfeddata/README.md),

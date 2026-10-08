@@ -12,6 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "src" / "ppfeddata"
 DOCS = [ROOT / "docs" / "ARCHITECTURE.md", ROOT / "docs" / "ARCHITECTURE.vi.md", PKG / "README.md", ROOT / "configs" / "README.md",
         ROOT / "results" / "README.md", ROOT / "tests" / "README.md", ROOT / "demo" / "README.md"]
+HISTORY = [ROOT / "docs" / "PP-FedData_Implementation_Spec.md", ROOT / "docs" / "SPEC_DEVIATIONS.md"]   # links only: they name past files too
 NOT_COMMITTED = ("data/", "artifacts/", "configs/local.yaml", "results/runs.csv", "results/summary.csv")
 COMMANDS = set(build_parser()._subparsers._group_actions[0].choices)
 
@@ -28,7 +29,7 @@ def _code(md: Path) -> list[str]:
     return re.findall(r"`([^`\n]+)`", md.read_text(encoding="utf-8"))
 
 
-@pytest.mark.parametrize("md", DOCS, ids=lambda p: str(p.relative_to(ROOT)))
+@pytest.mark.parametrize("md", DOCS + HISTORY, ids=lambda p: str(p.relative_to(ROOT)))
 def test_links_resolve(md):
     for target in re.findall(r"\]\(([^)#\s]+)\)", md.read_text(encoding="utf-8")):
         if not target.startswith("http"):

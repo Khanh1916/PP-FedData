@@ -70,8 +70,8 @@ Các hướng CVAE (B2, B3, M1-M3) đi qua cùng các bước 1, 2, 4 và 5. Sơ
 | hiểu thiết kế và mã | [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md), rồi README của từng thư mục ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md); tiếng Anh) |
 | xem mọi kết quả và cách diễn giải | [results/reports/final_report.md](results/reports/final_report.md): 9.0 tóm tắt, 9.9b vì sao chọn FedDP-Marginal, 9.10b theo yêu cầu, 9.11 vòng tiếp theo |
 | chọn cấu hình cho một triển khai | [results/reports/recommend.md](results/reports/recommend.md), trang tương tác `results/reports/recommend.html` (tải về rồi mở), trang 3 của demo |
-| biết các luật công việc tuân theo | [PP-FedData_Implementation_Spec.md](PP-FedData_Implementation_Spec.md) |
-| biết vì sao có chỗ khác spec, kèm bằng chứng | [SPEC_DEVIATIONS.md](SPEC_DEVIATIONS.md) |
+| biết các luật công việc tuân theo | [docs/PP-FedData_Implementation_Spec.md](docs/PP-FedData_Implementation_Spec.md) |
+| biết vì sao có chỗ khác spec, kèm bằng chứng | [docs/SPEC_DEVIATIONS.md](docs/SPEC_DEVIATIONS.md) |
 | chạy lại toàn bộ | Cài đặt, Dữ liệu, Chạy từng Phase, Tái lập (bên dưới) |
 
 ## Kết quả và cách đọc
@@ -262,14 +262,15 @@ PP-FedData/
 ├── configs/              default.yaml (mọi tham số), best_*.yaml (thiết lập chọn trên val), exp/ (ma trận thí nghiệm),
 │                         feature_decisions.yaml, label_map.yaml; local.yaml (đường dẫn riêng máy, không commit)
 ├── results/              kết quả được commit: reports/, figures/, *.json, manifests/, repro/; runs.csv và summary.csv không commit
-├── docs/                 ARCHITECTURE.md, ARCHITECTURE.vi.md: thành phần, luồng dữ liệu, cơ chế bảo vệ, bản đồ mã
+├── docs/
+│   ├── ARCHITECTURE.md, ARCHITECTURE.vi.md   thành phần, luồng dữ liệu, cơ chế bảo vệ, bản đồ mã
+│   ├── PP-FedData_Implementation_Spec.md     các luật (spec v1.5)
+│   └── SPEC_DEVIATIONS.md                    mọi chỗ lệch spec, kèm bằng chứng
 ├── tests/                pytest cho mọi bước
 ├── demo/                 app.py (Streamlit)
 ├── notebooks/            trống; dành cho notebook chỉ để xem (không chứa logic)
 ├── data/, artifacts/     do các lần chạy ghi: dữ liệu đã xử lý, phân hoạch, mô hình, dữ liệu sinh, dự đoán (không commit)
-├── PP-FedData_Implementation_Spec.md   các luật (spec v1.5)
-├── SPEC_DEVIATIONS.md    mọi chỗ lệch spec, kèm bằng chứng
-└── pyproject.toml, requirements.txt, requirements-lock.txt
+└── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
 Mỗi thư mục có mã, thiết lập hoặc kết quả đều có README (tiếng Anh) liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),

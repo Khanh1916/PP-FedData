@@ -201,7 +201,8 @@ Each folder with code or results has its own README: [`src/ppfeddata/`](../src/p
   `aggregate` (or the stage's command).
 - **One process per FL run.** Flower simulations run with Ray in their own process (`fl/run.py`, `fl/mg_app.py`); do not run other
   heavy jobs at the same time on a small machine.
-- **Every deviation is logged.** A change of method goes to `SPEC_DEVIATIONS.md` with its evidence; the spec keeps only the rules.
+- **Every deviation is logged.** A change of method goes to [SPEC_DEVIATIONS.md](SPEC_DEVIATIONS.md) with its evidence; the
+  [spec](PP-FedData_Implementation_Spec.md) keeps only the rules.
 
 ## 10. Extending
 

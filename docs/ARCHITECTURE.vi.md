@@ -201,7 +201,8 @@ Mỗi thư mục có mã hoặc kết quả có README riêng (tiếng Anh): [`s
   `aggregate` (hoặc lệnh của bước đó).
 - **Mỗi lần chạy FL một tiến trình.** Mô phỏng Flower chạy với Ray trong tiến trình riêng (`fl/run.py`, `fl/mg_app.py`); trên máy nhỏ không
   chạy việc nặng khác cùng lúc.
-- **Mọi chỗ lệch đều được ghi.** Thay đổi phương pháp ghi vào `SPEC_DEVIATIONS.md` kèm bằng chứng; spec chỉ giữ luật.
+- **Mọi chỗ lệch đều được ghi.** Thay đổi phương pháp ghi vào [SPEC_DEVIATIONS.md](SPEC_DEVIATIONS.md) kèm bằng chứng;
+  [spec](PP-FedData_Implementation_Spec.md) chỉ giữ luật.
 
 ## 10. Mở rộng
 
