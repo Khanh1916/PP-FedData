@@ -65,6 +65,12 @@ Rows per class [train, val, test] (quotas; the splits are by capture group, see 
 | M1-eps10 | - | 0.2293 ± 0.0327 | 0.4471 ± 0.0008 | 0.4830 ± 0.0006 |
 | M2 | - | 0.3979 ± 0.0083 | 0.4478 ± 0.0007 | 0.4831 ± 0.0004 |
 | M3-eps5 | - | 0.2565 ± 0.0313 | 0.4476 ± 0.0008 | 0.4832 ± 0.0007 |
+| MG-eps1 | - | 0.3894 ± 0.0095 | 0.4451 ± 0.0008 | 0.4813 ± 0.0006 |
+| MG-eps5 | - | 0.4084 ± 0.0025 | 0.4482 ± 0.0005 | 0.4837 ± 0.0003 |
+| MG-eps10 | - | 0.4133 ± 0.0074 | 0.4492 ± 0.0007 | 0.4841 ± 0.0004 |
+| MGl-eps1 | - | 0.2526 ± 0.0287 | 0.4463 ± 0.0009 | 0.4823 ± 0.0008 |
+| MGl-eps5 | - | 0.3740 ± 0.0105 | 0.4470 ± 0.0013 | 0.4828 ± 0.0010 |
+| MGl-eps10 | - | 0.4134 ± 0.0073 | 0.4483 ± 0.0004 | 0.4837 ± 0.0003 |
 
 ## 2b. Utility, MLP (test macro-F1, mean ± std over seeds)
 
@@ -79,6 +85,12 @@ Rows per class [train, val, test] (quotas; the splits are by capture group, see 
 | M1-eps10 | - | 0.2432 ± 0.0365 | 0.3453 ± 0.0071 | 0.4144 ± 0.0018 |
 | M2 | - | 0.4166 ± 0.0060 | 0.3582 ± 0.0042 | 0.4174 ± 0.0019 |
 | M3-eps5 | - | 0.2556 ± 0.0297 | 0.3355 ± 0.0082 | 0.4097 ± 0.0025 |
+| MG-eps1 | - | 0.3815 ± 0.0112 | 0.3466 ± 0.0018 | 0.4126 ± 0.0004 |
+| MG-eps5 | - | 0.4011 ± 0.0046 | 0.3350 ± 0.0169 | 0.4074 ± 0.0071 |
+| MG-eps10 | - | 0.4285 ± 0.0077 | 0.3445 ± 0.0069 | 0.4109 ± 0.0057 |
+| MGl-eps1 | - | 0.2360 ± 0.0360 | 0.3429 ± 0.0090 | 0.4116 ± 0.0048 |
+| MGl-eps5 | - | 0.3774 ± 0.0101 | 0.3410 ± 0.0152 | 0.4117 ± 0.0052 |
+| MGl-eps10 | - | 0.4018 ± 0.0046 | 0.3444 ± 0.0121 | 0.4119 ± 0.0065 |
 
 ![macro-F1 by configuration](../figures/f1_by_config.png)
 
@@ -96,6 +108,12 @@ Rows per class [train, val, test] (quotas; the splits are by capture group, see 
 | M1-eps10 | 0.291 ± 0.002 | 0.354 ± 0.002 | 0.184 ± 0.002 | 0.276 ± 0.001 |
 | M2 | 0.290 ± 0.001 | 0.346 ± 0.003 | 0.192 ± 0.004 | 0.279 ± 0.000 |
 | M3-eps5 | 0.290 ± 0.002 | 0.352 ± 0.002 | 0.187 ± 0.002 | 0.277 ± 0.001 |
+| MG-eps1 | 0.292 ± 0.002 | 0.339 ± 0.001 | 0.187 ± 0.001 | 0.278 ± 0.000 |
+| MG-eps5 | 0.290 ± 0.002 | 0.355 ± 0.001 | 0.186 ± 0.001 | 0.278 ± 0.000 |
+| MG-eps10 | 0.290 ± 0.001 | 0.351 ± 0.001 | 0.193 ± 0.003 | 0.280 ± 0.001 |
+| MGl-eps1 | 0.291 ± 0.002 | 0.349 ± 0.006 | 0.184 ± 0.000 | 0.277 ± 0.000 |
+| MGl-eps5 | 0.289 ± 0.002 | 0.352 ± 0.003 | 0.185 ± 0.002 | 0.278 ± 0.001 |
+| MGl-eps10 | 0.291 ± 0.002 | 0.354 ± 0.004 | 0.188 ± 0.002 | 0.279 ± 0.000 |
 
 ![recall of the rare classes](../figures/recall_rare_classes.png)
 
@@ -113,6 +131,12 @@ All classes:
 | M1-eps10 | 0.974 ± 0.000 | 0.817 ± 0.001 | 0.291 ± 0.002 | 0.354 ± 0.002 | 0.184 ± 0.002 | 0.276 ± 0.001 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | M2 | 0.975 ± 0.000 | 0.817 ± 0.001 | 0.290 ± 0.001 | 0.346 ± 0.003 | 0.192 ± 0.004 | 0.279 ± 0.000 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 | M3-eps5 | 0.975 ± 0.000 | 0.819 ± 0.001 | 0.290 ± 0.002 | 0.352 ± 0.002 | 0.187 ± 0.002 | 0.277 ± 0.001 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| MG-eps1 | 0.974 ± 0.000 | 0.818 ± 0.000 | 0.292 ± 0.002 | 0.339 ± 0.001 | 0.187 ± 0.001 | 0.278 ± 0.000 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| MG-eps5 | 0.974 ± 0.000 | 0.819 ± 0.001 | 0.290 ± 0.002 | 0.355 ± 0.001 | 0.186 ± 0.001 | 0.278 ± 0.000 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| MG-eps10 | 0.974 ± 0.000 | 0.817 ± 0.002 | 0.290 ± 0.001 | 0.351 ± 0.001 | 0.193 ± 0.003 | 0.280 ± 0.001 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| MGl-eps1 | 0.975 ± 0.001 | 0.819 ± 0.000 | 0.291 ± 0.002 | 0.349 ± 0.006 | 0.184 ± 0.000 | 0.277 ± 0.000 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| MGl-eps5 | 0.974 ± 0.000 | 0.818 ± 0.000 | 0.289 ± 0.002 | 0.352 ± 0.003 | 0.185 ± 0.002 | 0.278 ± 0.001 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
+| MGl-eps10 | 0.974 ± 0.000 | 0.817 ± 0.001 | 0.291 ± 0.002 | 0.354 ± 0.004 | 0.188 ± 0.002 | 0.279 ± 0.000 | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a | n/a |
 
 ## 4. Privacy: epsilon achieved and empirical checks
 
@@ -127,6 +151,12 @@ The formal guarantee is epsilon (record level, packets of one TCP stream are cor
 | M1-eps10 | 10 | 9.998 ± 0.001 / 9.994 ± 0.002 | 0.0001 ± 0.0001 | 1.0207 ± 0.0261 | 0.4885 ± 0.0035 |
 | M2 | - | - | 0.0002 ± 0.0001 | 0.9479 ± 0.0133 | 0.4919 ± 0.0014 |
 | M3-eps5 | 5 | 4.998 ± 0.001 / 4.994 ± 0.001 | 0.0001 ± 0.0000 | 0.9788 ± 0.0128 | 0.4894 ± 0.0045 |
+| MG-eps1 | 1 | 1.000 ± 0.000 / 1.000 ± 0.000 | 0.0007 ± 0.0001 | 0.8326 ± 0.0118 | 0.4958 ± 0.0015 |
+| MG-eps5 | 5 | 5.000 ± 0.000 / 5.000 ± 0.000 | 0.0001 ± 0.0000 | 0.9381 ± 0.0014 | 0.4900 ± 0.0015 |
+| MG-eps10 | 10 | 10.000 ± 0.000 / 10.000 ± 0.000 | 0.0003 ± 0.0000 | 0.8840 ± 0.0069 | 0.4955 ± 0.0030 |
+| MGl-eps1 | 1 | 1.000 ± 0.000 / 1.000 ± 0.000 | 0.0002 ± 0.0001 | 0.9345 ± 0.0133 | 0.4980 ± 0.0032 |
+| MGl-eps5 | 5 | 5.000 ± 0.000 / 5.000 ± 0.000 | 0.0000 ± 0.0000 | 0.9337 ± 0.0057 | 0.4927 ± 0.0014 |
+| MGl-eps10 | 10 | 10.000 ± 0.000 / 10.000 ± 0.000 | 0.0003 ± 0.0001 | 0.8938 ± 0.0050 | 0.4953 ± 0.0039 |
 
 Thresholds from the config (heuristics to be confirmed by the user): duplicate rate <= 0.01, DCR ratio >= 0.5, MIA AUC <= 0.55.
 
@@ -143,6 +173,12 @@ C2ST AUC close to 1 means a classifier tells synthetic from real rows almost per
 | M1-eps10 | 0.2006 ± 0.0109 | 0.0101 ± 0.0008 | 0.1379 ± 0.0030 | 0.9999 ± 0.0000 |
 | M2 | 0.1243 ± 0.0162 | 0.0035 ± 0.0016 | 0.0709 ± 0.0111 | 0.9998 ± 0.0000 |
 | M3-eps5 | 0.2151 ± 0.0021 | 0.0116 ± 0.0004 | 0.1458 ± 0.0052 | 0.9999 ± 0.0000 |
+| MG-eps1 | 0.0649 ± 0.0032 | 0.0017 ± 0.0003 | 0.1175 ± 0.0017 | 0.9996 ± 0.0001 |
+| MG-eps5 | 0.0664 ± 0.0049 | 0.0023 ± 0.0009 | 0.0886 ± 0.0020 | 0.9999 ± 0.0000 |
+| MG-eps10 | 0.0469 ± 0.0014 | 0.0021 ± 0.0003 | 0.0864 ± 0.0021 | 0.9995 ± 0.0001 |
+| MGl-eps1 | 0.3519 ± 0.0264 | 0.0474 ± 0.0044 | 0.2298 ± 0.0102 | 0.9998 ± 0.0000 |
+| MGl-eps5 | 0.1119 ± 0.0125 | 0.0053 ± 0.0026 | 0.1260 ± 0.0124 | 0.9999 ± 0.0001 |
+| MGl-eps10 | 0.0655 ± 0.0029 | 0.0037 ± 0.0002 | 0.1053 ± 0.0042 | 0.9995 ± 0.0003 |
 
 ![utility and privacy against epsilon](../figures/utility_privacy.png)
 
@@ -175,6 +211,12 @@ The residual-noise scales are computed from the pooled train data and are not co
 | M1-eps5 | 0.2451 ± 0.0039 | 0.2787 ± 0.0295 | 0.4467 ± 0.0013 | 0.4470 ± 0.0010 |
 | M1-eps10 | 0.2293 ± 0.0327 | 0.2914 ± 0.0188 | 0.4471 ± 0.0008 | 0.4475 ± 0.0009 |
 | M3-eps5 | 0.2565 ± 0.0313 | 0.2943 ± 0.0276 | 0.4476 ± 0.0008 | 0.4473 ± 0.0003 |
+| MG-eps1 | 0.3894 ± 0.0095 | n/a | 0.4451 ± 0.0008 | n/a |
+| MG-eps5 | 0.4084 ± 0.0025 | n/a | 0.4482 ± 0.0005 | n/a |
+| MG-eps10 | 0.4133 ± 0.0074 | n/a | 0.4492 ± 0.0007 | n/a |
+| MGl-eps1 | 0.2526 ± 0.0287 | n/a | 0.4463 ± 0.0009 | n/a |
+| MGl-eps5 | 0.3740 ± 0.0105 | n/a | 0.4470 ± 0.0013 | n/a |
+| MGl-eps10 | 0.4134 ± 0.0073 | n/a | 0.4483 ± 0.0004 | n/a |
 
 ## 8. Reference rows (not in the spec matrix)
 
@@ -246,21 +288,22 @@ What this does and does not cover: it covers the choice of the capture groups of
 
 ## 9. Interpretation (Phase 12)
 
-Generated by `ppfeddata aggregate` (module `interpret.py`) from the run ledger and the test-set predictions saved by every run (147 runs, seeds [0, 1, 2], 30,000 real test rows). The rules are those of the spec (Phase 12); the choices it leaves open are recorded in SPEC_DEVIATIONS 12.1-12.10. Every number is recomputed from those files (the macro-F1 recomputed from the predictions equals the ledger's to 8e-17); `results/interpretation.json` holds the same numbers in machine-readable form.
+Generated by `ppfeddata aggregate` (module `interpret.py`) from the run ledger and the test-set predictions saved by every run (219 runs, seeds [0, 1, 2], 30,000 real test rows). The rules are those of the spec (Phase 12); the choices it leaves open are recorded in SPEC_DEVIATIONS 12.1-12.10. Every number is recomputed from those files (the macro-F1 recomputed from the predictions equals the ledger's to 8e-17); `results/interpretation.json` holds the same numbers in machine-readable form.
 
 **How a difference is judged.** Every comparison is a difference of test macro-F1 (or of recall) between two configurations, averaged over the 3 seeds (delta = first minus second). A difference *has an effect* only if (i) its 95 % paired-bootstrap interval excludes 0 and (ii) |delta| is larger than the seed-to-seed std of the two configurations (the larger of the two, ddof = 0, as in every table). The bootstrap draws the 30,000 real test rows with replacement, stratified by class, with the same 1000 resamples for every run, so the differences are paired. Packets of one TCP stream are correlated, which makes that interval too narrow; every verdict is therefore repeated with a bootstrap over whole streams (20,343 streams) and marked **†** when the verdict changes. Neither interval reflects which capture files form the test split (11 capture groups; sensitivity A4 was not run) or training randomness beyond the seeds that were run, so a verdict is a statement about this test split and these seeds.
 
 ### 9.0 Answers at a glance
 
-- **R1 - Does synthetic data improve the IDS?** Short answer: RF: no generator passes the rule (SMOTE +0.057); MLP: 6 of 7 generators pass, the best by +0.030 (SMOTE +0.140). Test macro-F1, real + synthetic minus real only: RF: 0 of 7 generators better, 7 no effect, 0 worse (delta -0.0005 to +0.0011); MLP: 6 of 7 generators better, 1 no effect, 0 worse (delta +0.0073 to +0.0300). Recall of the rare classes (DELAYED/SYN/INVALID/WILL, RF) moves by at most 0.009 for any generator, against +0.063 to +0.102 (mean of the four) for the SMOTE / class-weight references. Reference macro-F1 deltas: B1a +0.045 (RF), B1b +0.057 (RF), B1b +0.140 (MLP).
+- **R1 - Does synthetic data improve the IDS?** Short answer: RF: 1 of 13 generators pass, the best by +0.002 (SMOTE +0.057); MLP: 10 of 13 generators pass, the best by +0.030 (SMOTE +0.140). Test macro-F1, real + synthetic minus real only: RF: 1 of 13 generators better, 11 no effect, 1 worse (delta -0.0021 to +0.0020); MLP: 10 of 13 generators better, 3 no effect, 0 worse (delta +0.0068 to +0.0300). Recall of the rare classes (DELAYED/SYN/INVALID/WILL, RF) moves by at most 0.012 for any generator, against +0.063 to +0.102 (mean of the four) for the SMOTE / class-weight references. Reference macro-F1 deltas: B1a +0.045 (RF), B1b +0.057 (RF), B1b +0.140 (MLP).
 - **R2 - Is the CVAE better than the simple methods?** No. TAug with the CVAE (B2, B3) against class weights (B1a, RF) and SMOTE (B1b): 6 of 6 comparisons worse, 0 no effect, 0 better (macro-F1 delta -0.1239 to -0.0438; rare-class recall delta -0.175 to -0.062).
 - **R3 - What does non-IID FL cost?** B2 minus B3 in test macro-F1: TSTR-RF +0.0172, TSTR-MLP +0.0119, TAug-RF +0.0006, TAug-MLP -0.0088. Relative loss in TSTR-RF: 4.2 %. Reported only; the spec sets no pass / fail threshold.
-- **R4 - What does DP cost, and what does it bring?** Cost, plain decoder against the epsilon = infinity point: TSTR macro-F1 delta -0.1834 to -0.1308 (6 of 6 comparisons worse), TAug delta -0.0074 to +0.0003 (6 of 6 no effect). Over epsilon = 1, 5, 10 the TSTR-RF curve is monotone within noise and flat (range 0.018 against seed std up to 0.033). Benefit: no empirical benefit is measurable. MIA AUC is 0.488-0.492 at every epsilon including infinity (spread 0.004), it does not approach 0.5 as epsilon shrinks, and the attack did not detect an over-fitted CVAE (AUC 0.519), so the positive control of the spec is not met for the CVAE. What DP brings is the formal guarantee (record level, see 9.8). A second attack, with access to the released model (record fit under the model, calibrated by a reference model), passes its positive control (AUC 0.664 on the over-fitted CVAE against 0.519 for the attack on the synthetic data); against the federated models it gives B3 0.500, M1-eps10 0.496, M1-eps5 0.496, M1-eps1 0.497; it detects nothing (AUC < 0.55) in any of them.
+- **R4 - What does DP cost, and what does it bring?** Cost, plain decoder against the epsilon = infinity point: TSTR macro-F1 delta -0.1834 to +0.0275 (8 of 12 comparisons worse), TAug delta -0.0075 to +0.0009 (12 of 12 no effect). Over epsilon = 1, 5, 10 the TSTR-RF curve is monotone within noise and not flat (range 0.161 against seed std up to 0.029). Benefit: no empirical benefit is measurable. MIA AUC is 0.488-0.498 at every epsilon including infinity (spread 0.010), it does not approach 0.5 as epsilon shrinks, and the attack did not detect an over-fitted CVAE (AUC 0.519), so the positive control of the spec is not met for the CVAE. What DP brings is the formal guarantee (record level, see 9.8). A second attack, with access to the released model (record fit under the model, calibrated by a reference model), passes its positive control (AUC 0.664 on the over-fitted CVAE against 0.519 for the attack on the synthetic data); against the federated models it gives B3 0.500, M1-eps10 0.496, M1-eps5 0.496, M1-eps1 0.497; it detects nothing (AUC < 0.55) in any of them.
 - **R5 - What does SecAgg cost?** Utility (M2 - B3 and M3 - M1-eps5, 8 comparisons): 8 no effect, 0 better, 0 worse (largest |delta| 0.0113); the differences are inside the seed noise. Overhead: M2 / B3: 1.12x time per round, 1.52x bytes per parameter per round; M3-eps5 / M1-eps5: 1.02x time per round, 1.55x bytes per parameter per round.
-- **R6 - Recommended configuration.** Rule: MIA AUC <= 0.55, epsilon <= 5 when DP is used, time per round <= 3x plain FL (B3), then the highest TAug macro-F1 (RF). Eligible: B3, M2. The literal rule picks B3; tied within noise: B3, M2; the tie is broken in favour of the stronger protection: **M2**. DP configurations fail the overhead filter (M1-eps1 4.37x, M1-eps5 4.27x, M1-eps10 4.53x, M3-eps5 4.35x), not utility or MIA: every candidate's TAug-RF macro-F1 lies in 0.4467-0.4483. If a formal DP guarantee is required, the DP option the rule would pick without the overhead filter is M1-eps1 (tied: M1-eps1, M1-eps5, M3-eps5).
-- **Which of M1, M2, M3 for which requirement?** Utility does not decide it (the TAug-RF macro-F1 of every candidate lies in 0.4467-0.4483); what each one protects and what it costs does (9.10). **M2** if only the aggregation server must not see the updates (1.12x time per round, 1.52x bytes per parameter, utility: 4 of 4 comparisons with B3 show no effect; no epsilon); **M1-eps1** if a formal guarantee on the released model or synthetic data is required (TSTR macro-F1 -47 to -34 % against epsilon = infinity, recall of the rare classes 0.11-0.13 against 0.31, 4.3-4.5x time per round; the three epsilons are indistinguishable in utility, so the smallest costs no more here); **M3-eps5** if both are needed (on top of M1-eps5: 1.02x time, 1.55x bytes per parameter, 4 of 4 utility comparisons show no effect). These are costs and guarantees, not a measured privacy benefit: the empirical attack is at chance for every configuration (R4). If the goal is only a detector, training it directly by FL is the alternative to all three (9.9).
+- **R6 - Recommended configuration.** Rule: MIA AUC <= 0.55, epsilon <= 5 when DP is used, time per round <= 3x plain FL (B3), then the highest TAug macro-F1 (RF). Eligible: B3, M2, MG-eps1, MG-eps5, MGl-eps1, MGl-eps5. The literal rule picks MG-eps5; tied within noise: B3, M2, MG-eps5, MGl-eps5; **MG-eps5**. DP configurations fail the overhead filter (M1-eps1 4.37x, M1-eps5 4.27x, M1-eps10 4.53x, M3-eps5 4.35x), not utility or MIA: every candidate's TAug-RF macro-F1 lies in 0.4451-0.4492. If a formal DP guarantee is required, the DP option the rule would pick without the overhead filter is M1-eps1 (tied: M1-eps1, M3-eps5, MG-eps5, MGl-eps5).
+- **Which of M1, M2, M3 for which requirement?** Utility does not decide it (the TAug-RF macro-F1 of every candidate lies in 0.4451-0.4492); what each one protects and what it costs does (9.10). **M2** if only the aggregation server must not see the updates (1.12x time per round, 1.52x bytes per parameter, utility: 4 of 4 comparisons with B3 show no effect; no epsilon); **M1-eps1** if a formal guarantee on the released model or synthetic data is required (TSTR macro-F1 -47 to 7 % against epsilon = infinity, recall of the rare classes 0.09-0.32 against 0.31, 4.3-4.5x time per round); **M3-eps5** if both are needed (on top of M1-eps5: 1.02x time, 1.55x bytes per parameter, 4 of 4 utility comparisons show no effect). These are costs and guarantees, not a measured privacy benefit: the empirical attack is at chance for every configuration (R4). If the goal is only a detector, training it directly by FL is the alternative to all three (9.9).
 - **Do the answers depend on the test groups or the sampling?** Extensions A4-s1, A4-s2, A5-cap20 re-ran the study from Phase 3 with one setting changed: 5 of 6 comparisons (R1, synthetic-only against real data, DP cost) keep their verdict in every world; those that change: real + synthetic (B3) minus real only (RF): R1 (main none, A4-s1 better, A4-s2 better, A5-cap20 none). Section 8c has the numbers; the choice of other datasets, quotas and client counts is not covered.
-- **Why a CVAE at all?** R1 and R2 do not support the CVAE as a way to improve the IDS (worse than class weights and SMOTE in 6 of 6 comparisons; generators better than real data only: RF 0 of 7, at most +0.001 against +0.057 for SMOTE, MLP 6 of 7, at most +0.030 against +0.140 for SMOTE). The CVAE is the premise of the spec (a federated, label-conditional generator whose data balance the classes of the IDS), not the outcome of a comparison between generators, and this study is its test. What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give RF 0.396 (B3), 0.398 (M2) against 0.447 for real data only, without pooling the raw data. Tested after the main study: training the MLP itself by FedAvg on the same clients (no generator) reaches macro-F1 0.429 with class weights (the clients then share their class counts) and 0.319 without, against 0.420 for the CVAE route (synthetic data only, TSTR-MLP): the class-weighted federated MLP is not different from (inside the noise) it (delta +0.009), the plain one below it (delta -0.101). Given the same protections (SecAgg numerics, DP at epsilon 1, 5, 10, both) and a little tuning on validation, the direct classifier is above the CVAE route with the same protection in 2 of 6 cases, not different in 4 and below in 0. Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators. See 9.9.
+- **Why a CVAE at all?** R1 and R2 support the CVAE only in part as a way to improve the IDS (worse than class weights and SMOTE in 6 of 6 comparisons; generators better than real data only: RF 1 of 13, at most +0.002 against +0.057 for SMOTE, MLP 10 of 13, at most +0.030 against +0.140 for SMOTE). The CVAE is the premise of the spec (a federated, label-conditional generator whose data balance the classes of the IDS), not the outcome of a comparison between generators, and this study is its test. What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give RF 0.396 (B3), 0.398 (M2) against 0.447 for real data only, without pooling the raw data. Tested after the main study: training the MLP itself by FedAvg on the same clients (no generator) reaches macro-F1 0.429 with class weights (the clients then share their class counts) and 0.319 without, against 0.420 for the CVAE route (synthetic data only, TSTR-MLP): the class-weighted federated MLP is not different from (inside the noise) it (delta +0.009), the plain one below it (delta -0.101). Given the same protections (SecAgg numerics, DP at epsilon 1, 5, 10, both) and a little tuning on validation, the direct classifier is above the CVAE route with the same protection in 2 of 6 cases, not different in 4 and below in 0. Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators. See 9.9.
+- **Why FedDP-Marginal and not the CVAE?** Under DP the CVAE route stays far from its non-DP version even after re-tuning per epsilon at full scale (O1), while the federated DP marginal generator does not (TSTR macro-F1, test, mean over seeds: ε 1: MGr-eps1 0.389 against the best CVAE route M1-eps1 0.227; ε 5: MGs-eps5 0.408 against the best CVAE route M1o-eps5 (plain) 0.287; ε 10: MGs-eps10 0.429 against the best CVAE route M1o-eps10 0.289; B3, the CVAE without DP: 0.420). It also sends three small rounds instead of tens of model rounds, and its noise can be split over the clients through secure aggregation with exact accounting. The framework therefore uses FedDP-Marginal; the CVAE stays as the baseline. Not an algorithmic novelty (FLAIM, MST, AIM); see 9.9b.
 - **Red flags** (spec Phase 12): F1 (macro-F1 near 1.00, B0 included): not triggered; F2 (TSTR above TRTR): TRIGGERED, investigated: not above the class-balanced real reference; F3 (model copies training data): not triggered; F4 (large spread between seeds): TRIGGERED (only in rows outside the spec matrix) - more seeds or a stability check; F5 (reported epsilon far from an independent recomputation): not triggered. Details in 9.7.
 
 ### 9.1 R1 - Does synthetic data improve the IDS?
@@ -278,6 +321,12 @@ Delta = test macro-F1 of real + synthetic training data (TAug) minus real data o
 | M1-eps10 | -0.0001 [-0.0012, +0.0009] | 0.0010 | no effect | +0.0171 [+0.0151, +0.0191] | 0.0114 | better |
 | M2 | +0.0006 [-0.0006, +0.0018] | 0.0010 | no effect | +0.0300 [+0.0274, +0.0324] | 0.0114 | better |
 | M3-eps5 | +0.0004 [-0.0007, +0.0014] | 0.0010 | no effect | +0.0073 [+0.0058, +0.0088] | 0.0114 | no effect |
+| MG-eps1 | -0.0021 [-0.0033, -0.0009] | 0.0010 | worse | +0.0184 [+0.0157, +0.0212] | 0.0114 | better |
+| MG-eps5 | +0.0010 [-0.0000, +0.0020] | 0.0010 | no effect | +0.0068 [+0.0050, +0.0086] | 0.0169 | no effect |
+| MG-eps10 | +0.0020 [+0.0008, +0.0031] | 0.0010 | better | +0.0163 [+0.0135, +0.0193] | 0.0114 | better |
+| MGl-eps1 | -0.0009 [-0.0019, +0.0000] | 0.0010 | no effect | +0.0146 [+0.0129, +0.0165] | 0.0114 | better |
+| MGl-eps5 | -0.0002 [-0.0012, +0.0009] | 0.0013 | no effect | +0.0127 [+0.0113, +0.0145] | 0.0152 | no effect |
+| MGl-eps10 | +0.0011 [-0.0000, +0.0022] | 0.0010 | no effect | +0.0162 [+0.0143, +0.0181] | 0.0121 | better |
 
 Recall of the rare classes (DELAYED, SYN, INVALID, WILL), RF: delta TAug - B0 and verdict ('=' = no effect):
 
@@ -292,6 +341,12 @@ Recall of the rare classes (DELAYED, SYN, INVALID, WILL), RF: delta TAug - B0 an
 | M1-eps10 | +0.003 better | +0.002 = | -0.001 = | -0.001 = | +0.001 [-0.000, +0.002] = |
 | M2 | +0.002 = | -0.006 worse † | +0.007 better | +0.001 = | +0.001 [-0.000, +0.002] = |
 | M3-eps5 | +0.001 = | +0.000 = | +0.001 = | -0.001 = | +0.001 [-0.000, +0.002] = |
+| MG-eps1 | +0.003 better | -0.012 worse | +0.001 = | -0.000 = | -0.002 [-0.003, -0.001] worse |
+| MG-eps5 | +0.001 = | +0.003 = | +0.001 = | +0.000 = | +0.001 [+0.000, +0.003] better |
+| MG-eps10 | +0.002 = | -0.001 = | +0.008 better | +0.002 better | +0.003 [+0.001, +0.004] better |
+| MGl-eps1 | +0.002 better | -0.003 = | -0.001 = | -0.001 = | -0.001 [-0.002, +0.000] = |
+| MGl-eps5 | +0.001 = | +0.000 = | -0.001 = | +0.001 = | +0.000 [-0.001, +0.001] = |
+| MGl-eps10 | +0.002 better | +0.002 = | +0.002 = | +0.001 = | +0.002 [+0.001, +0.003] better |
 
 Recall of the rare classes (DELAYED, SYN, INVALID, WILL), MLP: delta TAug - B0 and verdict ('=' = no effect):
 
@@ -305,10 +360,16 @@ Recall of the rare classes (DELAYED, SYN, INVALID, WILL), MLP: delta TAug - B0 a
 | M1-eps10 | -0.001 = | -0.020 = | +0.073 better | +0.004 better | +0.014 [+0.012, +0.016] better |
 | M2 | +0.023 better | -0.045 worse | +0.116 better | +0.003 better | +0.024 [+0.022, +0.027] better |
 | M3-eps5 | +0.003 = | -0.008 = | +0.028 = | -0.000 = | +0.006 [+0.004, +0.007] = |
+| MG-eps1 | +0.011 better | -0.062 worse | +0.085 better | +0.006 = | +0.010 [+0.007, +0.012] better |
+| MG-eps5 | -0.005 = | -0.041 = | +0.059 = | +0.002 better | +0.004 [+0.002, +0.006] = |
+| MG-eps10 | -0.007 = | -0.062 worse | +0.097 better | +0.006 better | +0.009 [+0.006, +0.011] better |
+| MGl-eps1 | +0.008 better | -0.030 worse | +0.058 better | -0.000 = | +0.009 [+0.008, +0.011] better |
+| MGl-eps5 | +0.006 = | -0.013 = | +0.043 = | +0.003 better | +0.010 [+0.008, +0.011] = |
+| MGl-eps10 | -0.009 = | -0.026 = | +0.075 better | +0.009 better | +0.012 [+0.011, +0.014] better |
 
 ### 9.2 R2 - Is the CVAE better than the simple methods?
 
-Delta = TAug macro-F1 of the CVAE (B2 centralised, B3 federated) minus the simple method trained on the same real data (B1a: class weights, RF only; B1b: SMOTE to the same per-class target). R1 and R2 do not favour the CVAE as an augmentation method; section 9.9 explains why the study uses it and what is left of the case.
+Delta = TAug macro-F1 of the CVAE (B2 centralised, B3 federated) minus the simple method trained on the same real data (B1a: class weights, RF only; B1b: SMOTE to the same per-class target).
 
 | CVAE | compared with | delta macro-F1 [95% CI] | seed std | verdict | delta rare-class recall [95% CI] | verdict (recall) |
 |---|---|---|---|---|---|---|
@@ -337,27 +398,32 @@ B2 (centralised CVAE) minus B3 (the same CVAE trained with FedAvg over 5 non-IID
 | configuration | TSTR-RF | TSTR-MLP | TAug-RF | TAug-MLP |
 |---|---|---|---|---|
 | M1-eps1 | -0.1589 [-0.1632, -0.1543] worse | -0.1834 [-0.1882, -0.1787] worse | +0.0003 [-0.0009, +0.0015] no effect | -0.0074 [-0.0097, -0.0051] no effect |
+| MGl-eps1 | -0.1334 [-0.1373, -0.1292] worse | -0.1524 [-0.1562, -0.1486] worse | -0.0011 [-0.0024, +0.0002] no effect | -0.0056 [-0.0076, -0.0036] no effect |
 | M1-eps5 | -0.1408 [-0.1453, -0.1362] worse | -0.1308 [-0.1356, -0.1258] worse | -0.0007 [-0.0019, +0.0004] no effect | -0.0074 [-0.0096, -0.0052] no effect |
+| MGl-eps5 | -0.0119 [-0.0158, -0.0070] no effect | -0.0109 [-0.0146, -0.0070] no effect | -0.0003 [-0.0016, +0.0008] no effect | -0.0075 [-0.0096, -0.0053] no effect |
 | M1-eps10 | -0.1567 [-0.1606, -0.1527] worse | -0.1452 [-0.1501, -0.1404] worse | -0.0003 [-0.0013, +0.0009] no effect | -0.0032 [-0.0053, -0.0012] no effect |
+| MGl-eps10 | +0.0275 [+0.0232, +0.0323] better | +0.0135 [+0.0092, +0.0179] better | +0.0009 [-0.0003, +0.0021] no effect | -0.0041 [-0.0064, -0.0016] no effect |
 
 **Empirical privacy and generator quality against epsilon** (mean ± std over seeds; the validation ELBO is each run's own, with its own architecture and beta, so compare the infinity row with the others only roughly):
 
 | epsilon | achieved (max over clients and seeds) | MIA AUC | DCR ratio | duplicate rate | validation ELBO (FL final) |
 |---|---|---|---|---|---|
 | infinity (B3-plain) | - | 0.4901 ± 0.0049 | 0.9440 ± 0.0137 | 0.00050 ± 0.00019 | 2.31 ± 0.70 |
+| 10 | 10.000 | 0.4953 ± 0.0039 | 0.8938 ± 0.0050 | 0.00030 ± 0.00007 | - |
 | 10 | 9.999 | 0.4885 ± 0.0035 | 1.0207 ± 0.0261 | 0.00008 ± 0.00006 | 6.97 ± 2.68 |
+| 5 | 5.000 | 0.4927 ± 0.0014 | 0.9337 ± 0.0057 | 0.00004 ± 0.00003 | - |
 | 5 | 4.999 | 0.4880 ± 0.0042 | 0.9853 ± 0.0129 | 0.00004 ± 0.00006 | 5.93 ± 1.16 |
+| 1 | 1.000 | 0.4980 ± 0.0032 | 0.9345 ± 0.0133 | 0.00019 ± 0.00014 | - |
 | 1 | 0.997 | 0.4920 ± 0.0017 | 0.9551 ± 0.0061 | 0.00000 ± 0.00000 | 8.35 ± 3.07 |
 
 **Shape of the utility-privacy curve** (a step to a larger epsilon that is worse by more than the larger seed std of the two points would break monotonicity):
 
 | curve | eps 1 | eps 5 | eps 10 | monotone within noise | range | largest seed std | flat (range <= std) |
 |---|---|---|---|---|---|---|---|
-| TSTR-rf | 0.227 ± 0.030 | 0.245 ± 0.004 | 0.229 ± 0.033 | yes | 0.018 | 0.033 | yes |
-| TSTR-mlp | 0.205 ± 0.010 | 0.258 ± 0.018 | 0.243 ± 0.037 | yes | 0.053 | 0.037 | no |
-| validation ELBO (lower is better) | 8.350 ± 3.067 | 5.931 ± 1.156 | 6.966 ± 2.675 | yes | 2.419 | 3.067 | yes |
+| TSTR-rf | 0.253 ± 0.029 | 0.374 ± 0.010 | 0.413 ± 0.007 | yes | 0.161 | 0.029 | no |
+| TSTR-mlp | 0.236 ± 0.036 | 0.377 ± 0.010 | 0.402 ± 0.005 | yes | 0.166 | 0.036 | no |
 
-**Membership inference.** The AUC is within 0.5 ± 0.05 at every epsilon, infinity included (spread 0.0041); the gap to 0.5 is 0.0099 at epsilon = infinity and 0.0080 at the smallest epsilon, against a seed std of 0.0049, so the AUC does not approach 0.5 as epsilon shrinks (it is already there).
+**Membership inference.** The AUC is within 0.5 ± 0.05 at every epsilon, infinity included (spread 0.0100); the gap to 0.5 is 0.0099 at epsilon = infinity and 0.0080 at the smallest epsilon, against a seed std of 0.0049, so the AUC does not approach 0.5 as epsilon shrinks (it is already there).
 
 Positive control (b2_cvae.md): on a CVAE over-fitted on 498 members the attack reaches AUC 0.519 (threshold 0.55), so it **does not detect an over-fitted CVAE**; the spec's condition 'MIA AUC approaches 0.5 as epsilon shrinks, after passing the positive control' cannot be established with this attack. On a pure copier of the members it reaches (noise 0: 0.977, noise 0.05: 0.669, noise 0.2: 0.532, noise 0.5: 0.506). An AUC near 0.5 therefore says only that no synthetic row is a near-copy of a training row.
 
@@ -424,16 +490,22 @@ Rule (spec Phase 12; thresholds from the config): among the configurations with 
 | M1-eps10 | 0.4471 | 0.2293 | 0.488 | 9.999 | 4.53 | yes | NO | NO | NO |
 | M2 | 0.4478 | 0.3979 | 0.492 | - | 1.12 | yes | yes | yes | yes |
 | M3-eps5 | 0.4476 | 0.2565 | 0.489 | 4.999 | 4.35 | yes | yes | NO | NO |
+| MG-eps1 | 0.4451 | 0.3894 | 0.496 | 1.000 | n/a (3 rounds, 20 s in total) | yes | yes | yes | yes |
+| MG-eps5 | 0.4482 | 0.4084 | 0.490 | 5.000 | n/a (3 rounds, 21 s in total) | yes | yes | yes | yes |
+| MG-eps10 | 0.4492 | 0.4133 | 0.495 | 10.000 | n/a (3 rounds, 19 s in total) | yes | NO | yes | NO |
+| MGl-eps1 | 0.4463 | 0.2526 | 0.498 | 1.000 | n/a (3 rounds, 1 s in total) | yes | yes | yes | yes |
+| MGl-eps5 | 0.4470 | 0.3740 | 0.493 | 5.000 | n/a (3 rounds, 1 s in total) | yes | yes | yes | yes |
+| MGl-eps10 | 0.4483 | 0.4134 | 0.495 | 10.000 | n/a (3 rounds, 1 s in total) | yes | NO | yes | NO |
 
-**Result.** The literal rule picks **B3** (highest TAug-RF among the eligible). Tied within noise: B3, M2. After the tie-break the recommendation is **M2**; the literal pick leads it by 5.0e-07 in TAug-RF, far inside the seed std.
+**Result.** The literal rule picks **MG-eps5** (highest TAug-RF among the eligible). Tied within noise: B3, M2, MG-eps5, MGl-eps5. The recommendation is **MG-eps5**.
 
-**How much the ranking says.** The TAug-RF macro-F1 of all candidates lies in 0.4467-0.4483 (real data only, B0-RF: 0.4472); R1 found 0 of 7 generators better than real data only for the RF. The ranking therefore separates the candidates little, and the outcome is decided by the filters and the tie-break. Removed by the overhead filter: M1-eps1, M1-eps5, M1-eps10, M3-eps5; by the epsilon limit: M1-eps10; by the MIA filter: nobody (the attack is at chance for every generator, so it filters nothing).
+**How much the ranking says.** The TAug-RF macro-F1 of all candidates lies in 0.4451-0.4492 (real data only, B0-RF: 0.4472); R1 found 1 of 13 generators better than real data only for the RF. The ranking therefore separates the candidates little, and the outcome is decided by the filters and the tie-break. Removed by the overhead filter: M1-eps1, M1-eps5, M1-eps10, M3-eps5; by the epsilon limit: M1-eps10, MG-eps10, MGl-eps10; by the MIA filter: nobody (the attack is at chance for every generator, so it filters nothing).
 
-**If a formal DP guarantee is required.** Dropping only the overhead filter, the rule would pick M1-eps1 (tied within noise: M1-eps1, M1-eps5, M3-eps5); with the tie-break, **M1-eps1**: epsilon 0.997, TAug-RF 0.4477, but TSTR-RF 0.2270 and 4.37x the time per round of B3. If the synthetic data are to be released instead of the real data (the TSTR scenario), the utility column to read is TSTR, not TAug.
+**If a formal DP guarantee is required.** Dropping only the overhead filter, the rule would pick MG-eps5 (tied within noise: M1-eps1, M3-eps5, MG-eps5, MGl-eps5); with the tie-break, **M1-eps1**: epsilon 0.997, TAug-RF 0.4477, but TSTR-RF 0.2270 and 4.37x the time per round of B3. If the synthetic data are to be released instead of the real data (the TSTR scenario), the utility column to read is TSTR, not TAug.
 
-**Ranked by TSTR instead of TAug.** When the synthetic data replace the real data, the macro-F1 to rank by is TSTR-RF. The same rule then picks M2 (tied within noise: B3, M2) and, after the tie-break, **M2**: the same recommendation as above.
+**Ranked by TSTR instead of TAug.** When the synthetic data replace the real data, the macro-F1 to rank by is TSTR-RF. The same rule then picks MG-eps5 (tied within noise: B3, MG-eps5) and, after the tie-break, **MG-eps5**: the same recommendation as above.
 
-**What R6 does not say.** R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. R1 and R2 say it is not when the real training data can be pooled; section 9.9 gives the setting in which the recommendation applies.
+**What R6 does not say.** R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. See R1 and R2 for how a CVAE pipeline compares with the simple methods.
 
 ### 9.7 Red flags
 
@@ -449,15 +521,20 @@ The spec lists five situations that must be investigated and never reported as s
 
 **F1** B0 macro-F1: RF 0.4472, MLP 0.3282; the highest macro-F1 of any configuration is 0.5043 (threshold 0.95).
 
-**F2 TSTR above TRTR.** 3 of 14 generator / classifier pairs have TSTR better than B0 by the rule of this section.
+**F2 TSTR above TRTR.** 8 of 26 generator / classifier pairs have TSTR better than B0 by the rule of this section.
 
 | generator | classifier | TSTR - B0 [95% CI] | TSTR - B1b-MLP [95% CI] | recall NORMAL (TSTR - B0) | recall rare classes (TSTR - B0) |
 |---|---|---|---|---|---|
 | B2 | MLP | +0.1036 [+0.0994, +0.1078] | -0.0369 [-0.0414, -0.0323] worse | -0.171 | +0.159 |
 | B3 | MLP | +0.0917 [+0.0875, +0.0960] | -0.0488 [-0.0534, -0.0436] worse | -0.189 | +0.208 |
 | M2 | MLP | +0.0884 [+0.0844, +0.0925] | -0.0521 [-0.0569, -0.0467] worse | -0.182 | +0.149 |
+| MG-eps1 | MLP | +0.0533 [+0.0491, +0.0577] | -0.0872 [-0.0922, -0.0818] worse | -0.101 | +0.061 |
+| MG-eps5 | MLP | +0.0729 [+0.0683, +0.0778] | -0.0675 [-0.0728, -0.0617] worse | -0.141 | +0.098 |
+| MG-eps10 | MLP | +0.1003 [+0.0953, +0.1053] | -0.0402 [-0.0455, -0.0346] worse | -0.151 | +0.172 |
+| MGl-eps5 | MLP | +0.0492 [+0.0449, +0.0536] | -0.0913 [-0.0962, -0.0858] worse | -0.130 | +0.054 |
+| MGl-eps10 | MLP | +0.0736 [+0.0690, +0.0780] | -0.0669 [-0.0723, -0.0613] worse | -0.137 | +0.110 |
 
-Investigation: B0 is trained on the imbalanced real train pool and TSTR on a class-balanced synthetic set, so the fair real counterpart of TSTR is the class-balanced real reference (B1b, SMOTE). In every flagged pair TSTR stays below that reference (table). In every flagged pair the gain over B0 comes with lower NORMAL recall and higher rare-class recall, the signature of class balancing. For the RF, TSTR is worse than B0 in 7 of 7 pairs. The preprocessor and the generators are fitted on the train split, the validation split only stops training and selects hyper-parameters, the test split is never used for fitting or tuning (SPEC_DEVIATIONS 6.4), and the test groups are disjoint from the train groups. Status: not above the class-balanced reference, so no sign of label leakage in this comparison.
+Investigation: B0 is trained on the imbalanced real train pool and TSTR on a class-balanced synthetic set, so the fair real counterpart of TSTR is the class-balanced real reference (B1b, SMOTE). In every flagged pair TSTR stays below that reference (table). In every flagged pair the gain over B0 comes with lower NORMAL recall and higher rare-class recall, the signature of class balancing. For the RF, TSTR is worse than B0 in 13 of 13 pairs. The preprocessor and the generators are fitted on the train split, the validation split only stops training and selects hyper-parameters, the test split is never used for fitting or tuning (SPEC_DEVIATIONS 6.4), and the test groups are disjoint from the train groups. Status: not above the class-balanced reference, so no sign of label leakage in this comparison.
 
 TSTR trains on 5000 synthetic rows per class (balanced by construction); B0 trains on the imbalanced real train pool (quota per class: NORMAL 60000, BCF 20000, DELAYED 3000, SYN 3000, INVALID 1500, WILL 1000).
 
@@ -497,7 +574,7 @@ TSTR trains on 5000 synthetic rows per class (balanced by construction); B0 trai
 
 **Where the choice comes from.** The CVAE is the premise of the study, not the outcome of a comparison between generators: the spec (title and 'Idea') asks whether a label-conditional CVAE trained by federated learning on non-IID clients, protected by DP-SGD, secure aggregation or both, can produce data that balance the classes for the IDS classifiers (RF and MLP). R1 and R2 are the test of that premise, and the spec asks for results that run against the expectation to be reported as they are.
 
-**What R1 and R2 say about that premise.** R1 and R2 do not support the premise. RF: 0 of 7 generators better than real data only (delta -0.0005 to +0.0011); MLP: 6 of 7 generators better than real data only (delta +0.0073 to +0.0300); the simple references change macro-F1 by B1a +0.045 (RF), B1b +0.057 (RF), B1b +0.140 (MLP). TAug with the CVAE is worse than class weights and SMOTE in 6 of 6 comparisons (macro-F1 delta -0.1239 to -0.0438). When the real training data can be pooled and the goal is only a better IDS, class weights or SMOTE are the better choice: they use the same real data and need no generator. This is a negative result for the premise on this data, and it is reported as such.
+**What R1 and R2 say about that premise.** R1 and R2 support the premise only in part. RF: 1 of 13 generators better than real data only (delta -0.0021 to +0.0020); MLP: 10 of 13 generators better than real data only (delta +0.0068 to +0.0300); the simple references change macro-F1 by B1a +0.045 (RF), B1b +0.057 (RF), B1b +0.140 (MLP). TAug with the CVAE is worse than class weights and SMOTE in 6 of 6 comparisons (macro-F1 delta -0.1239 to -0.0438). The simple methods are not uniformly better; see the tables of 9.1 and 9.2.
 
 **What the choice can still rest on.** TAug, B0 and B1 all train on the pooled real training data, so none of them is available when raw data cannot leave the clients, the setting of the threat model. There the federated CVAE is the only option of this study that produces data without pooling the raw records, and the question becomes what the synthetic data alone are worth (TSTR) and what protection can be layered on them. The table puts both settings side by side (test macro-F1, mean over seeds).
 
@@ -514,8 +591,14 @@ TSTR trains on 5000 synthetic rows per class (balanced by construction); B0 trai
 | raw data stays at the clients | M1-eps10 (synthetic data only, TSTR) | no | 0.229 | 0.243 |
 | raw data stays at the clients | M2 (synthetic data only, TSTR) | no | 0.398 | 0.417 |
 | raw data stays at the clients | M3-eps5 (synthetic data only, TSTR) | no | 0.256 | 0.256 |
+| raw data stays at the clients | MG-eps1 (synthetic data only, TSTR) | no | 0.389 | 0.381 |
+| raw data stays at the clients | MG-eps5 (synthetic data only, TSTR) | no | 0.408 | 0.401 |
+| raw data stays at the clients | MG-eps10 (synthetic data only, TSTR) | no | 0.413 | 0.429 |
+| raw data stays at the clients | MGl-eps1 (synthetic data only, TSTR) | no | 0.253 | 0.236 |
+| raw data stays at the clients | MGl-eps5 (synthetic data only, TSTR) | no | 0.374 | 0.377 |
+| raw data stays at the clients | MGl-eps10 (synthetic data only, TSTR) | no | 0.413 | 0.402 |
 
-With the synthetic data alone the RF reaches 0.396 (B3) and 0.398 (M2) against 0.447 with real data only (-11 % and -11 %); the MLP is above real data only (0.420 against 0.328), a gap that flag F2 traces to B0 being trained on imbalanced data (it stays below SMOTE, 0.469); DP lowers the synthetic-only macro-F1 by 34-47 % against epsilon = infinity at every epsilon tested (R4).
+With the synthetic data alone the RF reaches 0.396 (B3) and 0.398 (M2) against 0.447 with real data only (-11 % and -11 %); the MLP is above real data only (0.420 against 0.328), a gap that flag F2 traces to B0 being trained on imbalanced data (it stays below SMOTE, 0.469); DP lowers the synthetic-only macro-F1 by 7-47 % against epsilon = infinity at every epsilon tested (R4).
 
 **The detector trained directly by federated learning (run after the main study: `ppfeddata fed-baseline`).** The obvious competitor of the federated CVAE when raw data cannot be pooled is not to generate data at all and to train the MLP by FedAvg on the same 5 non-IID clients (Dirichlet alpha 0.5, same partitions and seeds as B3, evaluated on the same real test split). It is plain PyTorch run in process (it measures utility, not Flower's overhead), has the architecture of the sklearn MLP, no hyper-parameter search and no DP or SecAgg; the round with the best validation macro-F1 is kept, with the 30 rounds x 2 epochs of the federated CVAE and again with 100 rounds. `CentMLP*` are the same recipe on the pooled data, the control that separates 'federated' from 'this MLP'. `*cw` weights the loss by class from the summed class counts of the clients, which the clients would have to share.
 
@@ -555,15 +638,34 @@ Limits of this comparison: one MLP architecture, untuned in this first compariso
 
 **What this does not show.**
 
-- The synthetic rows are easy to tell from real ones (C2ST AUC 0.9998 for B3; close to 1 for every generator, from 0.9996 to 1.0000; section 5), so fidelity is poor and the premise was tested with a generator of this quality; a generator with better fidelity might behave differently (not tested).
-- Privacy: the membership-inference check is at chance for every generator, the non-private B3 included (0.491), and it did not pass its positive control on an over-fitted CVAE; a second attack with access to the released model did pass its positive control (calibrated AUC 0.664) and detected no leakage in B3 or in the DP models, so the study cannot show that the synthetic data leak less than the real data. Only epsilon (M1, M3) gives a guarantee, and it costs 34-47 % of the synthetic-only macro-F1 (R4).
+- The synthetic rows are easy to tell from real ones (C2ST AUC 0.9998 for B3; close to 1 for every generator, from 0.9995 to 1.0000; section 5), so fidelity is poor and the premise was tested with a generator of this quality; a generator with better fidelity might behave differently (not tested).
+- Privacy: the membership-inference check is at chance for every generator, the non-private B3 included (0.491), and it did not pass its positive control on an over-fitted CVAE; a second attack with access to the released model did pass its positive control (calibrated AUC 0.664) and detected no leakage in B3 or in the DP models, so the study cannot show that the synthetic data leak less than the real data. Only epsilon (M1, M3) gives a guarantee, and it costs 7-47 % of the synthetic-only macro-F1 (R4).
 - Not tested: federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); other generators (the optional WGAN-GP, TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above).
 
-**How to read R6 with this in mind.** R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. Read R1 to R6 together: (1) the real data can be pooled and the goal is a better IDS: class weights or SMOTE, no generator (RF 0.492 / 0.504 against 0.447 for real data only); (2) the raw data cannot leave the clients and data must be generated or shared: a federated CVAE, **M2** by the rule of 9.6, or M1-eps1 if a formal guarantee is required, accepting a synthetic-only macro-F1 below that of real data.
+**How to read R6 with this in mind.** R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. Read R1 to R6 together: (1) the raw data cannot leave the clients and data must be generated or shared: a federated CVAE, **MG-eps5** by the rule of 9.6, or M1-eps1 if a formal guarantee is required, accepting a synthetic-only macro-F1 below that of real data.
+
+### 9.9b Why the framework moved from the CVAE to FedDP-Marginal (optimisation round)
+
+The CVAE was the premise of the spec (9.9). The optimisation round tested whether a better-tuned CVAE closes the gap that DP opens, and whether another generator does better under the same federation, DP and secure aggregation. Numbers from `results/scorecard.json` (test split, classifier chosen on validation, mean ± std over seeds):
+
+| ε | generator | configuration | TSTR macro-F1 | binary F1 | rare recall | MB / round | rounds |
+|---|---|---|---|---|---|---|---|
+| 1 | CVAE route (best valid) | M1-eps1 | 0.227 ± 0.030 | 0.805 | 0.132 | 1.46 | 30 |
+| 1 | FedDP-Marginal | MGr-eps1 | 0.389 ± 0.010 | 0.875 | 0.253 | 0.20 | 3 |
+| 5 | CVAE route (best valid) | M1o-eps5 (plain) | 0.287 ± 0.027 | 0.800 | 0.168 | 0.54 | 50 |
+| 5 | FedDP-Marginal | MGs-eps5 | 0.408 ± 0.003 | 0.901 | 0.293 | 0.15 | 3 |
+| 10 | CVAE route (best valid) | M1o-eps10 | 0.289 ± 0.040 | 0.850 | 0.132 | 1.40 | 30 |
+| 10 | FedDP-Marginal | MGs-eps10 | 0.429 ± 0.008 | 0.906 | 0.331 | 0.16 | 3 |
+
+- **What the CVAE route got from re-tuning.** Searching the DP hyper-parameters per epsilon at full scale (real FL runs) did not improve on the baseline within the seed std, and at ε 1 the trial chosen on one-seed validation was worse on test (SPEC_DEVIATIONS O1.9). Distributed DP is not valid for its multi-step local DP-SGD, so with secure aggregation it stays local DP.
+- **Why FedDP-Marginal fits the setting.** It releases only sums of count tables, which is what secure aggregation computes; the Gaussian or Skellam noise can be split over the clients, Skellam with exact accounting through the modular arithmetic of SecAgg+ (O2.3); three rounds of well under 1 MB in total; and the released tables do not depend on how the rows are spread over the clients (O4.2).
+- **What it does not solve.** The recall of the rare classes stays below B3; synthetic data still do not help when the real data can be pooled (TAug ≈ 0); a classifier still tells the synthetic rows from the real ones (C2ST ≈ 1); the distributed variant assumes honest clients (ε with h honest clients is reported); the tree captures only pairwise dependencies; the settings were chosen on non-private validation data.
+- **Novelty.** Marginal-based DP synthesis in federated learning exists: FLAIM / DistAIM (Maddock, Cormode, Maple, KDD 2024), CaPS (MPC, ICML 2024), HeteroFedSyn (2026 preprint), built on MST / AIM / PrivBayes / PrivSyn. What this study adds is the combination and the evidence: exact distributed DP with Skellam noise through a real secure-aggregation implementation with measured bytes and the epsilon per number of honest clients, a systematic comparison with a CVAE under the same FL / DP / SecAgg for an MQTT intrusion-detection dataset, and a requirement-driven configuration guide (9.10b).
+- **Not tested:** FLAIM or AIM themselves (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation, a classifier trained by FL with distributed DP.
 
 ### 9.10 Which configuration for which requirement (M1, M2, M3)
 
-R6 (9.6) ranks the configurations by one number, the TAug macro-F1, and that number does not separate them (all candidates lie in 0.4467-0.4483), so M1, M2 and M3 were not compared for use but filtered. What does separate them is what each protects and what it costs. This section sets the measured costs next to the requirement a deployment may have. It applies only when the raw data cannot be pooled (9.9); when they can, use class weights or SMOTE, whatever the protection requirement.
+R6 (9.6) ranks the configurations by one number, the TAug macro-F1, and that number does not separate them (all candidates lie in 0.4451-0.4492), so M1, M2 and M3 were not compared for use but filtered. What does separate them is what each protects and what it costs. This section sets the measured costs next to the requirement a deployment may have. It applies only when the raw data cannot be pooled (9.9); when they can, use class weights or SMOTE, whatever the protection requirement.
 
 **What each option costs** (the synthetic data alone train the classifier, TSTR, test macro-F1 and recall, mean over seeds; the rare classes are DELAYED, SYN, INVALID, WILL; the DP rows use the plain decoder, the one inside epsilon, and are compared with B3-plain, the epsilon = infinity point with the same decoder; the DP-tuned model is smaller than the B3 / M2 model, so compare bytes per parameter).
 
@@ -575,7 +677,13 @@ R6 (9.6) ranks the configurations by one number, the TAug macro-F1, and that num
 | M1-eps1 | one record (epsilon) | plain | 0.227 | 0.205 | 0.132 | 0.676 | 4.37 | 1.46 | 40.0 |
 | M1-eps5 | one record (epsilon) | plain | 0.245 | 0.258 | 0.128 | 0.743 | 4.27 | 1.46 | 40.0 |
 | M1-eps10 | one record (epsilon) | plain | 0.229 | 0.243 | 0.112 | 0.781 | 4.53 | 1.46 | 40.0 |
+| MGl-eps1 | one record (epsilon) | plain | 0.253 | 0.236 | 0.087 | 0.950 | - | - | - |
+| MGl-eps5 | one record (epsilon) | plain | 0.374 | 0.377 | 0.226 | 0.853 | - | - | - |
+| MGl-eps10 | one record (epsilon) | plain | 0.413 | 0.402 | 0.306 | 0.836 | - | - | - |
 | M3-eps5 | one record (epsilon) and each client's update | plain | 0.256 | 0.256 | 0.124 | 0.763 | 4.35 | 2.25 | 61.8 |
+| MG-eps1 | one record (epsilon) and each client's update | plain | 0.389 | 0.381 | 0.253 | 0.880 | - | - | - |
+| MG-eps5 | one record (epsilon) and each client's update | plain | 0.408 | 0.401 | 0.293 | 0.835 | - | - | - |
+| MG-eps10 | one record (epsilon) and each client's update | plain | 0.413 | 0.429 | 0.316 | 0.825 | - | - | - |
 
 For scale: a classifier trained on real data only (B0, RF) reaches macro-F1 0.447, recall 0.276 on the rare classes and 0.975 on NORMAL.
 
@@ -583,16 +691,16 @@ For scale: a classifier trained on real data only (B0, RF) reaches macro-F1 0.44
 
 | requirement | choose | what it costs (measured) | what it does not give |
 |---|---|---|---|
-| The real training data can be pooled and the goal is a better IDS | none of M1, M2, M3: class weights (B1a) or SMOTE (B1b) | RF macro-F1 0.492 / 0.504 against 0.447 for real data only (R1, R2) | no protection of the raw data (it is pooled); the federated classifier is in the next row and in 9.9 |
+| The real training data can be pooled and the goal is a better IDS | see 9.1 and 9.2 | RF macro-F1 0.492 / 0.504 against 0.447 for real data only (R1, R2) | no protection of the raw data (it is pooled); the federated classifier is in the next row and in 9.9 |
 | Raw data stay at the clients and the goal is only a detector: no synthetic data have to be shared | FedAvg on the classifier itself, class-weighted (no CVAE; 9.9) | MLP macro-F1 0.429 against 0.420 for the CVAE route with synthetic data only: not different from (inside the noise); without class weights 0.319; the class weights need the clients' class counts | synthetic data to share or inspect; the protected versions are compared in 9.9 |
 | Raw data stay at the clients; only the aggregation server must not see a client's update; model and synthetic data stay inside the federation | M2 | 1.12x time per round and 1.52x bytes per parameter against B3; utility: 4 of 4 comparisons with B3 show no effect (R5) | no epsilon: nothing limits what the model or the synthetic data reveal about a record; a malicious client is not covered (9.8) |
-| The model or the synthetic data leave the federation and a formal guarantee about a record is required | M1-eps1 | TSTR macro-F1 -47 to -34 % against epsilon = infinity (R4); recall of the rare classes 0.11-0.13 against 0.31; 4.3-4.5x time per round (above the 3x filter of R6); the TSTR curve is flat over epsilon = 1, 5, 10 (range 0.018, seed std up to 0.033), so the smallest epsilon costs no more utility here | protection of the class label; protection of a whole capture (see below); a hidden update, the server sees the noisy update; an empirical benefit (the attack is at chance for every generator) |
-| Both: the server must not see a client's update, and a formal guarantee is required | M3-eps5 | what M1-eps1 costs, plus 1.02x time and 1.55x bytes per parameter against M1-eps5; utility: 4 of 4 comparisons with M1-eps5 show no effect | SecAgg adds no epsilon credit; only epsilon = 5 was run for it |
+| The model or the synthetic data leave the federation and a formal guarantee about a record is required | M1-eps1, MGl-eps1, M1-eps5, MGl-eps5, M1-eps10, MGl-eps10 | TSTR macro-F1 -47 to 7 % against epsilon = infinity (R4); recall of the rare classes 0.09-0.32 against 0.31; 4.3-4.5x time per round (above the 3x filter of R6) | protection of the class label; protection of a whole capture (see below); a hidden update, the server sees the noisy update; an empirical benefit (the attack is at chance for every generator) |
+| Both: the server must not see a client's update, and a formal guarantee is required | M3-eps5, MG-eps1, MG-eps5, MG-eps10 | what M1-eps1 costs, plus 1.02x time and 1.55x bytes per parameter against M1-eps5; utility: 4 of 4 comparisons with M1-eps5 show no effect | SecAgg adds no epsilon credit; only epsilon = 1, 5, 5, 10 was run for it |
 | Clients that cannot afford DP-SGD's extra compute (the R6 overhead filter is 3x plain FL) | M2 is the only protected configuration within it | DP configurations take 4.3-4.5x the time per round of B3 on this CPU | a measurement on real IoT hardware or a real network (single-machine simulation, 9.8 and section 10) |
 
 **What in the IoT / MQTT data changes the choice.** Measured on this study's data; the causes are not tested.
 
-- **The rare attack classes are thin at the clients, and DP is where it shows.** In the Dirichlet partition (alpha 0.5) the (client, rare class) cells that hold at most 10 records are (seed 0: 15 of 80, 6 with none; seed 1: 24 of 80, 7 with none; seed 2: 25 of 80, 4 with none). With DP the synthetic-only RF recovers the rare classes much worse (mean recall 0.11-0.13 against 0.31 at epsilon = infinity), while NORMAL moves from 0.80 to 0.68-0.78: the DP cost falls mostly on the rare classes. Mean over the seeds; the DP rows have the largest spread between seeds (flag F4), and they also differ from B3-plain in architecture and hyper-parameters (the DP-tuned model), so the gap is not only the noise.
+- **The rare attack classes are thin at the clients, and DP is where it shows.** In the Dirichlet partition (alpha 0.5) the (client, rare class) cells that hold at most 10 records are (seed 0: 15 of 80, 6 with none; seed 1: 24 of 80, 7 with none; seed 2: 25 of 80, 4 with none). With DP the synthetic-only RF recovers the rare classes much worse (mean recall 0.09-0.32 against 0.31 at epsilon = infinity), while NORMAL moves from 0.80 to 0.68-0.95: the DP cost falls mostly on the rare classes. Mean over the seeds; the DP rows have the largest spread between seeds (flag F4), and they also differ from B3-plain in architecture and hyper-parameters (the DP-tuned model), so the gap is not only the noise.
 
 - **Attacks arrive as captures, and epsilon protects one packet.** In the train split a TCP stream gives 1.0-1.2 rows on average, but each rare class comes from 16 capture groups (blocks of a capture file) and one capture group gives up to 63-188 rows of it (per class: DELAYED 188, SYN 188, INVALID 94, WILL 63). By group privacy the guarantee for k rows of one source is at most k times epsilon (delta grows as well), so at epsilon = 0.997 the bound for a whole capture of 188 rows is about 187, a vacuous one: epsilon says little about whether one attacker's or one device's capture took part in the training (k counts the rows of one capture held by one client, so it is at most these figures; no exact conversion is claimed).
 
@@ -642,10 +750,16 @@ The list is written once (`limitations.py`) and also used by the README and the 
 - **Tail of the time-gap feature.** The tail of `time_delta_from_previous_displayed_frame` is still clipped at 5 sigma: 72 of 88,500 train rows (0.08 %) after the x1000 scaling; without the scaling it was 1.04 %. Extreme gaps are therefore merged in the features and in the generated rows. *(feature_schema.json audit; SPEC_DEVIATIONS 4.10)*
 - **Very sparse columns.** Columns that are empty in almost every row (but not all) use the statistics of the rows where they apply, with an `_is_na` flag (`ultra_sparse_fix`); this departs from the rule of spec v1.1. *(SPEC_DEVIATIONS 4.5)*
 - **DoS and DDoS are merged.** In the 6-class mode used for every experiment the DoS / DDoS sub-classes of an attack family are one class, so neither the classifiers nor the generator separate them (the 11-class data were prepared, but no run of the experiment matrix uses them). *(spec Definition of Done; leakage_report.md C5; configs/default.yaml g2_log)*
-- **Weak fidelity and privacy diagnostics.** C2ST AUC is 0.9996-1.0000 for the generators (a classifier tells synthetic rows from real ones almost perfectly). The attack did not detect an over-fitted CVAE (AUC 0.519), so the positive control the spec asks for is not met for the CVAE: an AUC near 0.5 does not show privacy. A second attack, with access to the released model (record fit under the model, calibrated by a reference model), passes its positive control (AUC 0.664 on the over-fitted CVAE against 0.519 for the attack on the synthetic data); against the federated models it gives B3 0.500, M1-eps10 0.496, M1-eps5 0.496, M1-eps1 0.497; it detects nothing (AUC < 0.55) in any of them. It tests one attack family at record level, not group privacy. *(b2_cvae.md; section 4 and 9.4)*
+- **Weak fidelity and privacy diagnostics.** C2ST AUC is 0.9995-1.0000 for the generators (a classifier tells synthetic rows from real ones almost perfectly). The attack did not detect an over-fitted CVAE (AUC 0.519), so the positive control the spec asks for is not met for the CVAE: an AUC near 0.5 does not show privacy. A second attack, with access to the released model (record fit under the model, calibrated by a reference model), passes its positive control (AUC 0.664 on the over-fitted CVAE against 0.519 for the attack on the synthetic data); against the federated models it gives B3 0.500, M1-eps10 0.496, M1-eps5 0.496, M1-eps1 0.497; it detects nothing (AUC < 0.55) in any of them. It tests one attack family at record level, not group privacy. *(b2_cvae.md; section 4 and 9.4)*
 - **Seed-to-seed spread.** Seed-to-seed spread includes the sensitivity of FL training to tiny perturbations: two runs that differ only by noise of 1e-5 differ by about 0.03 macro-F1 in TSTR. A standard deviation over three seeds is a rough estimate. *(SPEC_DEVIATIONS 10.4)*
 - **Intervals and verdicts.** The intervals and verdicts of section 9 reflect the sampling of test rows (or of whole streams) and three training seeds only. They do not cover the choice of capture groups, the hyper-parameters or the data sampling. *(section 9)*
-- **What was not compared.** The CVAE is the premise of the spec, not the result of a comparison of generators. Training the classifier itself by FL was tested after the main study, with and without the protections (section 9.9). Not tested: federated SMOTE, other generators, other ways to use the synthetic data. *(section 9.9; SPEC_DEVIATIONS 12.10)*
+- **What was not compared.** The CVAE was the premise of the spec; the optimisation round compared it with one other generator, FedDP-Marginal, which the framework now uses (section 9.9b). Training the classifier itself by FL was tested with and without the protections (section 9.9). Not tested: FLAIM / AIM (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation, federated SMOTE, a classifier trained by FL with distributed DP. *(sections 9.9, 9.9b; SPEC_DEVIATIONS 12.10, O3.2)*
+- **Distributed DP assumes honest clients.** The distributed variant of FedDP-Marginal splits the noise over the clients: its epsilon holds when every client adds its share. If only h of the K clients do (the others collude with the aggregator), the epsilon is larger; it is reported for every h (at epsilon 5 with 5 clients: 14.2 with one honest client) and it grows with the number of clients. The local variant (every client adds the full noise) needs no such trust but loses utility. *(SPEC_DEVIATIONS O2.3, O4.2; results/reports/robustness.md)*
+- **Pairwise dependencies only.** FedDP-Marginal models each class with a Chow-Liu tree: every attribute depends on one parent. Higher-order structure (degree 2, a structure per class) was tried and did not help on this data, but it may on others; within a coarse bin the numeric values are drawn uniformly inside a fine bin. *(SPEC_DEVIATIONS O3.2)*
+- **Synthetic rows remain distinguishable.** A classifier separates the synthetic rows from the real ones almost perfectly (C2ST AUC 0.999-1.000 for every generator, the CVAE and FedDP-Marginal alike); utility for an IDS trained on the synthetic data does not imply that the rows look real. *(SPEC_DEVIATIONS O3.2; scorecard.md)*
+- **Rare classes and augmentation.** With the best protected generator the recall of the rare classes stays below the non-private federated CVAE (B3), and adding synthetic rows to the real data does not help when the real data can be pooled (TAug and TAugR gains near 0): the value of the framework is training an IDS where the raw data cannot be pooled. *(SPEC_DEVIATIONS O1.7, O3.2)*
+- **Accounting choices.** The Skellam variant uses the RDP bound of Agarwal et al. (2021) and the RDP to (epsilon, delta) conversion of Opacus; the Gaussian variant uses zCDP with the simpler conversion, which is looser, so part of the gap between the two at the same epsilon comes from the conversion, not from the mechanism. The released marginals are post-processed (fusion, IPF) at no privacy cost; the tuning of these choices on validation is not covered by epsilon. *(SPEC_DEVIATIONS O2.3, O3.3)*
+- **Abandoned and unrun parts of the round.** The full-scale DP search of the CVAE did not improve it (one-seed validation choices did not hold on test); the DP-FedSGD variant of the CVAE and the SecAgg bit sweep for the CVAE were written but not run after the pivot to FedDP-Marginal. *(SPEC_DEVIATIONS O1.9, O2.1, O2.2)*
 
 ## 11. Sources
 

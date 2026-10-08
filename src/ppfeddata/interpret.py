@@ -284,8 +284,8 @@ def r6(ctx: Context, cost: dict[str, dict[str, Any]]) -> dict[str, Any]:
         c = cost.get(e["label"])
         ratio = float(c["ratio"]) if c and not math.isnan(c["ratio"]) else None
         r = {"label": e["label"], "kind": e["color"], "federated": e["label"] != "B2", "taug_cfg": taug, "tstr_cfg": tstr, "taug_f1": ctx.summary_value(taug, "macro_f1"),
-             "tstr_f1": ctx.summary_value(tstr, "macro_f1"), "mia_auc": mia, "eps_max": eps, "time_ratio": ratio,
-             "ok_mia": bool(mia <= th["mia_auc_max"]), "ok_eps": eps is None or eps <= th["eps_max_recommend"],
+             "tstr_f1": ctx.summary_value(tstr, "macro_f1"), "mia_auc": mia, "eps_max": eps, "time_ratio": ratio, "fl_total_s": ctx.summary_value(tstr, "fl_total_s"),
+             "ok_mia": bool(mia <= th["mia_auc_max"]), "ok_eps": eps is None or eps <= th["eps_max_recommend"] * (1 + 1e-9),      # float tolerance only
              "ok_overhead": ratio is None or ratio <= th["overhead_ratio_max"]}
         r["eligible"] = bool(r["federated"] and r["ok_mia"] and r["ok_eps"] and r["ok_overhead"])
         rows.append(r)

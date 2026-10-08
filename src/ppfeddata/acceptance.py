@@ -221,9 +221,12 @@ def check_readme(texts: dict[str, str | None], cli_commands: set[str], clean_rec
             miss.append(f"{name} not found")
             continue
         miss += [f"{name}: {n}" for n in need if n not in text] + [f"{name}: command {c}" for c in sorted(cli_commands - readme_commands(text))]
-    tried = ("a clean-install record is in results/reports/clean_install.md (install from the lock, pytest, dry run in a new venv); the raw-data phases were not re-run there"
+    raw_ok = bool(clean_record and "Phases 1-5 from the raw data" in clean_record and "identical to the main checkout" in clean_record)      # O5 (D10)
+    tried = ("a clean-install record is in results/reports/clean_install.md: install from the lock in a new venv and Phases 1-5 re-run from the raw data in a clean copy, "
+             "with processed data identical to the main checkout" if raw_ok else
+             "a clean-install record is in results/reports/clean_install.md (install from the lock, pytest, dry run in a new venv); the raw-data phases were not re-run there"
              if clean_record and "pytest" in clean_record and "passed" in clean_record else "not tried on a clean machine (that is the only real test of 'enough')")
-    return Item("D10", crit, "FAIL" if miss else "PARTIAL",
+    return Item("D10", crit, "FAIL" if miss else ("PASS" if raw_ok else "PARTIAL"),
                 (f"missing: {miss}" if miss else f"both READMEs (English and Vietnamese) have install, data, every phase command ({len(cli_commands)} CLI commands), reproduction steps, layout, run times and limitations; "
                  + tried))
 

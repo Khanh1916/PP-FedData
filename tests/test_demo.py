@@ -83,7 +83,9 @@ def gen(world, label):
 # --------------------------------------------------------------------------------------------------
 def test_generators_follow_the_spec_matrix(world):
     gs = {g.label: g for g in dl.generators(world.cfg)}
-    assert set(gs) == {"B2", "B3", "M2", "M1-eps1", "M1-eps5", "M1-eps10", "M3"}
+    assert set(gs) == {"B2", "B3", "M2", "M1-eps1", "M1-eps5", "M1-eps10", "M3", "MG-eps1", "MG-eps5", "MG-eps10"}
+    assert gs["MG-eps5"].kind == "mg" and gs["MG-eps5"].dp and gs["MG-eps5"].secagg and gs["MG-eps5"].run_name == "MGs-eps5"
+    assert "Skellam" in gs["MG-eps5"].protections
     assert [gs[k].dp for k in ("B2", "B3", "M2", "M1-eps5", "M3")] == [False, False, False, True, True]
     assert [gs[k].secagg for k in ("B2", "B3", "M2", "M1-eps5", "M3")] == [False, False, True, False, True]
     assert gs["B2"].federated is False and gs["B3"].federated is True

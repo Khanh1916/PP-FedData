@@ -198,11 +198,30 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         "The intervals and verdicts of section 9 reflect the sampling of test rows (or of whole streams) and three training seeds only. They do not cover the choice of capture groups, "
         "the hyper-parameters or the data sampling.", "section 9")
     add("What was not compared",
-        ("The CVAE is the premise of the spec, not the result of a comparison of generators. Training the classifier itself by FL was tested after the main study, with and without the protections (section 9.9). Not tested: federated SMOTE, "
-         "other generators, other ways to use the synthetic data."
-         if (interp or {}).get("fed_classifier") else
-         "The CVAE is the premise of the spec, not the result of a comparison of generators. Not tested: federated training of the classifier itself, federated class weights or SMOTE, other "
-         "generators, other ways to use the synthetic data (see section 9.9)."), "section 9.9; SPEC_DEVIATIONS 12.10")
+        "The CVAE was the premise of the spec; the optimisation round compared it with one other generator, FedDP-Marginal, which the framework now uses (section 9.9b). "
+        "Training the classifier itself by FL was tested with and without the protections (section 9.9). Not tested: FLAIM / AIM (Private-PGM was not installed), "
+        "DP-CTGAN or other deep generators in the federation, federated SMOTE, a classifier trained by FL with distributed DP.", "sections 9.9, 9.9b; SPEC_DEVIATIONS 12.10, O3.2")
+    # optimisation round (spec v1.5): FedDP-Marginal
+    add("Distributed DP assumes honest clients",
+        "The distributed variant of FedDP-Marginal splits the noise over the clients: its epsilon holds when every client adds its share. If only h of the K clients do (the others "
+        "collude with the aggregator), the epsilon is larger; it is reported for every h (at epsilon 5 with 5 clients: 14.2 with one honest client) and it grows with the number of "
+        "clients. The local variant (every client adds the full noise) needs no such trust but loses utility.", "SPEC_DEVIATIONS O2.3, O4.2; results/reports/robustness.md")
+    add("Pairwise dependencies only",
+        "FedDP-Marginal models each class with a Chow-Liu tree: every attribute depends on one parent. Higher-order structure (degree 2, a structure per class) was tried and did "
+        "not help on this data, but it may on others; within a coarse bin the numeric values are drawn uniformly inside a fine bin.", "SPEC_DEVIATIONS O3.2")
+    add("Synthetic rows remain distinguishable",
+        "A classifier separates the synthetic rows from the real ones almost perfectly (C2ST AUC 0.999-1.000 for every generator, the CVAE and FedDP-Marginal alike); utility for an "
+        "IDS trained on the synthetic data does not imply that the rows look real.", "SPEC_DEVIATIONS O3.2; scorecard.md")
+    add("Rare classes and augmentation",
+        "With the best protected generator the recall of the rare classes stays below the non-private federated CVAE (B3), and adding synthetic rows to the real data does not "
+        "help when the real data can be pooled (TAug and TAugR gains near 0): the value of the framework is training an IDS where the raw data cannot be pooled.", "SPEC_DEVIATIONS O1.7, O3.2")
+    add("Accounting choices",
+        "The Skellam variant uses the RDP bound of Agarwal et al. (2021) and the RDP to (epsilon, delta) conversion of Opacus; the Gaussian variant uses zCDP with the simpler conversion, "
+        "which is looser, so part of the gap between the two at the same epsilon comes from the conversion, not from the mechanism. The released marginals are post-processed "
+        "(fusion, IPF) at no privacy cost; the tuning of these choices on validation is not covered by epsilon.", "SPEC_DEVIATIONS O2.3, O3.3")
+    add("Abandoned and unrun parts of the round",
+        "The full-scale DP search of the CVAE did not improve it (one-seed validation choices did not hold on test); the DP-FedSGD variant of the CVAE and the SecAgg bit sweep "
+        "for the CVAE were written but not run after the pivot to FedDP-Marginal.", "SPEC_DEVIATIONS O1.9, O2.1, O2.2")
     return out
 
 

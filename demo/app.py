@@ -226,7 +226,9 @@ def page_tradeoff(cfg: dict, path: str | None) -> None:
         if rec["dp_alternative"]:
             st.markdown(f"Nếu cần bảo đảm DP hình thức, lựa chọn DP mà quy tắc sẽ chọn nếu bỏ điều kiện overhead là **{rec['dp_alternative']}**.")
         st.dataframe(rec["table"], hide_index=True, width="stretch")
-        st.caption("Khuyến nghị chỉ xếp hạng các cấu hình CVAE với nhau; nó không nói rằng dùng CVAE tốt hơn không dùng (xem cảnh báo ở đầu trang và mục 9.6, 9.9 của báo cáo).")
+        st.caption("Khuyến nghị xếp hạng các bộ sinh có bảo vệ (CVAE và FedDP-Marginal) với nhau; nó không nói rằng dữ liệu sinh tốt hơn dữ liệu thật khi dữ liệu thật gộp được "
+                   "(xem cảnh báo ở đầu trang và mục 9.6, 9.9, 9.9b của báo cáo).")
+    page_requirement(cfg)
     guide = next((k for k in secs if k.split()[0] == "9.10"), None)
     if guide:
         st.subheader("Cấu hình nào cho yêu cầu nào (M1, M2, M3)")
@@ -246,11 +248,55 @@ def page_tradeoff(cfg: dict, path: str | None) -> None:
             show_md(secs[key], base)
 
 
+def page_requirement(cfg: dict) -> None:
+    """Optimisation round O4: the configuration for a deployment requirement, with the same rules as `ppfeddata recommend` (results/scorecard.json)."""
+    import json
+
+    from ppfeddata import recommend as rc
+    from ppfeddata import scorecard as scm
+
+    p = dl.results_dir(cfg) / "scorecard.json"
+    if not p.exists():
+        return
+    st.subheader("Cấu hình theo yêu cầu triển khai (`ppfeddata recommend`)")
+    card = scm._from_json(json.loads(p.read_text(encoding="utf-8")))
+    names = [s.name for s in rc.SCENARIOS]
+    pick = st.selectbox("Kịch bản mẫu", ["(tự chọn)"] + names, key="rq_scn")
+    base = rc.SCENARIOS[names.index(pick)] if pick in names else rc.Requirement()
+    c = st.columns(4)
+    ts = c[0].selectbox("Tin máy chủ?", ["có", "không"], index=0 if base.trust_server else 1, key=f"rq_ts_{pick}") == "có"
+    hon = c[1].selectbox("Số client trung thực tối thiểu", ["tất cả", "4", "3", "2", "1"],
+                         index=0 if (base.trust_clients and not base.honest_clients) else (4 if not base.trust_clients else ["tất cả", "4", "3", "2", "1"].index(str(base.honest_clients))),
+                         key=f"rq_h_{pick}")
+    eps = c[2].selectbox("ε tối đa", ["không cần DP", "1", "5", "10"], index=["không cần DP", "1", "5", "10"].index(f"{base.max_eps:g}" if base.max_eps else "không cần DP"),
+                         key=f"rq_e_{pick}")
+    pri = c[3].selectbox("Ưu tiên", ["macro", "binary", "rare"], index=["macro", "binary", "rare"].index(base.priority), key=f"rq_p_{pick}")
+    c2 = st.columns(3)
+    mbt = c2[0].number_input("MB tổng tối đa (0 = không giới hạn)", min_value=0.0, value=float(base.max_mb_total or 0.0), key=f"rq_mb_{pick}")
+    mia = c2[1].number_input("MIA AUC tối đa (0 = không giới hạn)", min_value=0.0, max_value=1.0, value=float(base.max_mia or 0.0), key=f"rq_mia_{pick}")
+    rr = c2[2].number_input("Recall lớp hiếm tối thiểu", min_value=0.0, max_value=1.0, value=float(base.min_rare_recall or 0.0), key=f"rq_rr_{pick}")
+    req = rc.Requirement("demo", ts, hon != "1", None if eps == "không cần DP" else float(eps), None, mbt or None, None, pri, rr or None,
+                         honest_clients=None if hon in ("tất cả", "1") else int(hon), max_mia=mia or None)
+    res = rc.recommend(card, req)
+    if res["best"]:
+        b = res["best"]
+        st.success(f"Khuyến nghị: **{b['label']}** · {res['priority_metric']} {b.get(res['priority_metric']):.3f} · ε đúng với giả định tin cậy {b['eps_eff']:.2f}"
+                   + (f" · hoà trong độ lệch seed: {', '.join(res['ties_with_best'])}" if res["ties_with_best"] else "") + f"  \nLệnh: `{res['command']}`")
+    else:
+        st.info("Không cấu hình hợp lệ nào thoả yêu cầu.")
+    st.dataframe([{k: r.get(k) for k in rc.SLIM_KEYS} for r in res["front"]], hide_index=True, width="stretch")
+    if res["rejected"]:
+        with st.expander(f"Bị loại ({len(res['rejected'])})"):
+            st.dataframe([{"cấu hình": r["label"], "lý do": "; ".join(r["rejected_because"])} for r in res["rejected"]], hide_index=True, width="stretch")
+    st.caption("Mặt Pareto trên các trục triển khai: macro-F1 TSTR, F1 nhị phân, recall lớp hiếm (bằng nhau trong độ lệch seed), ε đúng với giả định tin cậy, SecAgg, MB/vòng, MB tổng. "
+               "Cùng luật với `python -m ppfeddata.cli recommend` và `results/reports/recommend.html`.")
+
+
 # --------------------------------------------------------------------------------------------------
 # Page 4: sample generation
 # --------------------------------------------------------------------------------------------------
 def page_generate(cfg: dict, path: str | None) -> None:
-    st.header("Tạo mẫu từ CVAE đã huấn luyện")
+    st.header("Tạo mẫu từ bộ sinh đã huấn luyện (FedDP-Marginal hoặc CVAE)")
     avail = dl.available_generators(cfg)
     if not avail:
         st.warning("Không thấy mô hình đã huấn luyện trong `artifacts/` (hoặc thiếu dữ liệu đã xử lý trong `data/processed/`). Chạy các Phase 7-10 trước (xem README).")
@@ -341,9 +387,15 @@ def page_threat(cfg: dict, path: str | None) -> None:
     st.caption(f"{len(items)} mục, sinh từ `limitations.py` (cùng danh sách với mục 10 của báo cáo và README; tiếng Anh). Con số lấy từ manifest, schema, config và interpretation.json.")
     for it in items:
         st.markdown(f"**{it['id']} {it['topic']}.** {it['text']}  \n*Nguồn: {it['source']}*")
+    md = get_report(path, _stamp(dl.report_path(cfg)))
+    sec = next((v for k, v in (dl.split_markdown(md, 3) if md else {}).items() if k.split()[0] == "9.9b"), None)
+    if sec:
+        st.subheader("Vì sao khung chuyển từ CVAE sang FedDP-Marginal?")
+        st.caption("Mục 9.9b của báo cáo (tiếng Anh), sinh từ `results/scorecard.json`.")
+        show_md(sec, dl.report_path(cfg).parent)
     note = dl.why_cvae_note(R, cfg)
     if note:
-        st.subheader("Vì sao vẫn dùng CVAE?")
+        st.subheader("Vì sao thiết kế ban đầu dùng CVAE?")
         st.markdown(note + "\n\nChi tiết: mục 9.9 của báo cáo (trang 3).")
 
 

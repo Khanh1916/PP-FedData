@@ -33,7 +33,7 @@ class Generator:
     label: str                      # configuration id of the matrix: B2, B3, M1-eps5, M2, M3
     title: str
     run_name: str                   # prefix of the artifact folder: B2, B3, M1d-t21-eps5, M2, M3d-t21-eps5
-    kind: str                       # b2 | b3 | m1 | m2 | m3
+    kind: str                       # b2 | b3 | m1 | m2 | m3 | mg (FedDP-Marginal, spec v1.5)
     dp: bool
     secagg: bool
     federated: bool
@@ -42,6 +42,8 @@ class Generator:
     @property
     def protections(self) -> str:
         parts = ["federated" if self.federated else "centralised"]
+        if self.kind == "mg":
+            return ", ".join(parts + [f"DP count tables (Skellam noise split over the clients, target epsilon {self.eps_target:g})", "secure aggregation (SecAgg+)"])
         if self.dp:
             parts.append(f"client-side DP-SGD (target epsilon {self.eps_target:g})")
         if self.secagg:
@@ -59,6 +61,10 @@ def generators(cfg: dict[str, Any]) -> list[Generator]:
             continue
         out.append(Generator(e.id, e.title, "B2" if e.kind == "b2" else str(fl_run_name(cfg, e)), e.kind, dp=e.kind in ("m1", "m3"), secagg=e.kind in ("m2", "m3"),
                              federated=e.kind != "b2", eps_target=float(e.params["eps"]) if "eps" in e.params else None))
+    # FedDP-Marginal (spec v1.5): the framework's generator; the Flower SecAgg+ runs (MGr = with the post-processing of O3.3 where it was chosen)
+    for e in (1, 5, 10):
+        name = f"MGr-eps{e}" if e == 1 and (artifacts_dir(cfg) / run_id(f"MGr-eps{e}", int(cfg["seeds"][0]), cfg["label_mode"])).exists() else f"MGs-eps{e}"
+        out.append(Generator(f"MG-eps{e}", f"FedDP-Marginal, epsilon {e}", name, "mg", dp=True, secagg=True, federated=True, eps_target=float(e)))
     return out
 
 
@@ -67,7 +73,7 @@ def run_dir(cfg: dict[str, Any], g: Generator, seed: int) -> Path:
 
 
 def model_file(cfg: dict[str, Any], g: Generator, seed: int) -> Path:
-    return run_dir(cfg, g, seed) / ("model.pt" if g.kind == "b2" else "final_state.pt")
+    return run_dir(cfg, g, seed) / {"b2": "model.pt", "mg": "mg_model.pkl"}.get(g.kind, "final_state.pt")
 
 
 def available_seeds(cfg: dict[str, Any], g: Generator) -> list[int]:
@@ -80,7 +86,7 @@ def available_generators(cfg: dict[str, Any]) -> list[tuple[Generator, list[int]
 
 def synthetic_path(cfg: dict[str, Any], g: Generator, seed: int, variant: str) -> Path:
     """The synthetic set the evaluation saved for this model: `<run>[-plain]_<seed>/synthetic.npz` (B2 has no separate plain run)."""
-    name = g.run_name + ("-plain" if variant == "plain" and g.kind != "b2" else "")
+    name = g.run_name + ("-plain" if variant == "plain" and g.kind not in ("b2", "mg") else "")
     return artifacts_dir(cfg) / run_id(name, int(seed), cfg["label_mode"]) / "synthetic.npz"
 
 
@@ -118,6 +124,20 @@ def load_model(cfg: dict[str, Any], g: Generator, seed: int, schema: dict[str, A
     f = model_file(cfg, g, seed)
     if not f.exists():
         raise FileNotFoundError(f"no trained model for {g.label} seed {seed}: {f}")
+    if g.kind == "mg":                      # the released (noisy) tables; MGr adds the post-processing chosen on validation (no privacy cost)
+        import pickle
+
+        import yaml
+
+        from ppfeddata.models import marginal as mg
+        from ppfeddata.tune_marginal import REFINE_PATH
+
+        with open(f, "rb") as fh:
+            m = pickle.load(fh)
+        if g.run_name.startswith("MGr") and REFINE_PATH.exists():
+            ref = (yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8"))["searches"].get(f"eps{g.eps_target:g}") or {}).get("chosen")
+            m = mg.refine(m, **ref) if ref else m
+        return m
     layout, k = build_layout(schema), len(schema["label_map"])
     if g.kind == "b2":
         ck = torch.load(f, map_location="cpu", weights_only=True)
@@ -195,7 +215,11 @@ def sample(cfg: dict[str, Any], g: Generator, train_seed: int, classes: list[str
         if stats is None:
             variant = "plain"
             notes.append("generate.residual_noise is off in the config: the plain decoder was sampled")
-    X, y = generate(model, assets.schema, {names.index(c): n for c in sel}, int(sample_seed), stats=stats)
+    if g.kind == "mg":
+        from ppfeddata.models import marginal as mg
+        X, y = mg.sample(model, assets.schema, [n if c in sel else 0 for c in names], int(sample_seed))
+    else:
+        X, y = generate(model, assets.schema, {names.index(c): n for c in sel}, int(sample_seed), stats=stats)
     return Samples(X, y, readable_table(X, y, assets.pre, names), g, int(train_seed), int(sample_seed), variant, n, sel, notes)
 
 

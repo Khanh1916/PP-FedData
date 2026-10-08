@@ -171,6 +171,9 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                    if fed else "Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
                    "federated class weights or SMOTE, other generators. See 9.9.") if tstr and b0 else " See 9.9.")
         out.append(head + tail)
+    pv = _pivot_facts(cfg)
+    if pv:
+        out.append(_pivot_bullet(pv))
     bits = [f"{f['id']} ({f['title']}): {f['status']}" for f in R["flags"]]
     out.append("**Red flags** (spec Phase 12): " + "; ".join(bits) + ". Details in 9.7.")
     return out
@@ -362,7 +365,7 @@ def _r6(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         return L + ["_(no candidate)_", ""]
     yn = lambda b: "yes" if b else "NO"            # noqa: E731
     rows = [{"configuration": r["label"], f"TAug-{PRIMARY.upper()}": f"{r['taug_f1']:.4f}", f"TSTR-{PRIMARY.upper()}": f"{r['tstr_f1']:.4f}", "MIA AUC": f"{r['mia_auc']:.3f}",
-             "epsilon (max)": f"{r['eps_max']:.3f}" if r["eps_max"] is not None else "-", "time / round vs B3": f"{r['time_ratio']:.2f}" if r["time_ratio"] is not None else "n/a (not federated)",
+             "epsilon (max)": f"{r['eps_max']:.3f}" if r["eps_max"] is not None else "-", "time / round vs B3": f"{r['time_ratio']:.2f}" if r["time_ratio"] is not None else ("n/a (not federated)" if not r.get("federated") else f"n/a (3 rounds, {r.get('fl_total_s') or float('nan'):.0f} s in total)"),
              f"MIA <= {th['mia_auc_max']}": yn(r["ok_mia"]), f"eps <= {th['eps_max_recommend']:g}": yn(r["ok_eps"]), f"overhead <= {th['overhead_ratio_max']:g}x": yn(r["ok_overhead"]),
              "eligible": yn(r["eligible"]) if r["federated"] else "no (pooled data)"} for r in r6["candidates"]]
     L += [f"Rule (spec Phase 12; thresholds from the config): among the configurations with MIA AUC <= {th['mia_auc_max']}, epsilon (max over clients and seeds) <= {th['eps_max_recommend']:g} when DP is used and "
@@ -799,6 +802,77 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     return L + _guide_o4(cfg)
 
 
+def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
+    """Numbers behind 9.9b: the best valid CVAE route and FedDP-Marginal per epsilon, from results/scorecard.json (TSTR on the real test split,
+    classifier chosen on validation, mean over seeds)."""
+    import json as _json
+    import math as _math
+    from pathlib import Path as _P
+
+    p = _P(cfg["compute"]["runs_csv"]).parent / "scorecard.json"
+    if not p.exists():
+        return None
+    rows = [r for r in _json.loads(p.read_text(encoding="utf-8"))["rows"] if r.get("valid") and not r.get("reference")]
+    by = {r["label"]: r for r in rows}
+    cvae = lambda e: [r for r in rows if r.get("dp") and r.get("method") in ("M1", "M3") and abs(float(r.get("eps_target") or 0) - e) < 1e-9]   # noqa: E731
+    mg = lambda e: [r for r in rows if r.get("method") == "MG" and r.get("dp_mode") == "distributed" and abs(float(r.get("eps_target") or 0) - e) < 1e-9]  # noqa: E731
+    out = {"eps": {}, "b3": by.get("B3"), "m2": by.get("M2")}
+    for e in (1.0, 5.0, 10.0):
+        c, m = cvae(e), mg(e)
+        main = {1.0: ("MGr-eps1", "MGs-eps1"), 5.0: ("MGs-eps5",), 10.0: ("MGs-eps10",)}[e]       # the framework's configuration (as in R6), not the best variant
+        m = [by[x] for x in main if x in by] or m
+        if c and m:
+            bc, bm = max(c, key=lambda r: r["tstr_f1"]), m[0]
+            out["eps"][e] = {"cvae": bc, "mg": bm}
+    if not out["eps"]:
+        return None
+    _ = _math
+    return out
+
+
+def _pivot_bullet(f: dict[str, Any]) -> str:
+    parts = [f"ε {e:g}: {v['mg']['label']} {v['mg']['tstr_f1']:.3f} against the best CVAE route {v['cvae']['label']} {v['cvae']['tstr_f1']:.3f}" for e, v in f["eps"].items()]
+    b3 = f.get("b3")
+    return ("**Why FedDP-Marginal and not the CVAE?** Under DP the CVAE route stays far from its non-DP version even after re-tuning per epsilon at full scale "
+            "(O1), while the federated DP marginal generator does not (TSTR macro-F1, test, mean over seeds: " + "; ".join(parts)
+            + (f"; B3, the CVAE without DP: {b3['tstr_f1']:.3f}" if b3 else "") + "). It also sends three small rounds instead of tens of model rounds, "
+            "and its noise can be split over the clients through secure aggregation with exact accounting. The framework therefore uses FedDP-Marginal; "
+            "the CVAE stays as the baseline. Not an algorithmic novelty (FLAIM, MST, AIM); see 9.9b.")
+
+
+def _pivot(cfg: dict[str, Any]) -> list[str]:
+    f = _pivot_facts(cfg)
+    if not f:
+        return []
+    rows = []
+    for e, v in f["eps"].items():
+        for kind, r in (("CVAE route (best valid)", v["cvae"]), ("FedDP-Marginal", v["mg"])):
+            rows.append({"ε": f"{e:g}", "generator": kind, "configuration": r["label"], "TSTR macro-F1": f"{r['tstr_f1']:.3f} ± {r.get('tstr_f1_std') or 0:.3f}",
+                         "binary F1": f"{r.get('bin_f1', float('nan')):.3f}", "rare recall": f"{r.get('rare_recall', float('nan')):.3f}",
+                         "MB / round": "n/a" if not r.get("bytes_per_round") else f"{r['bytes_per_round'] / 1e6:.2f}",
+                         "rounds": "n/a" if not r.get("rounds") else f"{r['rounds']:.0f}"})
+    L = ["### 9.9b Why the framework moved from the CVAE to FedDP-Marginal (optimisation round)", "",
+         "The CVAE was the premise of the spec (9.9). The optimisation round tested whether a better-tuned CVAE closes the gap that DP opens, and whether another generator does "
+         "better under the same federation, DP and secure aggregation. Numbers from `results/scorecard.json` (test split, classifier chosen on validation, mean ± std over seeds):", "",
+         _table(rows), "",
+         "- **What the CVAE route got from re-tuning.** Searching the DP hyper-parameters per epsilon at full scale (real FL runs) did not improve on the baseline within the seed std, "
+         "and at ε 1 the trial chosen on one-seed validation was worse on test (SPEC_DEVIATIONS O1.9). Distributed DP is not valid for its multi-step local DP-SGD, so with "
+         "secure aggregation it stays local DP.",
+         "- **Why FedDP-Marginal fits the setting.** It releases only sums of count tables, which is what secure aggregation computes; the Gaussian or Skellam noise can be split "
+         "over the clients, Skellam with exact accounting through the modular arithmetic of SecAgg+ (O2.3); three rounds of well under 1 MB in total; and the released "
+         "tables do not depend on how the rows are spread over the clients (O4.2).",
+         "- **What it does not solve.** The recall of the rare classes stays below B3; synthetic data still do not help when the real data can be pooled (TAug ≈ 0); "
+         "a classifier still tells the synthetic rows from the real ones (C2ST ≈ 1); the distributed variant assumes honest clients (ε with h honest clients is "
+         "reported); the tree captures only pairwise dependencies; the settings were chosen on non-private validation data.",
+         "- **Novelty.** Marginal-based DP synthesis in federated learning exists: FLAIM / DistAIM (Maddock, Cormode, Maple, KDD 2024), CaPS (MPC, ICML 2024), "
+         "HeteroFedSyn (2026 preprint), built on MST / AIM / PrivBayes / PrivSyn. What this study adds is the combination and the evidence: exact distributed DP with Skellam "
+         "noise through a real secure-aggregation implementation with measured bytes and the epsilon per number of honest clients, a systematic comparison with a CVAE under "
+         "the same FL / DP / SecAgg for an MQTT intrusion-detection dataset, and a requirement-driven configuration guide (9.10b).",
+         "- **Not tested:** FLAIM or AIM themselves (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation, a classifier trained by FL "
+         "with distributed DP.", ""]
+    return L
+
+
 def _guide_o4(cfg: dict[str, Any]) -> list[str]:
     """Section 9.10, part 2 (optimisation round O4): the deployment requirements of `ppfeddata recommend` with FedDP-Marginal and the
     federation / 11-class robustness of `ppfeddata robustness`. Read from results/recommend.json and results/robustness.json."""
@@ -992,5 +1066,5 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
          f"(the macro-F1 recomputed from the predictions equals the ledger's to {m['integrity_max_abs_diff_vs_ledger']:.0e}); `results/interpretation.json` holds the same numbers in machine-readable form.", ""]
     L += _how_judged(R)
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
-    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _guide(R, cfg)
+    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg) + _guide(R, cfg)
     return L

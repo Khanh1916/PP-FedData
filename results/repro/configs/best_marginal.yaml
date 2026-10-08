@@ -1,0 +1,403 @@
+searches:
+  eps1:
+    epsilon: 1.0
+    best:
+      bins: 32
+      split: &id001
+      - 0.3
+      - 0.1
+      - 0.6
+    val_macro_f1: 0.34236408778651456
+    val:
+      macro_f1: 0.34236408778651456
+      bin_f1: 0.8120039395168299
+      rare_recall: 0.18525
+    grid:
+    - bins: 4
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.32213043340717973
+      bin_f1: 0.8531780583369613
+      rare_recall: 0.172125
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 4
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.3361799193656505
+      bin_f1: 0.868884959545625
+      rare_recall: 0.18824999999999997
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 4
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.33415264614377493
+      bin_f1: 0.815960443856724
+      rare_recall: 0.177875
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 8
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.3140546355175702
+      bin_f1: 0.8288859239492996
+      rare_recall: 0.19125000000000003
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 8
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.31638740942332366
+      bin_f1: 0.8168552036199094
+      rare_recall: 0.18925
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 8
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.314796823692304
+      bin_f1: 0.8569269793296993
+      rare_recall: 0.19
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 16
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.32478926072344066
+      bin_f1: 0.8277969554637542
+      rare_recall: 0.16762500000000002
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 16
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.31352123079637434
+      bin_f1: 0.8261240266014892
+      rare_recall: 0.149
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 16
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.3389743393721622
+      bin_f1: 0.8383240223463688
+      rare_recall: 0.17675
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 32
+      split: *id001
+      macro_f1: 0.34236408778651456
+      bin_f1: 0.8120039395168299
+      rare_recall: 0.18525
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 32
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.29974485646709526
+      bin_f1: 0.7929007992477668
+      rare_recall: 0.140125
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    - bins: 32
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.32800513668735704
+      bin_f1: 0.813529921942758
+      rare_recall: 0.169375
+      eps: 1.0000000000000009
+      eps_one_honest: 2.293612871782914
+    fitness: val macro-F1 of RF on syn_per_class rows per class; distributed noise,
+      seed 0
+    limitation: tuned on real non-private validation data, one seed
+  eps5:
+    epsilon: 5.0
+    best:
+      bins: 4
+      split: &id002
+      - 0.15
+      - 0.05
+      - 0.8
+    val_macro_f1: 0.4073047064617202
+    val:
+      macro_f1: 0.4073047064617202
+      bin_f1: 0.8931938257536517
+      rare_recall: 0.311375
+    grid:
+    - bins: 4
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.40695607593580513
+      bin_f1: 0.8992964617675756
+      rare_recall: 0.314
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 4
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.4037404306891336
+      bin_f1: 0.8851224105461393
+      rare_recall: 0.30324999999999996
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 4
+      split: *id002
+      macro_f1: 0.4073047064617202
+      bin_f1: 0.8931938257536517
+      rare_recall: 0.311375
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 8
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.3794635616828572
+      bin_f1: 0.8888429965408643
+      rare_recall: 0.289875
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 8
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.3764030215669396
+      bin_f1: 0.8985418265541059
+      rare_recall: 0.26937500000000003
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 8
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.3786428662619555
+      bin_f1: 0.8519722583441699
+      rare_recall: 0.285125
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 16
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.38757201570758454
+      bin_f1: 0.8808960403849189
+      rare_recall: 0.28
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 16
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.38167242573121046
+      bin_f1: 0.8847583643122676
+      rare_recall: 0.27
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 16
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.3757392833043542
+      bin_f1: 0.88537797541198
+      rare_recall: 0.262125
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 32
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.38702453022217154
+      bin_f1: 0.8578193951135507
+      rare_recall: 0.271125
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 32
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.3935132650256726
+      bin_f1: 0.8645990922844177
+      rare_recall: 0.27875000000000005
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    - bins: 32
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.38528545847606693
+      bin_f1: 0.8569100391134289
+      rare_recall: 0.264625
+      eps: 5.000000000000005
+      eps_one_honest: 12.423068623121905
+    fitness: val macro-F1 of RF on syn_per_class rows per class; distributed noise,
+      seed 0
+    limitation: tuned on real non-private validation data, one seed
+  eps10:
+    epsilon: 10.0
+    best:
+      bins: 8
+      split: &id003
+      - 0.15
+      - 0.05
+      - 0.8
+    val_macro_f1: 0.4101550716086659
+    val:
+      macro_f1: 0.4101550716086659
+      bin_f1: 0.882936507936508
+      rare_recall: 0.334125
+    grid:
+    - bins: 4
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.3930489797423071
+      bin_f1: 0.8999070343972729
+      rare_recall: 0.306875
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 4
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.3911342969955756
+      bin_f1: 0.8991333777754987
+      rare_recall: 0.308
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 4
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.3613568017565769
+      bin_f1: 0.8870393634840872
+      rare_recall: 0.252125
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 8
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.3925557883031941
+      bin_f1: 0.8965836116105831
+      rare_recall: 0.3105
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 8
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.3785248293589665
+      bin_f1: 0.8944412961722734
+      rare_recall: 0.29775
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 8
+      split: *id003
+      macro_f1: 0.4101550716086659
+      bin_f1: 0.882936507936508
+      rare_recall: 0.334125
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 16
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.38852537443971663
+      bin_f1: 0.8895843112710583
+      rare_recall: 0.2855
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 16
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.3876405977924186
+      bin_f1: 0.8854810007327542
+      rare_recall: 0.279625
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 16
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.3938388825201711
+      bin_f1: 0.8864741798613266
+      rare_recall: 0.307125
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 32
+      split:
+      - 0.3
+      - 0.1
+      - 0.6
+      macro_f1: 0.4044166288256486
+      bin_f1: 0.8922052935364776
+      rare_recall: 0.313125
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 32
+      split:
+      - 0.5
+      - 0.1
+      - 0.4
+      macro_f1: 0.39663758381094766
+      bin_f1: 0.8751784298176051
+      rare_recall: 0.30225
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    - bins: 32
+      split:
+      - 0.15
+      - 0.05
+      - 0.8
+      macro_f1: 0.40714225271747395
+      bin_f1: 0.8761329305135951
+      rare_recall: 0.303375
+      eps: 10.000000000000002
+      eps_one_honest: 26.645756237508138
+    fitness: val macro-F1 of RF on syn_per_class rows per class; distributed noise,
+      seed 0
+    limitation: tuned on real non-private validation data, one seed

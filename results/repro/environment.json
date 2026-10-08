@@ -22,7 +22,7 @@
     "pytest": "9.1.1",
     "psutil": "7.2.2"
   },
-  "git_commit": "f19839cf582da36787da003e534466c47451d471",
+  "git_commit": "1a0c6c86b1c891274eed3ba2bea00c12dae4c1f1",
   "git_dirty": true,
   "config_hash": "8c86c0b143d4",
   "label_mode": "6class",

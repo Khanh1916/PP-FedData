@@ -131,6 +131,10 @@ def test_readme_check_lists_what_is_missing():
     r = ac.check_readme({"README.md": en, "README.vi.md": vi.replace("## Hạn chế", "")}, {"a", "b"})
     assert r.status == "FAIL" and "README.vi.md: ## Hạn chế" in r.evidence
     assert ac.check_readme({"README.md": en, "README.vi.md": None}, {"a"}).status == "FAIL"                                  # one language missing is a FAIL
+    rec = "ran pytest: 346 passed. Phases 1-5 from the raw data in a clean copy: processed data identical to the main checkout."
+    r = ac.check_readme({"README.md": en, "README.vi.md": vi}, {"a", "b"}, rec)
+    assert r.status == "PASS" and "re-run from the raw data" in r.evidence                                                   # O5: the raw-data phases were re-run
+    assert ac.check_readme({"README.md": en, "README.vi.md": vi}, {"a", "b"}, "ran pytest: 3 passed").status == "PARTIAL"
     assert ac.check_readme({"README.md": "# x\n", "README.vi.md": "# x\n"}, set()).status == "FAIL" and ac.check_readme({}, set()).status == "FAIL"
 
 
@@ -150,5 +154,5 @@ def test_accept_on_the_repository(tmp_path, monkeypatch):
     assert path.exists() and len(items) == 12
     assert by["D1"].status == "PASS" and by["D2"].status == "PASS" and by["D4"].status == "PASS" and by["D9"].status == "PASS"
     assert by["D7"].status == "PARTIAL"                                                                  # not regenerated: the row says so
-    assert by["D10"].status in ("PARTIAL", "FAIL") and by["D6c"].status in ("PASS", "FAIL")
+    assert by["D10"].status in ("PASS", "PARTIAL", "FAIL") and by["D6c"].status in ("PASS", "FAIL")
     assert "Definition of Done" in path.read_text(encoding="utf-8")

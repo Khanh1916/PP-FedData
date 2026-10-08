@@ -1,22 +1,22 @@
 {
   "label_mode": "6class",
-  "git_commit": "f19839cf582da36787da003e534466c47451d471",
+  "git_commit": "1a0c6c86b1c891274eed3ba2bea00c12dae4c1f1",
   "files": {
     "results/runs.csv": {
-      "sha256": "0339e5ceebb348f0df428d806786ff4ef0fe24a37cf1e7e69e2ae9c4a94a00e7",
-      "bytes": 350891
+      "sha256": "6e00d577a72752b1cff5f13bd3ef045574c1aab489c6f38474d49571cf00072d",
+      "bytes": 1045102
     },
     "results/summary.csv": {
-      "sha256": "5da4298c1f80668bc8d9929d3f423734307bca4e9b922d60a7e9f3a0554d45e8",
-      "bytes": 128389
+      "sha256": "99c221e05e2fff61ffe04bbbf0559ed260061a1d0b1193004a365a6087245f65",
+      "bytes": 329827
     },
     "results/interpretation.json": {
-      "sha256": "02710e9689107ff4b56127f465c388765e45b7b211d8745d3b69d9c8014a7dc5",
-      "bytes": 280184
+      "sha256": "50476cc9695310149d7c42eaaeecfbc7c910acd3a089582af2dbaedc8e79f402",
+      "bytes": 391870
     },
     "results/reports/final_report.md": {
-      "sha256": "8757d870ee2fb8f3d80b56e382c8262cc559a61dad13c811d15b2e8992ed1152",
-      "bytes": 75819
+      "sha256": "799fb9dc8ff7be33b56a5b9e1627a6712e39356691dac378510011784543feed",
+      "bytes": 93914
     },
     "results/manifests/split_manifest_6class.json": {
       "sha256": "839a130273df0a2cb94a0ae760786be10ac77efa22153b2fdfea1b7604857a4d",
@@ -35,7 +35,7 @@
       "bytes": 3485
     },
     "results/repro/environment.json": {
-      "sha256": "c0b9950c4eacd175cac8ab824f2e07df17548ee2293a1006e7a206e29d3ed08b",
+      "sha256": "bbc32877502ace3eac7bea47bdc5f2f1c32e4a8f830de1a96a83f73db0a65cd9",
       "bytes": 806
     },
     "results/repro/configs/best_cvae.yaml": {
@@ -45,6 +45,22 @@
     "results/repro/configs/best_cvae_dp.yaml": {
       "sha256": "a64fda00642d6246f0f01f92fa407711c6c6a5923aeb4c8d2f1ad8e8a3e3c95b",
       "bytes": 1613
+    },
+    "results/repro/configs/best_cvae_dp_full.yaml": {
+      "sha256": "29598124fee345c76b5fea0b832571e4fb9ab20c3c211ed37f8678ac41d4cb30",
+      "bytes": 2971
+    },
+    "results/repro/configs/best_marginal.yaml": {
+      "sha256": "955889b6488c8384f7a3af072211defd00638597ffae699b0599d9b5a8f2debf",
+      "bytes": 9938
+    },
+    "results/repro/configs/best_marginal_bn.yaml": {
+      "sha256": "3c8c507a9fe8e6b726c4f8ce75701c8492c07a80dbcb06acf15f4762959ee70e",
+      "bytes": 13955
+    },
+    "results/repro/configs/best_marginal_refine.yaml": {
+      "sha256": "70e950f3c747557734ec8d1ab27088b0b222010d7eb8b251c6a0ea031baf5a7d",
+      "bytes": 11659
     },
     "results/repro/configs/default.yaml": {
       "sha256": "18215730d5d7120eb2fa8c6eeea36cbe885e8607efb091c24c44383b31b50647",
