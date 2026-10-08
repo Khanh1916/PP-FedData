@@ -61,6 +61,37 @@ def test_distributed_and_local_noise_accounting():
     assert d.info["sigmas"] == loc.info["sigmas"]               # same total per client; distributed splits it
 
 
+def test_skellam_rdp_tends_to_the_gaussian_and_calibrates_the_target():
+    a, m = 8, 37
+    for mu in (1e3, 1e5):
+        g = a * m / (2 * mu)
+        assert g <= mg.skellam_rdp(a, m, mu) <= g * (1 + 10 / mu ** 0.5)
+    sizes, split = [37, 666, 37], (0.3, 0.1, 0.6)
+    for eps in (1.0, 5.0):
+        mus = mg.skellam_mus(eps, 1e-5, sizes, split)
+        assert mg.skellam_eps(list(zip(sizes, mus)), 1e-5) == pytest.approx(eps, rel=1e-4)
+        assert mg.skellam_eps(list(zip(sizes, [m * 0.9 for m in mus])), 1e-5) > eps          # less noise -> above the budget
+
+
+def test_skellam_shares_sum_to_the_full_variance_and_stay_integers():
+    rng = np.random.default_rng(0)
+    tot = sum(mg.client_noise((200000,), 50.0, 0.2, rng, "skellam") for _ in range(5))
+    assert np.all(tot == np.round(tot)) and tot.var() == pytest.approx(50.0, rel=0.02) and abs(tot.mean()) < 0.1
+
+
+def test_skellam_fit_releases_integers_and_reports_epsilon_by_honest_clients():
+    s = _schema()
+    X, y = synthetic_data(1500)
+    parts = [np.arange(0, 500), np.arange(500, 1000), np.arange(1000, 1500)]
+    m = mg.fit(X, y, parts, s, eps=5.0, delta=1e-5, mechanism="skellam")
+    assert m.info["mechanism"] == "skellam" and m.info["eps"] == pytest.approx(5.0, rel=1e-4)
+    assert all(np.array_equal(t, np.round(t)) for t in m.fine + m.edge_tables)
+    curve = mg.eps_honest_curve(m.info["scales"], len(m.attrs), 1e-5, 3, "skellam")
+    assert curve[3] == pytest.approx(5.0, rel=1e-4) and curve[1] > curve[2] > curve[3]
+    Xs, ys = mg.sample(m, s, [100, 100, 100], 0)
+    assert Xs.shape == (300, 12)
+
+
 def test_mg_rows_in_the_scorecard():
     from ppfeddata import aggregate as ag
     from ppfeddata import scorecard as sc
@@ -71,3 +102,14 @@ def test_mg_rows_in_the_scorecard():
     by = {r["label"]: r for r in sc.build(s, rare=RARE)["rows"]}
     assert by["MGd-eps5"]["secagg"] and by["MGd-eps5"]["dp_mode"] == "distributed" and by["MGd-eps5"]["valid"]
     assert not by["MGl-eps5"]["secagg"] and by["MGl-eps5"]["dp_mode"] == "local"
+    assert ag.parse_config("MGs-eps1-TAug-mlp")["family"] == "o3 marginal distributed skellam secagg+"
+    s2 = pd.concat([s, pd.DataFrame(_gen("MGs-eps5", 0.40, 0.40, eps=5.0))], ignore_index=True)
+    r = {x["label"]: x for x in sc.build(s2, rare=RARE)["rows"]}["MGs-eps5"]
+    assert r["secagg"] and r["dp_mode"] == "distributed" and r["valid"]
+
+
+def test_flower_encoding_keeps_integers_exact():
+    from ppfeddata.fl import mg_app
+    p = mg_app.secagg_params({"fl": {"num_clients": 5}, "secagg": {}})["params"]
+    assert p["quantization_range"] == 2 * p["clipping_range"]          # quantisation step 1: integers are not rounded
+    assert 5 * p["quantization_range"] < p["modulus_range"] == 2 ** 32

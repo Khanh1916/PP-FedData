@@ -56,6 +56,47 @@ def sigma_for(rho: float, n_tables: int) -> float:
     return float(math.sqrt(n_tables / (2.0 * rho)))
 
 
+# Skellam (optimisation O2): integer noise Sk = Poisson(mu/2) - Poisson(mu/2), variance mu per cell. A sum of independent Skellams is a
+# Skellam, so K clients adding variance mu/K each give exactly Sk with variance mu, and integer counts plus integer noise go through the
+# modular arithmetic of secure aggregation without rounding. RDP (Agarwal, Kairouz, Liu, NeurIPS 2021, Corollary 3.6), integer alpha > 1:
+#   eps(alpha) <= alpha D2^2 / (2 mu) + min(((2 alpha - 1) D2^2 + 6 D1) / (4 mu^2), 3 D1 / (2 mu))
+# with D1, D2 the L1, L2 sensitivities (a release of m tables: D1 = m, D2 = sqrt(m)). Composition adds RDP; conversion to (eps, delta) as in
+# Opacus' RDP accountant (Balle et al. 2020).
+SK_ALPHAS = list(range(2, 64)) + list(range(64, 1025, 8))
+
+
+def skellam_rdp(alpha: int, m: int, mu: float) -> float:
+    d1, d2sq = float(m), float(m)
+    return alpha * d2sq / (2 * mu) + min(((2 * alpha - 1) * d2sq + 6 * d1) / (4 * mu ** 2), 3 * d1 / (2 * mu))
+
+
+def rdp_to_eps(rdp: Sequence[float], alphas: Sequence[int], delta: float) -> float:
+    return float(min(r - (math.log(delta) + math.log(a)) / (a - 1) + math.log((a - 1) / a) for r, a in zip(rdp, alphas)))
+
+
+def skellam_eps(releases: Sequence[tuple[int, float]], delta: float) -> float:
+    """(eps, delta) of the composition of Skellam releases [(number of tables m, variance mu), ...]."""
+    return rdp_to_eps([sum(skellam_rdp(a, m, mu) for m, mu in releases) for a in SK_ALPHAS], SK_ALPHAS, delta)
+
+
+def skellam_mus(eps: float, delta: float, sizes: Sequence[int], split: Sequence[float]) -> list[float]:
+    """Variance per cell of every release: mu_r = m_r / (2 t s_r) (the Gaussian split of rho), with the largest t (least noise) whose
+    composed Skellam epsilon is <= eps."""
+    mus = lambda t: [m / (2.0 * t * s) for m, s in zip(sizes, split)]          # noqa: E731
+    lo, hi = 1e-8, rho_from_eps(eps, delta)
+    while skellam_eps(list(zip(sizes, mus(hi))), delta) <= eps:
+        lo, hi = hi, hi * 2
+    for _ in range(60):
+        mid = (lo + hi) / 2
+        if skellam_eps(list(zip(sizes, mus(mid))), delta) <= eps:
+            lo = mid
+        else:
+            hi = mid
+        if hi - lo < 1e-6 * hi:
+            break
+    return mus(lo)
+
+
 # --------------------------------------------------------------------------------------------------
 # Attributes
 # --------------------------------------------------------------------------------------------------
@@ -118,13 +159,22 @@ def coarse_maps(fine_hist: list[np.ndarray], attrs: Sequence[Attr], bins: int) -
 # --------------------------------------------------------------------------------------------------
 # Releases (federated sums with Gaussian noise)
 # --------------------------------------------------------------------------------------------------
-def _noisy_sum(tables_per_client: list[list[np.ndarray]], sigma: float, noise_share: float, rng: np.random.Generator) -> list[np.ndarray]:
-    """Sum over clients of their tables, each client adding N(0, sigma^2 * noise_share) per cell (what SecAgg returns)."""
-    sd = sigma * math.sqrt(noise_share)
+def client_noise(shape: tuple[int, ...], scale: float, noise_share: float, rng: np.random.Generator, mechanism: str = "gaussian") -> np.ndarray:
+    """One client's noise for one table: Gaussian with std `scale` x sqrt(share), or Skellam with variance `scale` x share (integers)."""
+    if mechanism == "gaussian":
+        return rng.normal(0.0, scale * math.sqrt(noise_share), size=shape)
+    lam = scale * noise_share / 2.0
+    return (rng.poisson(lam, size=shape) - rng.poisson(lam, size=shape)).astype(np.float64)
+
+
+def _noisy_sum(tables_per_client: list[list[np.ndarray]], sigma: float, noise_share: float, rng: np.random.Generator,
+               mechanism: str = "gaussian") -> list[np.ndarray]:
+    """Sum over clients of their tables, each client adding its share of the noise per cell (what SecAgg returns). `sigma` is the std
+    (Gaussian) or the variance mu (Skellam) of the summed noise."""
     out = [np.zeros_like(t, dtype=np.float64) for t in tables_per_client[0]]
     for tabs in tables_per_client:
         for o, t in zip(out, tabs):
-            o += t + rng.normal(0.0, sd, size=t.shape)
+            o += t + client_noise(t.shape, sigma, noise_share, rng, mechanism)
     return out
 
 
@@ -170,45 +220,91 @@ class MarginalModel:
     info: dict[str, Any] = field(default_factory=dict)
 
 
+# ---- stages shared by the in-process simulation (`fit`) and the Flower app (`fl/mg_app.py`)
+STAGES = ("fine", "pairs", "edges")
+
+
+def pair_list(A: int) -> list[tuple[int, int]]:
+    return [(i, j) for i in range(A) for j in range(i + 1, A)]
+
+
+def stage_sizes(A: int) -> dict[str, int]:
+    """Number of tables of each release (= L1 sensitivity, and the squared L2 sensitivity)."""
+    return {"fine": A, "pairs": len(pair_list(A)), "edges": A}            # edges: the root table + A - 1 tree edges
+
+
+def noise_scales(eps: float, delta: float, A: int, split: Sequence[float], mechanism: str = "gaussian") -> dict[str, float]:
+    """Per release: the std (Gaussian) or variance (Skellam) of the summed noise per cell, for the target (eps, delta)."""
+    sizes = stage_sizes(A)
+    if mechanism == "gaussian":
+        rho = rho_from_eps(eps, delta)
+        return {s: sigma_for(rho * f, sizes[s]) for s, f in zip(STAGES, split)}
+    return dict(zip(STAGES, skellam_mus(eps, delta, [sizes[s] for s in STAGES], split)))
+
+
+def privacy_info(scales: dict[str, float], A: int, delta: float, share: float, mechanism: str) -> dict[str, float]:
+    """eps of the summed release, and with a single honest client (its share of the noise only)."""
+    sizes = stage_sizes(A)
+    if mechanism == "gaussian":
+        rho = sum(sizes[s] / (2 * scales[s] ** 2) for s in STAGES)
+        return {"rho": rho, "eps": eps_from_rho(rho, delta), "eps_one_honest": eps_from_rho(rho / share, delta) if share < 1 else eps_from_rho(rho, delta)}
+    e = skellam_eps([(sizes[s], scales[s]) for s in STAGES], delta)
+    e1 = skellam_eps([(sizes[s], scales[s] * share) for s in STAGES], delta) if share < 1 else e
+    return {"eps": e, "eps_one_honest": e1}
+
+
+def eps_honest_curve(scales: dict[str, float], A: int, delta: float, K: int, mechanism: str) -> dict[int, float]:
+    """eps when only h of the K clients add their share of the noise (the others collude and remove theirs)."""
+    return {h: privacy_info(scales, A, delta, h / K, mechanism)["eps_one_honest"] for h in range(1, K + 1)}
+
+
+def client_tables(stage: str, F: np.ndarray, y: np.ndarray, attrs: Sequence[Attr], k: int, maps: Sequence[np.ndarray] | None = None,
+                  edges: Sequence[tuple[int, int]] | None = None) -> list[np.ndarray]:
+    """One client's count tables of a release (no noise)."""
+    A = len(attrs)
+    if stage == "fine":
+        return [_count((y, F[:, j]), (k, a.n_fine)) for j, a in enumerate(attrs)]
+    nc = [int(m.max()) + 1 for m in maps]
+    C = np.stack([maps[j][F[:, j]] for j in range(A)], 1)
+    if stage == "pairs":
+        return [_count((C[:, i], C[:, j]), (nc[i], nc[j])) for i, j in pair_list(A)]
+    return [_count((C[:, 0], y), (nc[0], k))] + [_count((C[:, a], C[:, b], y), (nc[a], nc[b], k)) for a, b in edges]
+
+
+def tree_from_pairs(pt: Sequence[np.ndarray], A: int) -> list[tuple[int, int]]:
+    W = np.zeros((A, A))
+    for (i, j), t in zip(pair_list(A), pt):
+        W[i, j] = W[j, i] = mutual_information(t)
+    return max_spanning_tree(W)
+
+
 def fit(X: np.ndarray, y: np.ndarray, parts: Sequence[np.ndarray], schema: dict[str, Any], eps: float, delta: float, bins: int = 8,
-        split: Sequence[float] = SPLIT, noise_share: float | None = None, seed: int = 0) -> MarginalModel:
-    """The three federated releases. `noise_share` None -> 1 / number of clients (distributed); 1.0 -> local DP."""
+        split: Sequence[float] = SPLIT, noise_share: float | None = None, seed: int = 0, mechanism: str = "gaussian") -> MarginalModel:
+    """The three federated releases, simulated in-process (SecAgg returns the exact sum). `noise_share` None -> 1 / number of clients
+    (distributed); 1.0 -> local DP. `mechanism`: "gaussian" (O3.1) or "skellam" (O2: integer noise, exact under SecAgg)."""
     K = len(parts)
     share = 1.0 / K if noise_share is None else float(noise_share)
     attrs, k, clip = attributes(schema), len(schema["label_map"]), float(schema["settings"]["clip_sigma"])
     A = len(attrs)
-    rho = rho_from_eps(eps, delta)
-    rho_f, rho_p, rho_e = (rho * s for s in split)
+    sc = noise_scales(eps, delta, A, split, mechanism)
     rng = np.random.default_rng([int(seed), 4241])
     Fc = [discretise_fine(X[p], attrs, clip) for p in parts]
     yc = [np.asarray(y[p], dtype=np.int64) for p in parts]
-
-    # 1. per-class fine 1-way histograms
-    s_f = sigma_for(rho_f, A)
-    fine = _noisy_sum([[_count((yy, F[:, j]), (k, a.n_fine)) for j, a in enumerate(attrs)] for F, yy in zip(Fc, yc)], s_f, share, rng)
+    fine = _noisy_sum([client_tables("fine", F, yy, attrs, k) for F, yy in zip(Fc, yc)], sc["fine"], share, rng, mechanism)
     maps = coarse_maps(fine, attrs, bins)
-    nc = [int(m.max()) + 1 for m in maps]
-    Cc = [np.stack([maps[j][F[:, j]] for j in range(A)], 1) for F in Fc]
+    pt = _noisy_sum([client_tables("pairs", F, yy, attrs, k, maps) for F, yy in zip(Fc, yc)], sc["pairs"], share, rng, mechanism)
+    edges = tree_from_pairs(pt, A)
+    tabs = _noisy_sum([client_tables("edges", F, yy, attrs, k, maps, edges) for F, yy in zip(Fc, yc)], sc["edges"], share, rng, mechanism)
+    return assemble(attrs, k, clip, fine, maps, edges, tabs, sc, eps, delta, share, mechanism, bins, split, K,
+                    n_cells=int(sum(t.size for t in fine) + sum(t.size for t in pt) + sum(t.size for t in tabs)))
 
-    # 2. pairs on coarse values -> Chow-Liu tree
-    pairs = [(i, j) for i in range(A) for j in range(i + 1, A)]
-    s_p = sigma_for(rho_p, len(pairs))
-    pt = _noisy_sum([[_count((C[:, i], C[:, j]), (nc[i], nc[j])) for i, j in pairs] for C in Cc], s_p, share, rng)
-    W = np.zeros((A, A))
-    for (i, j), t in zip(pairs, pt):
-        W[i, j] = W[j, i] = mutual_information(t)
-    edges = max_spanning_tree(W)
 
-    # 3. root and edge tables with the class
-    s_e = sigma_for(rho_e, 1 + len(edges))
-    tabs = _noisy_sum([[_count((C[:, 0], yy), (nc[0], k))] + [_count((C[:, a], C[:, b], yy), (nc[a], nc[b], k)) for a, b in edges]
-                       for C, yy in zip(Cc, yc)], s_e, share, rng)
-    rho_used = sum(r for r in (rho_f, rho_p, rho_e))
-    info = {"eps_target": float(eps), "delta": float(delta), "rho": rho_used, "eps": eps_from_rho(rho_used, delta), "noise_share": share,
-            "eps_one_honest": eps_from_rho(rho_used / share, delta) if share < 1.0 else eps_from_rho(rho_used, delta),
-            "sigmas": {"fine": s_f, "pairs": s_p, "edges": s_e}, "bins": int(bins), "split": list(split), "n_cells": int(
-                sum(t.size for t in fine) + sum(t.size for t in pt) + sum(t.size for t in tabs)), "tree": edges, "num_clients": K}
-    return MarginalModel(attrs, k, clip, fine, maps, edges, tabs[0], tabs[1:], info)
+def assemble(attrs, k, clip, fine, maps, edges, tabs, scales, eps, delta, share, mechanism, bins, split, K, n_cells) -> MarginalModel:
+    info = {"eps_target": float(eps), "delta": float(delta), "noise_share": share, "mechanism": mechanism, **privacy_info(scales, len(attrs), delta, share, mechanism),
+            "scales": dict(scales), "bins": int(bins), "split": list(split), "n_cells": int(n_cells), "tree": [list(e) for e in edges], "num_clients": K}
+    if mechanism == "gaussian":
+        info["sigmas"] = dict(scales)
+    return MarginalModel(list(attrs), k, clip, list(fine), list(maps), [tuple(e) for e in edges], tabs[0], list(tabs[1:]), info)
 
 
 # --------------------------------------------------------------------------------------------------

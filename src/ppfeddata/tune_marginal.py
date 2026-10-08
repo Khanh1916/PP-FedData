@@ -4,7 +4,9 @@ The generator (`models/marginal.py`) is cheap (seconds per fit), so a small grid
 privacy budget, at each epsilon, with the distributed noise (seed 0, the same partition as the FL runs). Fitness as in O1/O2: validation
 macro-F1 of a RF on `tune.syn_per_class` rows per class. The chosen setting of an epsilon is then trained with every seed in two
 variants: `MGd` (noise split over the clients, the sum via secure aggregation; epsilon also for a single honest client) and `MGl` (every
-client adds its full noise: local DP, no trust in the other clients). Limitation (as before): chosen on non-private validation data.
+client adds its full noise: local DP, no trust in the other clients), and `MGs` (O2: the distributed variant with Skellam noise, run through
+Flower's real SecAgg+, `fl/mg_app.py`; bytes measured, the secure sum checked against the exact one). Limitation (as before): chosen on
+non-private validation data; the settings of `MGs` are those chosen for the Gaussian noise.
 """
 from __future__ import annotations
 
@@ -63,10 +65,11 @@ def final_name(variant: str, eps: float) -> str:
     return f"MG{variant}-eps{eps:g}"
 
 
-def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: list[int] | None = None, variants: tuple[str, ...] = ("d", "l"),
+def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: list[int] | None = None, variants: tuple[str, ...] = ("d", "l", "s"),
               resume: bool = True) -> list[str]:
     from ppfeddata.eval.overhead import Timer
     from ppfeddata.eval.runs import RunLedger, runs_csv_path
+    from ppfeddata.fl import mg_app
     from ppfeddata.fl.dpfedsgd import bytes_per_param_m2
     from ppfeddata.fl.m1 import _all_done
     from ppfeddata.models.b2 import evaluate_generator
@@ -87,17 +90,29 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
                 if resume and _all_done(ledger, [name], seed, mode):
                     logger.info("skip %s seed %d", name, seed)
                     continue
+                fl = None
                 with Timer() as t:
-                    m = mg.fit(X, y, _parts(cfg, y, schema, seed), schema, eps, delta, bins=int(s["bins"]), split=s["split"],
-                               noise_share=None if v == "d" else 1.0, seed=seed)
+                    if v == "s":                      # O2: Skellam noise, the releases through Flower's real SecAgg+ (fl/mg_app.py)
+                        fl = mg_app.run(cfg, seed, name, eps, int(s["bins"]), s["split"], "skellam", resume=resume)
+                        m = fl["model"]
+                    else:
+                        m = mg.fit(X, y, _parts(cfg, y, schema, seed), schema, eps, delta, bins=int(s["bins"]), split=s["split"],
+                                   noise_share=None if v == "d" else 1.0, seed=seed)
                 i = m.info
                 cells = int(i["n_cells"])
-                extra = {"alpha": float(cfg["fl"]["dirichlet_alpha"]), "num_clients": K, "rounds": 3, "local_epochs": 0, "fl_total_s": t.seconds,
-                         "cvae_train_s": t.seconds, "bytes_per_round": (bpp * cells / 3) if not math.isnan(bpp) else None, "bytes_estimated": True,
-                         "dp_mode": "distributed" if v == "d" else "local", "dp_target_eps": eps, "dp_eps_max": i["eps"], "dp_eps_median": i["eps"],
+                if fl is not None:
+                    cost = {"bytes_per_round": fl["bytes_total"] / 3, "sa_bytes_per_round": fl["bytes_total"] / 3, "bytes_estimated": False,
+                            "fl_total_s": fl["seconds"], "cvae_train_s": fl["seconds"], "sa_max_abs_diff": fl["max_abs_diff"], "dp_mechanism": "skellam",
+                            **{f"dp_eps_honest_{h}": e for h, e in i["eps_by_honest_clients"].items()}}
+                else:
+                    cost = {"bytes_per_round": (bpp * cells / 3) if not math.isnan(bpp) else None, "bytes_estimated": True, "fl_total_s": t.seconds,
+                            "cvae_train_s": t.seconds, "dp_mechanism": "gaussian"}
+                extra = {"alpha": float(cfg["fl"]["dirichlet_alpha"]), "num_clients": K, "rounds": 3, "local_epochs": 0, **cost,
+                         "dp_mode": "local" if v == "l" else "distributed", "dp_target_eps": eps, "dp_eps_max": i["eps"], "dp_eps_median": i["eps"],
                          "dp_eps_one_honest": i["eps_one_honest"], "dp_delta": delta, "dp_ratio_to_target": i["eps"] / eps, "mg_bins": int(s["bins"]),
-                         "mg_split": str(s["split"]), "mg_cells": cells, "mg_rho": i["rho"]}
-                logger.info("%s seed %d: eps %.3f (one honest %.1f), %d cells, %.1fs", name, seed, i["eps"], i["eps_one_honest"], cells, t.seconds)
+                         "mg_split": str(s["split"]), "mg_cells": cells, "mg_rho": i.get("rho")}
+                logger.info("%s seed %d: eps %.3f (one honest %.1f), %d cells, %.1fs%s", name, seed, i["eps"], i["eps_one_honest"], cells, t.seconds,
+                            f", {fl['bytes_total'] / 1e6:.2f} MB through SecAgg+, max |secure - exact| {fl['max_abs_diff']:g}" if fl else "")
                 evaluate_generator(cfg, None, name, seed, data, schema, ledger, extra, use_stats=False,
                                    sample_fn=lambda counts, sd, m=m: mg.sample(m, schema, counts, sd))
     return names

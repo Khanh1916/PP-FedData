@@ -103,10 +103,10 @@ def optimised_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
     out = []
     for p in prefixes:
         base = p[:-len("-plain")] if p.endswith("-plain") else p
-        g = re.match(r"MG(?P<kind>[dl])-eps(?P<eps>[0-9.]+)$", base)
+        g = re.match(r"MG(?P<kind>[dls])-eps(?P<eps>[0-9.]+)$", base)
         if g:                                                    # O3: marginal generator, distributed (SecAgg) or local DP
-            out.append(dict(label=base, eps=float(g["eps"]), cfgs=gen(p), optimised=True, plain=False, method="MG", secagg=g["kind"] == "d",
-                            dp_mode="distributed" if g["kind"] == "d" else "local"))
+            out.append(dict(label=base, eps=float(g["eps"]), cfgs=gen(p), optimised=True, plain=False, method="MG", secagg=g["kind"] != "l",
+                            dp_mode="local" if g["kind"] == "l" else "distributed"))
             continue
         if re.match(r"M2-c(16|32)$", base):                     # O2 bandwidth: M2 with the compact SecAgg+ encoding (no DP)
             out.append(dict(label=base, eps=None, cfgs=gen(p), optimised=True, plain=False, method="M2"))

@@ -6866,14 +6866,14 @@
       "value": 0.00076667
      },
      {
-      "config": "MGd-eps1-TSTR-rf",
-      "seed": 0,
-      "value": 0.00053333
+      "config": "MGs-eps1-TSTR-rf",
+      "seed": 1,
+      "value": 0.00073333
      },
      {
-      "config": "MGd-eps1-TSTR-rf",
+      "config": "MGs-eps1-TSTR-rf",
       "seed": 2,
-      "value": 0.0004
+      "value": 0.00063333
      }
     ],
     "min_dcr_ratio": [
@@ -6888,14 +6888,14 @@
       "value": 0.87506629
      },
      {
-      "config": "MGd-eps10-TSTR-rf",
-      "seed": 1,
-      "value": 0.88261256
+      "config": "MGs-eps10-TSTR-rf",
+      "seed": 2,
+      "value": 0.87689834
      }
     ],
     "dup_rate_max": 0.01,
     "dcr_ratio_min": 0.5,
-    "n_generators_checked": 116
+    "n_generators_checked": 125
    },
    "notes": []
   },
@@ -7002,7 +7002,7 @@
     "n_above_redflag": 7,
     "n_above_redflag_in_matrix": 0,
     "n_above_seed_std_max": 42,
-    "n_configurations": 157,
+    "n_configurations": 169,
     "n_in_matrix": 49,
     "max_std_in_matrix": 0.03696463,
     "redflag": 0.05,
@@ -7051,7 +7051,7 @@
     ]
    },
    "notes": [
-    "42 of 157 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
+    "42 of 169 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
    ]
   },
   {
@@ -7441,7 +7441,17 @@
      -0.0,
      0.00691275
     ],
-    "missing_specs": []
+    "missing_specs": [
+     "MGs-eps1_0",
+     "MGs-eps1_1",
+     "MGs-eps1_2",
+     "MGs-eps5_0",
+     "MGs-eps5_1",
+     "MGs-eps5_2",
+     "MGs-eps10_0",
+     "MGs-eps10_1",
+     "MGs-eps10_2"
+    ]
    },
    "notes": [
     "11 runs have fewer counted DP steps than rounds x epochs x ceil(n/B) for one client: Opacus' Poisson loader has int(1 / sample_rate) batches per epoch and 1 / (1 / 99) = 98.99999999999999 truncates to 98. The report uses the counted steps (and the true sampling rate), so epsilon is right; only the noise calibration was one step per epoch more conservative than needed for that client."

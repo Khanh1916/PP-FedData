@@ -74,8 +74,9 @@ def parse_config(name: str) -> dict[str, Any]:
     elif base.startswith("M3f-t"):                              # optimisation O2(a): M3-distributed, DP-FedSGD with the noise split over SecAgg
         trial = int(re.match(r"M3f-t(\d+)", base)[1])
         out.update(method="M3", family=f"o2 fedsgd t{trial}", fl_run=base)
-    elif base.startswith(("MGd-", "MGl-")):                     # optimisation O3: federated DP marginals + Chow-Liu tree (models/marginal.py)
-        out.update(method="MG", family=f"o3 marginal {'distributed' if base[2] == 'd' else 'local'}", fl_run=None)
+    elif base.startswith(("MGd-", "MGl-", "MGs-")):              # FedDP-Marginal (models/marginal.py): O3 Gaussian, O2 Skellam via Flower SecAgg+
+        kind = {"d": "distributed", "l": "local", "s": "distributed skellam secagg+"}[base[2]]
+        out.update(method="MG", family=f"o3 marginal {kind}", fl_run=base if base[2] == "s" else None)
     elif base.startswith(("M1-", "M3-")):
         out.update(method=base[:2], family="phase7 hyper-parameters", fl_run=base)
     elif _ALPHA.match(base):

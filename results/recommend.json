@@ -14,18 +14,18 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGd-eps10",
+   "label": "MGs-eps10",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
-   "eps_eff": 10.000000000000002,
-   "tstr_f1": 0.4272168683487048,
-   "tstr_f1_std": 0.0083379009722475,
-   "bin_f1": 0.8973908529583006,
-   "rare_recall": 0.31174999999999997,
-   "mb_round": 0.3061975517916461,
+   "eps_eff": 9.99999458023253,
+   "tstr_f1": 0.4285058147054687,
+   "tstr_f1_std": 0.0077193655804001,
+   "bin_f1": 0.9058194443750892,
+   "rare_recall": 0.3306166666666666,
+   "mb_round": 0.15758511111111112,
    "rounds": 3.0,
-   "mb_total": 0.9185926553749384
+   "mb_total": 0.47275533333333336
   },
   "ties_with_best": [
    "B3"
@@ -33,18 +33,18 @@
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
   "front": [
    {
-    "label": "MGd-eps10",
+    "label": "MGs-eps10",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 10.000000000000002,
-    "tstr_f1": 0.4272168683487048,
-    "tstr_f1_std": 0.0083379009722475,
-    "bin_f1": 0.8973908529583006,
-    "rare_recall": 0.31174999999999997,
-    "mb_round": 0.3061975517916461,
+    "eps_eff": 9.99999458023253,
+    "tstr_f1": 0.4285058147054687,
+    "tstr_f1_std": 0.0077193655804001,
+    "bin_f1": 0.9058194443750892,
+    "rare_recall": 0.3306166666666666,
+    "mb_round": 0.15758511111111112,
     "rounds": 3.0,
-    "mb_total": 0.9185926553749384
+    "mb_total": 0.47275533333333336
    },
    {
     "label": "B3",
@@ -89,28 +89,45 @@
     "mb_total": 191.99508
    },
    {
-    "label": "MGd-eps1",
+    "label": "MGs-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 1.0000000000000009,
-    "tstr_f1": 0.3493302396316121,
-    "tstr_f1_std": 0.0257512318144205,
-    "bin_f1": 0.8210715419467361,
-    "rare_recall": 0.18675,
-    "mb_round": 0.43978175738783,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.4083561734297294,
+    "tstr_f1_std": 0.0025025915386084,
+    "bin_f1": 0.9014290391662256,
+    "rare_recall": 0.29296666666666665,
+    "mb_round": 0.14937377777777777,
     "rounds": 3.0,
-    "mb_total": 1.31934527216349
+    "mb_total": 0.44812133333333337
+   },
+   {
+    "label": "MGs-eps1",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 0.9999998342281304,
+    "tstr_f1": 0.3421473519639738,
+    "tstr_f1_std": 0.0080070146790652,
+    "bin_f1": 0.824683212008862,
+    "rare_recall": 0.18853333333333333,
+    "mb_round": 0.20143677777777771,
+    "rounds": 3.0,
+    "mb_total": 0.6043103333333332
    }
   ],
   "meets": [
+   "MGs-eps10",
    "MGd-eps10",
    "B3",
    "MGd-eps5",
    "M2",
    "MGl-eps10",
+   "MGs-eps5",
    "MGl-eps5",
    "MGd-eps1",
+   "MGs-eps1",
    "M1o-eps10",
    "M1o-eps5 (plain)",
    "M3o-eps5 (plain)",
@@ -159,7 +176,9 @@
    "rounds": 3.0,
    "mb_total": 0.8282005190784738
   },
-  "ties_with_best": [],
+  "ties_with_best": [
+   "MGs-eps5"
+  ],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 5",
   "front": [
    {
@@ -177,24 +196,40 @@
     "mb_total": 0.8282005190784738
    },
    {
-    "label": "MGd-eps1",
+    "label": "MGs-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 1.0000000000000009,
-    "tstr_f1": 0.3493302396316121,
-    "tstr_f1_std": 0.0257512318144205,
-    "bin_f1": 0.8210715419467361,
-    "rare_recall": 0.18675,
-    "mb_round": 0.43978175738783,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.4083561734297294,
+    "tstr_f1_std": 0.0025025915386084,
+    "bin_f1": 0.9014290391662256,
+    "rare_recall": 0.29296666666666665,
+    "mb_round": 0.14937377777777777,
     "rounds": 3.0,
-    "mb_total": 1.31934527216349
+    "mb_total": 0.44812133333333337
+   },
+   {
+    "label": "MGs-eps1",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 0.9999998342281304,
+    "tstr_f1": 0.3421473519639738,
+    "tstr_f1_std": 0.0080070146790652,
+    "bin_f1": 0.824683212008862,
+    "rare_recall": 0.18853333333333333,
+    "mb_round": 0.20143677777777771,
+    "rounds": 3.0,
+    "mb_total": 0.6043103333333332
    }
   ],
   "meets": [
    "MGd-eps5",
+   "MGs-eps5",
    "MGl-eps5",
    "MGd-eps1",
+   "MGs-eps1",
    "M1o-eps5 (plain)",
    "M3o-eps5 (plain)",
    "M1o-eps5",
@@ -235,6 +270,9 @@
     "epsilon 10 > 5"
    ],
    "MGl-eps10": [
+    "epsilon 10 > 5"
+   ],
+   "MGs-eps10": [
     "epsilon 10 > 5"
    ]
   }
@@ -313,6 +351,20 @@
     "mb_total": 1.31934527216349
    },
    {
+    "label": "MGs-eps1",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 2.426914426490092,
+    "tstr_f1": 0.3421473519639738,
+    "tstr_f1_std": 0.0080070146790652,
+    "bin_f1": 0.824683212008862,
+    "rare_recall": 0.18853333333333333,
+    "mb_round": 0.20143677777777771,
+    "rounds": 3.0,
+    "mb_total": 0.6043103333333332
+   },
+   {
     "label": "M3o-eps5 (plain)",
     "method": "M3",
     "dp_mode": "local",
@@ -387,6 +439,7 @@
    "MGl-eps10",
    "MGl-eps5",
    "MGd-eps1",
+   "MGs-eps1",
    "M1o-eps10",
    "M1o-eps5 (plain)",
    "M3o-eps5 (plain)",
@@ -418,6 +471,12 @@
    ],
    "MGd-eps5": [
     "epsilon 12.4 > 10"
+   ],
+   "MGs-eps10": [
+    "epsilon 36 > 10"
+   ],
+   "MGs-eps5": [
+    "epsilon 14.2 > 10"
    ]
   }
  },
@@ -436,39 +495,40 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGd-eps1",
+   "label": "MGs-eps1",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
-   "eps_eff": 1.0000000000000009,
-   "tstr_f1": 0.3493302396316121,
-   "tstr_f1_std": 0.0257512318144205,
-   "bin_f1": 0.8210715419467361,
-   "rare_recall": 0.18675,
-   "mb_round": 0.43978175738783,
+   "eps_eff": 0.9999998342281304,
+   "tstr_f1": 0.3421473519639738,
+   "tstr_f1_std": 0.0080070146790652,
+   "bin_f1": 0.824683212008862,
+   "rare_recall": 0.18853333333333333,
+   "mb_round": 0.20143677777777771,
    "rounds": 3.0,
-   "mb_total": 1.31934527216349
+   "mb_total": 0.6043103333333332
   },
   "ties_with_best": [],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 1",
   "front": [
    {
-    "label": "MGd-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 1.0000000000000009,
-    "tstr_f1": 0.3493302396316121,
-    "tstr_f1_std": 0.0257512318144205,
-    "bin_f1": 0.8210715419467361,
-    "rare_recall": 0.18675,
-    "mb_round": 0.43978175738783,
+    "eps_eff": 0.9999998342281304,
+    "tstr_f1": 0.3421473519639738,
+    "tstr_f1_std": 0.0080070146790652,
+    "bin_f1": 0.824683212008862,
+    "rare_recall": 0.18853333333333333,
+    "mb_round": 0.20143677777777771,
     "rounds": 3.0,
-    "mb_total": 1.31934527216349
+    "mb_total": 0.6043103333333332
    }
   ],
   "meets": [
    "MGd-eps1",
+   "MGs-eps1",
    "MGl-eps1",
    "M1-eps1",
    "M1o-eps1 (plain)",
@@ -528,6 +588,12 @@
    ],
    "MGl-eps5": [
     "epsilon 5 > 1"
+   ],
+   "MGs-eps10": [
+    "epsilon 10 > 1"
+   ],
+   "MGs-eps5": [
+    "epsilon 5 > 1"
    ]
   }
  },
@@ -546,35 +612,35 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGd-eps10",
+   "label": "MGs-eps10",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
-   "eps_eff": 10.000000000000002,
-   "tstr_f1": 0.4272168683487048,
-   "tstr_f1_std": 0.0083379009722475,
-   "bin_f1": 0.8973908529583006,
-   "rare_recall": 0.31174999999999997,
-   "mb_round": 0.3061975517916461,
+   "eps_eff": 9.99999458023253,
+   "tstr_f1": 0.4285058147054687,
+   "tstr_f1_std": 0.0077193655804001,
+   "bin_f1": 0.9058194443750892,
+   "rare_recall": 0.3306166666666666,
+   "mb_round": 0.15758511111111112,
    "rounds": 3.0,
-   "mb_total": 0.9185926553749384
+   "mb_total": 0.47275533333333336
   },
   "ties_with_best": [],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
   "front": [
    {
-    "label": "MGd-eps10",
+    "label": "MGs-eps10",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 10.000000000000002,
-    "tstr_f1": 0.4272168683487048,
-    "tstr_f1_std": 0.0083379009722475,
-    "bin_f1": 0.8973908529583006,
-    "rare_recall": 0.31174999999999997,
-    "mb_round": 0.3061975517916461,
+    "eps_eff": 9.99999458023253,
+    "tstr_f1": 0.4285058147054687,
+    "tstr_f1_std": 0.0077193655804001,
+    "bin_f1": 0.9058194443750892,
+    "rare_recall": 0.3306166666666666,
+    "mb_round": 0.15758511111111112,
     "rounds": 3.0,
-    "mb_total": 0.9185926553749384
+    "mb_total": 0.47275533333333336
    },
    {
     "label": "MGd-eps5",
@@ -591,26 +657,43 @@
     "mb_total": 0.8282005190784738
    },
    {
-    "label": "MGd-eps1",
+    "label": "MGs-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 1.0000000000000009,
-    "tstr_f1": 0.3493302396316121,
-    "tstr_f1_std": 0.0257512318144205,
-    "bin_f1": 0.8210715419467361,
-    "rare_recall": 0.18675,
-    "mb_round": 0.43978175738783,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.4083561734297294,
+    "tstr_f1_std": 0.0025025915386084,
+    "bin_f1": 0.9014290391662256,
+    "rare_recall": 0.29296666666666665,
+    "mb_round": 0.14937377777777777,
     "rounds": 3.0,
-    "mb_total": 1.31934527216349
+    "mb_total": 0.44812133333333337
+   },
+   {
+    "label": "MGs-eps1",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 0.9999998342281304,
+    "tstr_f1": 0.3421473519639738,
+    "tstr_f1_std": 0.0080070146790652,
+    "bin_f1": 0.824683212008862,
+    "rare_recall": 0.18853333333333333,
+    "mb_round": 0.20143677777777771,
+    "rounds": 3.0,
+    "mb_total": 0.6043103333333332
    }
   ],
   "meets": [
+   "MGs-eps10",
    "MGd-eps10",
    "MGd-eps5",
    "MGl-eps10",
+   "MGs-eps5",
    "MGl-eps5",
    "MGd-eps1",
+   "MGs-eps1",
    "M1o-eps10",
    "M1o-eps5 (plain)",
    "M3o-eps5 (plain)",
@@ -668,22 +751,38 @@
   },
   "priority_metric": "rare_recall",
   "best": {
-   "label": "MGd-eps5",
+   "label": "MGs-eps5",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
-   "eps_eff": 5.000000000000005,
-   "tstr_f1": 0.4174361294300697,
-   "tstr_f1_std": 0.009394996642776,
-   "bin_f1": 0.9089276437448424,
-   "rare_recall": 0.2905333333333333,
-   "mb_round": 0.2760668396928246,
+   "eps_eff": 4.999997979927501,
+   "tstr_f1": 0.4083561734297294,
+   "tstr_f1_std": 0.0025025915386084,
+   "bin_f1": 0.9014290391662256,
+   "rare_recall": 0.29296666666666665,
+   "mb_round": 0.14937377777777777,
    "rounds": 3.0,
-   "mb_total": 0.8282005190784738
+   "mb_total": 0.44812133333333337
   },
-  "ties_with_best": [],
+  "ties_with_best": [
+   "MGd-eps5"
+  ],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 5",
   "front": [
+   {
+    "label": "MGs-eps5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.4083561734297294,
+    "tstr_f1_std": 0.0025025915386084,
+    "bin_f1": 0.9014290391662256,
+    "rare_recall": 0.29296666666666665,
+    "mb_round": 0.14937377777777777,
+    "rounds": 3.0,
+    "mb_total": 0.44812133333333337
+   },
    {
     "label": "MGd-eps5",
     "method": "MG",
@@ -699,23 +798,25 @@
     "mb_total": 0.8282005190784738
    },
    {
-    "label": "MGd-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
-    "eps_eff": 1.0000000000000009,
-    "tstr_f1": 0.3493302396316121,
-    "tstr_f1_std": 0.0257512318144205,
-    "bin_f1": 0.8210715419467361,
-    "rare_recall": 0.18675,
-    "mb_round": 0.43978175738783,
+    "eps_eff": 0.9999998342281304,
+    "tstr_f1": 0.3421473519639738,
+    "tstr_f1_std": 0.0080070146790652,
+    "bin_f1": 0.824683212008862,
+    "rare_recall": 0.18853333333333333,
+    "mb_round": 0.20143677777777771,
     "rounds": 3.0,
-    "mb_total": 1.31934527216349
+    "mb_total": 0.6043103333333332
    }
   ],
   "meets": [
+   "MGs-eps5",
    "MGd-eps5",
    "MGl-eps5",
+   "MGs-eps1",
    "MGd-eps1",
    "M1o-eps5 (plain)",
    "M1-eps5",
@@ -757,6 +858,9 @@
     "epsilon 10 > 5"
    ],
    "MGl-eps10": [
+    "epsilon 10 > 5"
+   ],
+   "MGs-eps10": [
     "epsilon 10 > 5"
    ]
   }

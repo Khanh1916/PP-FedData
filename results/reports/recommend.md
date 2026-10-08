@@ -8,15 +8,16 @@ one operator owns the server and every gateway (in-house IDS lab): no DP needed,
 
 Requirement: server trusted **yes**, clients trusted **yes**, ε ≤ ∞, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
 
-**Recommended: MGd-eps10** (ties within the seed std: B3). Command: `python -m ppfeddata.cli tune-marginal --final --eps 10`.
+**Recommended: MGs-eps10** (ties within the seed std: B3). Command: `python -m ppfeddata.cli tune-marginal --final --eps 10`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
-| MGd-eps10 | 0.427 | 0.897 | 0.312 | 10.00 | yes | distributed | 0.31 | 3 | 0.9 |
+| MGs-eps10 | 0.429 | 0.906 | 0.331 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
 | B3 | 0.420 | 0.929 | 0.367 | ∞ | no | no | 4.22 | 30 | 126.7 |
 | MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
 | M2 | 0.417 | 0.924 | 0.308 | ∞ | yes | no | 6.40 | 30 | 192.0 |
-| MGd-eps1 | 0.349 | 0.821 | 0.187 | 1.00 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
 ## cloud-aggregator
 
@@ -24,14 +25,15 @@ gateways of one company, aggregation in a third-party cloud: server not trusted,
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
 
-**Recommended: MGd-eps5**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
+**Recommended: MGd-eps5** (ties within the seed std: MGs-eps5). Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
 | MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
-| MGd-eps1 | 0.349 | 0.821 | 0.187 | 1.00 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
 
 ## consortium
 
@@ -46,13 +48,14 @@ Requirement: server trusted **no**, clients trusted **no**, ε ≤ 10.0, MB/roun
 | MGl-eps10 | 0.413 | 0.899 | 0.306 | 10.00 | no | local | 0.31 | 3 | 0.9 |
 | MGl-eps5 | 0.374 | 0.866 | 0.226 | 5.00 | no | local | 0.28 | 3 | 0.8 |
 | MGd-eps1 | 0.349 | 0.821 | 0.187 | 2.29 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-eps1 | 0.342 | 0.825 | 0.189 | 2.43 | yes | distributed | 0.20 | 3 | 0.6 |
 | M3o-eps5 (plain) | 0.272 | 0.847 | 0.157 | 5.00 | yes | local | 0.87 | 50 | 43.5 |
 | MGl-eps1 | 0.253 | 0.773 | 0.087 | 1.00 | no | local | 0.52 | 3 | 1.6 |
 | M1-eps1 | 0.227 | 0.805 | 0.132 | 1.00 | no | local | 1.46 | 30 | 43.7 |
 | M3o-eps1 (plain) | 0.184 | 0.611 | 0.063 | 1.00 | yes | local | 2.16 | 30 | 64.8 |
 | M3o-eps1 | 0.170 | 0.688 | 0.037 | 1.00 | yes | local | 2.16 | 30 | 64.8 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP); MGd-eps10 (epsilon 26.6 > 10); MGd-eps5 (epsilon 12.4 > 10).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP); MGd-eps10 (epsilon 26.6 > 10); MGd-eps5 (epsilon 12.4 > 10); MGs-eps10 (epsilon 36 > 10); MGs-eps5 (epsilon 14.2 > 10).
 
 ## strict-privacy
 
@@ -60,13 +63,13 @@ sensitive deployments (e.g. healthcare IoT): epsilon <= 1
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 1.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
 
-**Recommended: MGd-eps1**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 1`.
+**Recommended: MGs-eps1**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 1`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
-| MGd-eps1 | 0.349 | 0.821 | 0.187 | 1.00 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps5 (epsilon 5 > 1); M1-eps10 (epsilon 10 > 1); M2 (no DP); M3-eps5 (epsilon 5 > 1); M1o-eps10 (epsilon 10 > 1); M1o-eps10 (plain) (epsilon 10 > 1); M1o-eps5 (epsilon 5 > 1); M1o-eps5 (plain) (epsilon 5 > 1); M3o-eps10 (epsilon 10 > 1); M3o-eps10 (plain) (epsilon 10 > 1); M3o-eps5 (epsilon 5 > 1); M3o-eps5 (plain) (epsilon 5 > 1); MGd-eps10 (epsilon 10 > 1); MGd-eps5 (epsilon 5 > 1); MGl-eps10 (epsilon 10 > 1); MGl-eps5 (epsilon 5 > 1).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps5 (epsilon 5 > 1); M1-eps10 (epsilon 10 > 1); M2 (no DP); M3-eps5 (epsilon 5 > 1); M1o-eps10 (epsilon 10 > 1); M1o-eps10 (plain) (epsilon 10 > 1); M1o-eps5 (epsilon 5 > 1); M1o-eps5 (plain) (epsilon 5 > 1); M3o-eps10 (epsilon 10 > 1); M3o-eps10 (plain) (epsilon 10 > 1); M3o-eps5 (epsilon 5 > 1); M3o-eps5 (plain) (epsilon 5 > 1); MGd-eps10 (epsilon 10 > 1); MGd-eps5 (epsilon 5 > 1); MGl-eps10 (epsilon 10 > 1); MGl-eps5 (epsilon 5 > 1); MGs-eps10 (epsilon 10 > 1); MGs-eps5 (epsilon 5 > 1).
 
 ## low-bandwidth
 
@@ -74,13 +77,14 @@ gateways on NB-IoT / LoRa / metered 4G backhaul
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 10.0, MB/round ≤ 2.0, MB total ≤ 100.0, rounds ≤ ∞, priority **macro**.
 
-**Recommended: MGd-eps10**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 10`.
+**Recommended: MGs-eps10**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 10`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
-| MGd-eps10 | 0.427 | 0.897 | 0.312 | 10.00 | yes | distributed | 0.31 | 3 | 0.9 |
+| MGs-eps10 | 0.429 | 0.906 | 0.331 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
 | MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
-| MGd-eps1 | 0.349 | 0.821 | 0.187 | 1.00 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
 Excluded: B3 (the server sees the client updates in the clear, no DP, 4.22 MB/round > 2, 127 MB in total > 100); M2 (no DP, 6.4 MB/round > 2, 192 MB in total > 100); M3-eps5 (2.25 MB/round > 2); M3o-eps10 (2.16 MB/round > 2); M3o-eps10 (plain) (2.16 MB/round > 2); M3o-eps1 (2.16 MB/round > 2); M3o-eps1 (plain) (2.16 MB/round > 2).
 
@@ -90,12 +94,13 @@ the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **rare**.
 
-**Recommended: MGd-eps5**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
+**Recommended: MGs-eps5** (ties within the seed std: MGd-eps5). Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
+| MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
 | MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
-| MGd-eps1 | 0.349 | 0.821 | 0.187 | 1.00 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
 
