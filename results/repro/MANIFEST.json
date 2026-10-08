@@ -1,22 +1,22 @@
 {
   "label_mode": "6class",
-  "git_commit": "1a0c6c86b1c891274eed3ba2bea00c12dae4c1f1",
+  "git_commit": "416888550d7d1297e97bb849fbf485491fc320ed",
   "files": {
     "results/runs.csv": {
-      "sha256": "6e00d577a72752b1cff5f13bd3ef045574c1aab489c6f38474d49571cf00072d",
-      "bytes": 1045102
+      "sha256": "91e999b888c5f7c8c83d685d0bde4f2277489bb4b4254e520b0a6db243ca12ef",
+      "bytes": 1268275
     },
     "results/summary.csv": {
-      "sha256": "99c221e05e2fff61ffe04bbbf0559ed260061a1d0b1193004a365a6087245f65",
-      "bytes": 329827
+      "sha256": "61f1d3e3b50bf12e9d95da4b8f43ef6d9f7b72cf75abd57b4ed5cde5650f59be",
+      "bytes": 409543
     },
     "results/interpretation.json": {
-      "sha256": "50476cc9695310149d7c42eaaeecfbc7c910acd3a089582af2dbaedc8e79f402",
-      "bytes": 391870
+      "sha256": "6f83770d9eee24fc79792471b1fe05600fb033bba6264588e3b95b792825366f",
+      "bytes": 392780
     },
     "results/reports/final_report.md": {
-      "sha256": "799fb9dc8ff7be33b56a5b9e1627a6712e39356691dac378510011784543feed",
-      "bytes": 93914
+      "sha256": "5e320bb8bc5a15cd240c8ff581f45d8ddf11c04876a6dceb1289da0f18f297b1",
+      "bytes": 101011
     },
     "results/manifests/split_manifest_6class.json": {
       "sha256": "839a130273df0a2cb94a0ae760786be10ac77efa22153b2fdfea1b7604857a4d",
@@ -35,7 +35,7 @@
       "bytes": 3485
     },
     "results/repro/environment.json": {
-      "sha256": "bbc32877502ace3eac7bea47bdc5f2f1c32e4a8f830de1a96a83f73db0a65cd9",
+      "sha256": "0d4e70bfabdaafb73c2b6ba4452c90683832014c9bdc232027a91e92a635b2d2",
       "bytes": 806
     },
     "results/repro/configs/best_cvae.yaml": {
@@ -49,6 +49,10 @@
     "results/repro/configs/best_cvae_dp_full.yaml": {
       "sha256": "29598124fee345c76b5fea0b832571e4fb9ab20c3c211ed37f8678ac41d4cb30",
       "bytes": 2971
+    },
+    "results/repro/configs/best_group_dp.yaml": {
+      "sha256": "721743501ae3ffdf08b19dc3ff29c0ad0429a1d6335ed1c556b39db4eb6a88ee",
+      "bytes": 6010
     },
     "results/repro/configs/best_marginal.yaml": {
       "sha256": "955889b6488c8384f7a3af072211defd00638597ffae699b0599d9b5a8f2debf",
