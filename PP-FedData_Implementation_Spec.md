@@ -1,5 +1,7 @@
 # PP-FedData — Đặc tả triển khai cho coding agent (v1.5)
 
+> **Hai tệp đi cùng nhau.** Tệp này (spec) ghi **luật**: phải làm gì, theo thứ tự nào, nghiệm thu ra sao; không ghi kết quả. [`SPEC_DEVIATIONS.md`](SPEC_DEVIATIONS.md) ghi **bằng chứng**: mọi chỗ làm khác hoặc chi tiết hơn spec, kèm lý do, số đo và quyết định của người dùng, mỗi mục có mã (ví dụ 3.5, O2.3, P1.2) mà báo cáo, README và mã nguồn trích dẫn. Đọc spec để biết luật; tra SPEC_DEVIATIONS theo mã khi cần biết vì sao và đã đo được gì.
+>
 > Đây là hợp đồng công việc cho agent lập trình. Đọc toàn bộ trước khi viết code. Làm **tuần tự theo Phase**; mỗi Phase có *Deliverables* và *Gate* (điều kiện nghiệm thu). Không sang Phase sau khi Gate chưa đạt. v1.2 gộp các thay đổi rút ra khi thực hiện Phase 0-5; **v1.3 gộp tiếp các thay đổi của Phase 6-13** (các đoạn bắt đầu bằng "**v1.3:**"); **v1.4 thêm Phase 14, vòng tối ưu M1, M2, M3**; **v1.5 đổi bộ sinh chính của khung sang FedDP-Marginal (Phase 14, O2-O5), CVAE thành đối chứng**. Bằng chứng chi tiết và số đo nằm ở `SPEC_DEVIATIONS.md` (nhật ký bằng chứng, vẫn được giữ; spec này chỉ ghi luật, không ghi kết quả); các mục 🔶 và quyết định G1-G4 đã được người dùng chốt ghi rõ trong từng Phase.
 
 **Đề tài:** Khung sinh dữ liệu bảo toàn quyền riêng tư trong học liên kết (FL) để tăng cường phát hiện tấn công MQTT DoS/DDoS trên IoT.

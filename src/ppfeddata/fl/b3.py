@@ -242,7 +242,7 @@ def write_b3_report(cfg: dict[str, Any], out: str | Path = "./results/reports/b3
         L += ["## Partition (gate)", "",
               f"Seed {seeds[0]}, alpha {fl['dirichlet_alpha']}: client sizes {pc['sizes']} (minimum required {pc['min_required']}, {pc['draws']} Dirichlet draw(s)); "
               f"disjoint: {pc['disjoint']}; union = whole train pool ({n_rows} rows): {pc['covers_train_pool']}.", "",
-              _table([{c: int(v) if c != "client" else int(v) for c, v in r.items()} for r in table.to_dict("records")]), "", f"![partition]({Path('../figures') / fig.name})", ""]
+              _table([{c: int(v) if c != "client" else int(v) for c, v in r.items()} for r in table.to_dict("records")]), "", f"![partition]({(Path('../figures') / fig.name).as_posix()})", ""]
 
     sp = artifacts_dir(cfg) / f"b3_sanity_{mode}.json"
     if sp.exists():
@@ -272,7 +272,7 @@ def write_b3_report(cfg: dict[str, Any], out: str | Path = "./results/reports/b3
                       + ("The gap to the standard IID run is explained by the number of steps, not by the label skew." if gate["noniid_explained"] else
                          "The step count does not explain the gap; the cause is open."), ""]
         fig = plot_convergence(cfg, Path(fig_dir) / "fl_convergence.png")
-        L += [f"![convergence]({Path('../figures') / fig.name})", ""]
+        L += [f"![convergence]({(Path('../figures') / fig.name).as_posix()})", ""]          # forward slashes: GitHub does not read ..\figures
     L += ["## Gate Phase 8 checks", ""] + [f"- {k}: {'OK' if v else 'FAIL'}" for k, v in gate.items()] + [""]
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text("\n".join(L), encoding="utf-8")

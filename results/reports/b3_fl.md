@@ -113,7 +113,7 @@ Seed 0, alpha 0.5: client sizes [7557, 7270, 4810, 28757, 40106] (minimum requir
 | 3 | 26838 | 635 | 372 | 727 | 1 | 184 | 28757 |
 | 4 | 28280 | 9798 | 1243 | 75 | 140 | 570 | 40106 |
 
-![partition](..\figures\partition_alpha0.5_seed0.png)
+![partition](../figures/partition_alpha0.5_seed0.png)
 
 ## Sanity checks (seed 0)
 
@@ -122,7 +122,7 @@ Seed 0, alpha 0.5: client sizes [7557, 7270, 4810, 28757, 40106] (minimum requir
 - **IID vs non-IID:** final validation loss 1.9075 (alpha=100) vs 1.7638 (alpha=0.5); **non-IID is better than IID, the opposite of the expectation.**
   Explanation tested: with alpha=0.5 the clients differ a lot in size (see the partition table), a larger client takes more optimiser steps per epoch and also carries more FedAvg weight, so the averaged model gets 228 effective steps per round against 140 for near-IID equal-sized clients. An IID control with 4 local epochs (281 effective steps) ends at validation loss 1.7669 (non-IID 1.7638, IID with the standard local epochs 1.9075). The gap to the standard IID run is explained by the number of steps, not by the label skew.
 
-![convergence](..\figures\fl_convergence.png)
+![convergence](../figures/fl_convergence.png)
 
 ## Gate Phase 8 checks
 

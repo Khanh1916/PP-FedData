@@ -403,7 +403,7 @@ def write_m1_report(cfg: dict[str, Any], out: str | Path | None = None, fig_dir:
               _table(rows), ""]
     if rows is not None and eps_list:
         fig = plot_utility_privacy(cfg, df, sorted(eps_list), Path(fig_dir) / ("utility_privacy_m1_tuned.png" if tuned else "utility_privacy_m1.png"), family)
-        L += [f"![utility-privacy]({Path('../figures') / fig.name})", ""]
+        L += [f"![utility-privacy]({(Path('../figures') / fig.name).as_posix()})", ""]      # forward slashes: GitHub does not read ..\figures
     L += ["## Gate Phase 9 checks", ""] + [f"- {k}: {'OK' if v else 'FAIL'}" for k, v in gate.items()] + [""]
     Path(out).parent.mkdir(parents=True, exist_ok=True)
     Path(out).write_text("\n".join(L), encoding="utf-8")

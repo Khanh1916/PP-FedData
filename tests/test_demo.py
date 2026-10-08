@@ -468,6 +468,16 @@ def test_readme_links_point_to_files_that_exist(name):
             assert (ROOT / target).exists(), target
 
 
+def test_report_links_use_forward_slashes_and_point_to_committed_files():
+    """GitHub does not read ..\\figures\\x.png (a Windows path written by Path on Windows): the image is not shown."""
+    for md in sorted((ROOT / "results" / "reports").glob("*.md")):
+        for target in re.findall(r"\]\(([^)#\s]+)\)", md.read_text(encoding="utf-8")):
+            if target.startswith("http"):
+                continue
+            assert "\\" not in target, f"{md.name}: {target}"
+            assert (md.parent / target).exists(), f"{md.name}: {target}"
+
+
 @pytest.mark.parametrize("name", READMES)
 def test_readme_has_a_full_command_for_every_cli_command(name):
     named = {c.split()[0] for c in re.findall(r"python -m ppfeddata\.cli ([^`\n]+)", readme_text(name))}

@@ -183,7 +183,7 @@ The with-noise rows use scales that are not covered by epsilon; the gap shows ho
 - **sigma = 0, C = 1e6 vs B3:** validation loss 1.8028 vs 1.7638, relative difference 2.21 % (gate < 5 %): OK.
 - **Resume (target eps 5):** stopped at round 10 of a 20-round plan, then resumed: max |weight difference| 0.00e+00; DP step counters equal: True; eps max 4.9993 vs 4.9993 for the uninterrupted run (OK).
 
-![utility-privacy](..\figures\utility_privacy_m1.png)
+![utility-privacy](../figures/utility_privacy_m1.png)
 
 ## Gate Phase 9 checks
 

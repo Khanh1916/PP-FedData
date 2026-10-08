@@ -297,7 +297,7 @@ def write_secagg_report(cfg: dict[str, Any], out: str | Path = "./results/report
                       "This is the yardstick for the per-seed paired-bootstrap differences below: runs that differ only by noise of the size of SecAgg's quantisation error already differ in macro-F1 by "
                       f"{max(abs(f1[a][q] - f1[b][q]) for a, b in noise_pairs for q in prot):.3f} at most (TSTR), and the M2-B3 difference of this seed "
                       + ("is no larger than the largest noise-only difference for every protocol." if inside else "is larger than the largest noise-only difference for at least one protocol (only three noise-only pairs are available).") + "", ""]
-        L += [f"![secagg checks]({Path('../figures') / plot_checks(cfg, ck, Path(fig_dir) / 'secagg_checks.png').name})", ""]
+        L += [f"![secagg checks]({(Path('../figures') / plot_checks(cfg, ck, Path(fig_dir) / 'secagg_checks.png').name).as_posix()})", ""]   # forward slashes for GitHub
     else:
         L += ["Not run yet (`ppfeddata secagg-check`).", ""]
 

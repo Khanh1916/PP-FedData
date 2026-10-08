@@ -191,7 +191,7 @@ Same budgets, partitions and seeds; only the CVAE hyper-parameters and the clipp
 | 10 | Phase 7 hyper-parameters (no DP tuning) | 3 | 0.2094 ± 0.0546 | 0.1978 ± 0.0465 | 6.36 |
 | 10 | DP-tuned (M1d-t21) | 3 | 0.2305 ± 0.0246 | 0.2293 ± 0.0327 | 6.97 |
 
-![utility-privacy](..\figures\utility_privacy_m1_tuned.png)
+![utility-privacy](../figures/utility_privacy_m1_tuned.png)
 
 ## Gate Phase 9 checks
 

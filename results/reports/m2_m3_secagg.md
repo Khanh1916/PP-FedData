@@ -44,7 +44,7 @@ Final validation ELBO: B3-chk 1.7638, M2-chk 1.7772, B3-noise1 1.7736, B3-noise2
 
 This is the yardstick for the per-seed paired-bootstrap differences below: runs that differ only by noise of the size of SecAgg's quantisation error already differ in macro-F1 by 0.037 at most (TSTR), and the M2-B3 difference of this seed is larger than the largest noise-only difference for at least one protocol (only three noise-only pairs are available).
 
-![secagg checks](..\figures\secagg_checks.png)
+![secagg checks](../figures/secagg_checks.png)
 
 ### Utility of M2 vs B3 (test macro-F1, mean ± std over seeds)
 
