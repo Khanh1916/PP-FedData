@@ -158,6 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_tm = sub.add_parser("tune-marginal", help="Optimisation O3: second generator = federated DP marginals + Chow-Liu tree; grid (coarse bins x budget split) per epsilon on validation (seed 0) -> configs/best_marginal.yaml; `--final`: every seed as MGd-eps<e> (distributed noise via SecAgg) and MGl-eps<e> (local DP)")
     p_tm.add_argument("--eps", nargs="+", type=float, default=None, help="default dp.epsilons")
     p_tm.add_argument("--final", action="store_true")
+    p_tm.add_argument("--bn", action="store_true", help="O3(b): try the per-class Bayesian-network options one at a time and their combinations, 3 seeds on validation -> configs/best_marginal_bn.yaml")
     p_tm.add_argument("--seeds", nargs="+", type=int, default=None)
     p_tm.add_argument("--jobs", type=int, default=-1, help="RF jobs of the validation scoring")
     p_rc = sub.add_parser("recommend", help="Optimisation O4: configurations of the scorecard that meet a deployment requirement and their front; without options: the example IoT scenarios -> results/recommend.json, results/reports/recommend.md, results/reports/recommend.html (run after `scorecard`)")
@@ -169,6 +170,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_rc.add_argument("--max-rounds", type=int, default=None)
     p_rc.add_argument("--priority", choices=["macro", "binary", "rare"], default="macro")
     p_rc.add_argument("--min-rare-recall", type=float, default=None)
+    p_mm = sub.add_parser("mia-marginal", help="Optimisation O3(a): membership inference with access to the released FedDP-Marginal tables (log-likelihood, calibrated by a reference model), positive controls without noise -> results/mia_marginal.json")
+    p_mm.add_argument("--seeds", nargs="+", type=int, default=None)
     p_tr = sub.add_parser("taug-rare", help="Optimisation round: TAugR = real data + synthetic rows for the rare classes only, ratio chosen on validation (seed 0), from the saved synthetic sets of the scorecard generators -> results/runs.csv (`<prefix>-TAugR-<clf>`); run `aggregate` and `scorecard` after it")
     p_tr.add_argument("--prefixes", nargs="+", default=None, help="generator prefixes, default the valid rows of the scorecard")
     p_tr.add_argument("--seeds", nargs="+", type=int, default=None)
@@ -477,8 +480,12 @@ def main(argv: list[str] | None = None) -> None:
                 logger.info("O2 bandwidth: %s", run_m3o_level(c, a.m3_eps, lv, a.seeds))
 
     def cmd_tune_marginal(a):
-        from ppfeddata.tune_marginal import run_final, search
+        from ppfeddata.tune_marginal import run_final, search, search_bn
         c = load_config(a.config)
+        if a.bn:
+            for e, s_ in search_bn(c, a.eps, n_jobs=a.jobs)["searches"].items():
+                logger.info("MG-bn %s: chosen %s", e, s_["chosen"])
+            return
         if a.final:
             logger.info("O3 final runs: %s", run_final(c, a.eps, a.seeds))
             return
@@ -496,6 +503,12 @@ def main(argv: list[str] | None = None) -> None:
             b = r["best"]
             logger.info("%s: %s", r["requirement"]["name"], f"{b['label']} ({r['priority_metric']} {b.get(r['priority_metric']):.3f}, epsilon {b['eps_eff']:.3g}); "
                         f"front {[x['label'] for x in r['front']]}; command: {r['command']}" if b else "no valid configuration meets it")
+
+    def cmd_mia_marginal(a):
+        from ppfeddata.mia_marginal import run_all
+        r = run_all(load_config(a.config), seeds=a.seeds)
+        for n, v in {**r["controls"], **r["configs"]}.items():
+            logger.info("%s: calibrated AUC %.3f, plain %.3f", n, v["calibrated"]["auc_mean"]["mean"], v["plain"]["auc_mean"]["mean"])
 
     def cmd_taug_rare(a):
         from ppfeddata.eval.taug_rare import run
@@ -564,6 +577,7 @@ def main(argv: list[str] | None = None) -> None:
         "secagg-bits": cmd_secagg_bits,
         "tune-marginal": cmd_tune_marginal,
         "recommend": cmd_recommend,
+        "mia-marginal": cmd_mia_marginal,
         "accept": cmd_accept,
     }
     handler = dispatch.get(args.command)

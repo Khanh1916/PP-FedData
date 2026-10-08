@@ -6861,19 +6861,19 @@
    "evidence": {
     "max_dup_rate": [
      {
-      "config": "B3-plain-TSTR-rf",
-      "seed": 1,
-      "value": 0.00076667
+      "config": "MGb-eps10-TSTR-rf",
+      "seed": 0,
+      "value": 0.0012
      },
      {
-      "config": "MGs-eps1-TSTR-rf",
+      "config": "MGb-eps10-TSTR-rf",
       "seed": 1,
-      "value": 0.00073333
+      "value": 0.00116667
      },
      {
-      "config": "MGs-eps1-TSTR-rf",
+      "config": "MGb-eps10-TSTR-rf",
       "seed": 2,
-      "value": 0.00063333
+      "value": 0.00103333
      }
     ],
     "min_dcr_ratio": [
@@ -6895,7 +6895,7 @@
     ],
     "dup_rate_max": 0.01,
     "dcr_ratio_min": 0.5,
-    "n_generators_checked": 125
+    "n_generators_checked": 128
    },
    "notes": []
   },
@@ -7002,7 +7002,7 @@
     "n_above_redflag": 7,
     "n_above_redflag_in_matrix": 0,
     "n_above_seed_std_max": 42,
-    "n_configurations": 169,
+    "n_configurations": 185,
     "n_in_matrix": 49,
     "max_std_in_matrix": 0.03696463,
     "redflag": 0.05,
@@ -7051,7 +7051,7 @@
     ]
    },
    "notes": [
-    "42 of 169 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
+    "42 of 185 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
    ]
   },
   {

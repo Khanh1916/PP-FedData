@@ -61,11 +61,69 @@ def search(cfg: dict[str, Any], eps_list: list[float] | None = None, seed: int =
     return out
 
 
+BN_PATH = Path("./configs/best_marginal_bn.yaml")
+# O3(b): options of models/marginal_bn.py tried one at a time from the current best setting of each epsilon
+OPTIONS = {"class_trees": {"class_trees": True}, "degree2": {"degree": 2}, "degree2_bins4": {"degree": 2, "bins": 4},
+           "class_maps_rare2": {"class_maps": True, "bins_rare": 2}, "class_maps_rare4": {"class_maps": True, "bins_rare": 4},
+           "fine32": {"fine": 32}, "fine128": {"fine": 128}, "split_pairs20": {"split": [0.2, 0.2, 0.6]}, "split_cond80": {"split": [0.1, 0.1, 0.8]}}
+
+
+def search_bn(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: tuple[int, ...] = (0, 1, 2), n_jobs: int = -1) -> dict[str, Any]:
+    """O3(b): every option alone, then the combinations of the options that beat the reference by more than the seed std; each candidate
+    scored by the MEAN over `seeds` (partition, noise and sampling seed) of the validation scores, with Skellam noise split over the clients.
+    The reference is the tree of O3.1/O2 (`marginal.fit`) and its re-implementation in `marginal_bn` (degree 1, shared structure)."""
+    from ppfeddata.models import marginal_bn as bn
+
+    data, schema = load_data(cfg)
+    X, y = data["train"]["X"], np.asarray(data["train"]["y"], dtype=np.int64)
+    rare, delta, k, spc = rare_labels(cfg, schema), float(cfg["dp"]["delta"]), len(schema["label_map"]), int(cfg["tune"]["syn_per_class"])
+    parts = {s: _parts(cfg, y, schema, s) for s in seeds}
+    best0 = yaml.safe_load(BEST_PATH.read_text(encoding="utf-8"))["searches"]
+    out = yaml.safe_load(BN_PATH.read_text(encoding="utf-8")) if BN_PATH.exists() else {}
+
+    def score(name: str, eps: float, kw: dict[str, Any] | None) -> dict[str, Any]:
+        rows = []
+        for s in seeds:
+            if kw is None:
+                m = mg.fit(X, y, parts[s], schema, eps, delta, bins=base["bins"], split=base["split"], seed=s, mechanism="skellam")
+                Xs, ys = mg.sample(m, schema, [spc] * k, s)
+            else:
+                m = bn.fit(X, y, parts[s], schema, eps, delta, seed=s, mechanism="skellam", **{**base, **kw})
+                Xs, ys = bn.sample(m, schema, [spc] * k, s)
+            rows.append(val_scores_xy(cfg, Xs, ys, schema, data, s, rare, n_jobs=n_jobs))
+        r = {m_: (float(np.mean([x[m_] for x in rows])), float(np.std([x[m_] for x in rows]))) for m_ in ("macro_f1", "bin_f1", "rare_recall")}
+        logger.info("MG-bn eps %g %-28s val macro-F1 %.4f +- %.4f, rare %.3f +- %.3f, binary %.3f", eps, name, *r["macro_f1"], *r["rare_recall"], r["bin_f1"][0])
+        return {"name": name, "options": kw, **{f"{m_}_mean": v[0] for m_, v in r.items()}, **{f"{m_}_std": v[1] for m_, v in r.items()}}
+
+    for eps in [float(e) for e in (eps_list or cfg["dp"]["epsilons"])]:
+        base = {"bins": int(best0[f"eps{eps:g}"]["best"]["bins"]), "split": list(best0[f"eps{eps:g}"]["best"]["split"])}
+        ref = score("tree (O2 reference)", eps, None)
+        rows = [ref, score("bn degree 1 (same model)", eps, {})] + [score(n, eps, kw) for n, kw in OPTIONS.items()]
+        tol = lambda r: max(r["macro_f1_std"], ref["macro_f1_std"])                       # noqa: E731
+        wins = [r for r in rows[2:] if r["macro_f1_mean"] > ref["macro_f1_mean"] + tol(r)]
+        # combinations of compatible winners (one value per option key)
+        combos = []
+        for i in range(len(wins)):
+            for j in range(i + 1, len(wins)):
+                a, b = wins[i]["options"], wins[j]["options"]
+                if not set(a) & set(b):
+                    combos.append(score(f"{wins[i]['name']}+{wins[j]['name']}", eps, {**a, **b}))
+        rows += combos
+        best = max(rows, key=lambda r: r["macro_f1_mean"])
+        if best["macro_f1_mean"] <= ref["macro_f1_mean"] + tol(best):
+            best = ref                                    # no option beats the reference beyond the seed std: keep the tree
+        out.setdefault("searches", {})[f"eps{eps:g}"] = {"epsilon": eps, "base": base, "seeds": list(seeds), "chosen": best["name"],
+                                                         "chosen_options": best["options"], "rows": rows,
+                                                         "rule": "mean of 3 seeds on validation; an option is kept only when it beats the tree by more than the seed std"}
+        BN_PATH.write_text(yaml.safe_dump(out, sort_keys=False), encoding="utf-8")
+    return out
+
+
 def final_name(variant: str, eps: float) -> str:
     return f"MG{variant}-eps{eps:g}"
 
 
-def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: list[int] | None = None, variants: tuple[str, ...] = ("d", "l", "s"),
+def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: list[int] | None = None, variants: tuple[str, ...] = ("d", "l", "s", "b"),
               resume: bool = True) -> list[str]:
     from ppfeddata.eval.overhead import Timer
     from ppfeddata.eval.runs import RunLedger, runs_csv_path
@@ -74,7 +132,10 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
     from ppfeddata.fl.m1 import _all_done
     from ppfeddata.models.b2 import evaluate_generator
 
+    from ppfeddata.models import marginal_bn as bn
+
     best = yaml.safe_load(BEST_PATH.read_text(encoding="utf-8"))["searches"]
+    bn_best = yaml.safe_load(BN_PATH.read_text(encoding="utf-8"))["searches"] if BN_PATH.exists() else {}
     data, schema = load_data(cfg)
     X, y = data["train"]["X"], np.asarray(data["train"]["y"], dtype=np.int64)
     ledger, mode, delta, K = RunLedger(runs_csv_path(cfg)), cfg["label_mode"], float(cfg["dp"]["delta"]), int(cfg["fl"]["num_clients"])
@@ -84,6 +145,9 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
     for eps in [float(e) for e in (eps_list or cfg["dp"]["epsilons"])]:
         s = best[f"eps{eps:g}"]["best"]
         for v in variants:
+            opts = (bn_best.get(f"eps{eps:g}") or {}).get("chosen_options")
+            if v == "b" and opts is None:                 # O3(b) kept the tree at this epsilon: nothing new to run
+                continue
             name = final_name(v, eps)
             names.append(name)
             for seed in seeds:
@@ -92,7 +156,10 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
                     continue
                 fl = None
                 with Timer() as t:
-                    if v == "s":                      # O2: Skellam noise, the releases through Flower's real SecAgg+ (fl/mg_app.py)
+                    if v == "b":                      # O3(b): per-class Bayesian network chosen on 3 seeds, Skellam split over the clients (simulated sum)
+                        m = bn.fit(X, y, _parts(cfg, y, schema, seed), schema, eps, delta, seed=seed, mechanism="skellam",
+                                   **{"bins": int(s["bins"]), "split": s["split"], **opts})
+                    elif v == "s":                    # O2: Skellam noise, the releases through Flower's real SecAgg+ (fl/mg_app.py)
                         fl = mg_app.run(cfg, seed, name, eps, int(s["bins"]), s["split"], "skellam", resume=resume)
                         m = fl["model"]
                     else:
@@ -104,6 +171,11 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
                     cost = {"bytes_per_round": fl["bytes_total"] / 3, "sa_bytes_per_round": fl["bytes_total"] / 3, "bytes_estimated": False,
                             "fl_total_s": fl["seconds"], "cvae_train_s": fl["seconds"], "sa_max_abs_diff": fl["max_abs_diff"], "dp_mechanism": "skellam",
                             **{f"dp_eps_honest_{h}": e for h, e in i["eps_by_honest_clients"].items()}}
+                elif v == "b":                        # bytes = cells x the bytes per released value measured through SecAgg+ for MGs
+                    bpv = bytes_per_value_mgs(ledger)
+                    cost = {"bytes_per_round": (bpv * cells / 3) if not math.isnan(bpv) else None, "bytes_estimated": True, "fl_total_s": t.seconds,
+                            "cvae_train_s": t.seconds, "dp_mechanism": "skellam", "mg_options": str(opts),
+                            **{f"dp_eps_honest_{h}": e for h, e in mg.eps_honest_curve(i["scales"], len(m.attrs), delta, K, "skellam").items()}}
                 else:
                     cost = {"bytes_per_round": (bpp * cells / 3) if not math.isnan(bpp) else None, "bytes_estimated": True, "fl_total_s": t.seconds,
                             "cvae_train_s": t.seconds, "dp_mechanism": "gaussian"}
@@ -113,6 +185,16 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
                          "mg_split": str(s["split"]), "mg_cells": cells, "mg_rho": i.get("rho")}
                 logger.info("%s seed %d: eps %.3f (one honest %.1f), %d cells, %.1fs%s", name, seed, i["eps"], i["eps_one_honest"], cells, t.seconds,
                             f", {fl['bytes_total'] / 1e6:.2f} MB through SecAgg+, max |secure - exact| {fl['max_abs_diff']:g}" if fl else "")
+                smp = bn.sample if v == "b" else mg.sample
                 evaluate_generator(cfg, None, name, seed, data, schema, ledger, extra, use_stats=False,
-                                   sample_fn=lambda counts, sd, m=m: mg.sample(m, schema, counts, sd))
+                                   sample_fn=lambda counts, sd, m=m, smp=smp: smp(m, schema, counts, sd))
     return names
+
+
+def bytes_per_value_mgs(ledger) -> float:
+    """Bytes per released value through Flower SecAgg+, measured on the MGs runs (all three rounds / cells)."""
+    df = ledger.frame()
+    if not len(df) or "mg_cells" not in df:
+        return math.nan
+    r = df[df["config"].astype(str).str.match(r"^MGs-eps") & df["protocol"].eq("TSTR")]
+    return float((r["bytes_per_round"] * 3 / r["mg_cells"]).mean()) if len(r) else math.nan

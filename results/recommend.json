@@ -118,6 +118,7 @@
    }
   ],
   "meets": [
+   "MGb-eps10",
    "MGs-eps10",
    "MGd-eps10",
    "B3",
@@ -264,6 +265,9 @@
     "epsilon 10 > 5"
    ],
    "M3o-eps10 (plain)": [
+    "epsilon 10 > 5"
+   ],
+   "MGb-eps10": [
     "epsilon 10 > 5"
    ],
    "MGd-eps10": [
@@ -466,6 +470,9 @@
    "M2": [
     "no DP"
    ],
+   "MGb-eps10": [
+    "epsilon 36 > 10"
+   ],
    "MGd-eps10": [
     "epsilon 26.6 > 10"
    ],
@@ -577,6 +584,9 @@
    "M3o-eps5 (plain)": [
     "epsilon 5 > 1"
    ],
+   "MGb-eps10": [
+    "epsilon 10 > 1"
+   ],
    "MGd-eps10": [
     "epsilon 10 > 1"
    ],
@@ -686,6 +696,7 @@
    }
   ],
   "meets": [
+   "MGb-eps10",
    "MGs-eps10",
    "MGd-eps10",
    "MGd-eps5",
@@ -852,6 +863,9 @@
     "epsilon 10 > 5"
    ],
    "M3o-eps10 (plain)": [
+    "epsilon 10 > 5"
+   ],
+   "MGb-eps10": [
     "epsilon 10 > 5"
    ],
    "MGd-eps10": [

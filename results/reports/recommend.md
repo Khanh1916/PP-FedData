@@ -33,7 +33,7 @@ Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/roun
 | MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
 | MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
 
 ## consortium
 
@@ -55,7 +55,7 @@ Requirement: server trusted **no**, clients trusted **no**, ε ≤ 10.0, MB/roun
 | M3o-eps1 (plain) | 0.184 | 0.611 | 0.063 | 1.00 | yes | local | 2.16 | 30 | 64.8 |
 | M3o-eps1 | 0.170 | 0.688 | 0.037 | 1.00 | yes | local | 2.16 | 30 | 64.8 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP); MGd-eps10 (epsilon 26.6 > 10); MGd-eps5 (epsilon 12.4 > 10); MGs-eps10 (epsilon 36 > 10); MGs-eps5 (epsilon 14.2 > 10).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP); MGb-eps10 (epsilon 36 > 10); MGd-eps10 (epsilon 26.6 > 10); MGd-eps5 (epsilon 12.4 > 10); MGs-eps10 (epsilon 36 > 10); MGs-eps5 (epsilon 14.2 > 10).
 
 ## strict-privacy
 
@@ -69,7 +69,7 @@ Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 1.0, MB/roun
 |---|---|---|---|---|---|---|---|---|---|
 | MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps5 (epsilon 5 > 1); M1-eps10 (epsilon 10 > 1); M2 (no DP); M3-eps5 (epsilon 5 > 1); M1o-eps10 (epsilon 10 > 1); M1o-eps10 (plain) (epsilon 10 > 1); M1o-eps5 (epsilon 5 > 1); M1o-eps5 (plain) (epsilon 5 > 1); M3o-eps10 (epsilon 10 > 1); M3o-eps10 (plain) (epsilon 10 > 1); M3o-eps5 (epsilon 5 > 1); M3o-eps5 (plain) (epsilon 5 > 1); MGd-eps10 (epsilon 10 > 1); MGd-eps5 (epsilon 5 > 1); MGl-eps10 (epsilon 10 > 1); MGl-eps5 (epsilon 5 > 1); MGs-eps10 (epsilon 10 > 1); MGs-eps5 (epsilon 5 > 1).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps5 (epsilon 5 > 1); M1-eps10 (epsilon 10 > 1); M2 (no DP); M3-eps5 (epsilon 5 > 1); M1o-eps10 (epsilon 10 > 1); M1o-eps10 (plain) (epsilon 10 > 1); M1o-eps5 (epsilon 5 > 1); M1o-eps5 (plain) (epsilon 5 > 1); M3o-eps10 (epsilon 10 > 1); M3o-eps10 (plain) (epsilon 10 > 1); M3o-eps5 (epsilon 5 > 1); M3o-eps5 (plain) (epsilon 5 > 1); MGb-eps10 (epsilon 10 > 1); MGd-eps10 (epsilon 10 > 1); MGd-eps5 (epsilon 5 > 1); MGl-eps10 (epsilon 10 > 1); MGl-eps5 (epsilon 5 > 1); MGs-eps10 (epsilon 10 > 1); MGs-eps5 (epsilon 5 > 1).
 
 ## low-bandwidth
 
@@ -102,5 +102,5 @@ Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/roun
 | MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
 | MGs-eps1 | 0.342 | 0.825 | 0.189 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
 

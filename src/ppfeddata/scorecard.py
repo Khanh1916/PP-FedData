@@ -103,7 +103,7 @@ def optimised_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
     out = []
     for p in prefixes:
         base = p[:-len("-plain")] if p.endswith("-plain") else p
-        g = re.match(r"MG(?P<kind>[dls])-eps(?P<eps>[0-9.]+)$", base)
+        g = re.match(r"MG(?P<kind>[dlsb])-eps(?P<eps>[0-9.]+)$", base)
         if g:                                                    # O3: marginal generator, distributed (SecAgg) or local DP
             out.append(dict(label=base, eps=float(g["eps"]), cfgs=gen(p), optimised=True, plain=False, method="MG", secagg=g["kind"] != "l",
                             dp_mode="local" if g["kind"] == "l" else "distributed"))
@@ -162,6 +162,7 @@ def candidate_rows(summ: pd.DataFrame, df: pd.DataFrame | None = None, mia: dict
         else:
             r.update(taugr_config=None, taugr_classifier=None, taugr_gain=math.nan, taugr_gain_std=math.nan, taugr_ratio=math.nan)
         r["mia_auc"] = math.nan if e.get("twin") else _mia(mia, e["label"])
+        r["c2st"] = _val(rt, "c2st_auc_mean")[0]                      # fidelity: AUC of a classifier telling synthetic from real (0.5 = indistinguishable)
         for c in ("bytes_per_round", "fl_total_s", "rounds"):
             r[c] = _val(rt, c)[0]
         r["bytes_total"] = r["bytes_per_round"] * r["rounds"]          # one round of DP-FedSGD is one step: compare the whole run too
@@ -327,8 +328,8 @@ def render(sc: dict[str, Any]) -> str:
          "Utility on the real test split, mean ± std over seeds; the classifier of each protocol is the one with the higher validation macro-F1. "
          "`taug_gain` = macro-F1 of real + synthetic minus B0 with the same classifier; `TAugR gain` = the same with synthetic rows for the rare classes only, ratio x their real count chosen on validation (in brackets). ε = max over clients (∞ = no DP); for M3-distributed (`M3f`, O2) ε with every client honest, and in brackets with a single honest client. MB total = MB / round × rounds (DP-FedSGD needs many more, smaller rounds; its MB are estimated from M2). "
          "Front = not dominated by a valid configuration on any axis (utility within the seed std counts as equal; ε within 2 %, cost within 5 %).", "",
-         "| configuration | valid | front | TSTR macro-F1 | binary F1 | rare recall | TAug gain | TAugR gain (ratio) | ε | SecAgg | MIA AUC (model) | MB / round | rounds | MB total | FL time (s) |",
-         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
+         "| configuration | valid | front | TSTR macro-F1 | binary F1 | rare recall | TAug gain | TAugR gain (ratio) | ε | SecAgg | MIA AUC (model) | C2ST AUC | MB / round | rounds | MB total | FL time (s) |",
+         "|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|"]
     for r in sc["rows"]:
         if r.get("reference"):
             continue
@@ -336,7 +337,7 @@ def render(sc: dict[str, Any]) -> str:
         e1 = f" ({_fmt(r['eps_one_honest'], d=1)})" if r.get("dp_mode") == "distributed" else ""
         L.append(f"| {r['label']} ({r['tstr_classifier']}) | {'yes' if r['valid'] else 'no'} | {'**yes**' if r['pareto'] else 'no'} | {_fmt(r['tstr_f1'], r['tstr_f1_std'])} | "
                  f"{_fmt(r['bin_f1'], r['bin_f1_std'])} | {_fmt(r['rare_recall'], r['rare_recall_std'])} | {_fmt(r['taug_gain'], r['taug_gain_std'])} | {_fmt(r.get('taugr_gain'), r.get('taugr_gain_std'))}{_ratio(r)} | {_fmt(r['eps'], d=2)}{e1} | "
-                 f"{'yes' if r['secagg'] else 'no'} | {_fmt(r['mia_auc'])} | {_fmt(mb, d=2)} | {_fmt(r.get('rounds'), d=0)} | {_fmt(mbt, d=0)} | {_fmt(r['fl_total_s'], d=0)} |")
+                 f"{'yes' if r['secagg'] else 'no'} | {_fmt(r['mia_auc'])} | {_fmt(r.get('c2st'))} | {_fmt(mb, d=2)} | {_fmt(r.get('rounds'), d=0)} | {_fmt(mbt, d=0)} | {_fmt(r['fl_total_s'], d=0)} |")
     bad = [r for r in sc["rows"] if not r["valid"]]
     if bad:
         L += ["", "Not valid (kept out of the front): " + "; ".join(f"{r['label']}: {r['invalid_reason']}" for r in bad) + "."]
@@ -365,6 +366,9 @@ def run(cfg: dict[str, Any], freeze_baseline: bool = False, out_dir: str | Path 
         df = None
     read = lambda n: json.loads((res / n).read_text(encoding="utf-8")) if (res / n).exists() else None      # noqa: E731
     mia, fed = read("mia_model.json"), read("fed_classifier.json")
+    mgm = read("mia_marginal.json")                       # O3(a): the same attack design against the FedDP-Marginal tables
+    if mgm:
+        mia = {**(mia or {}), "configs": {**((mia or {}).get("configs") or {}), **mgm.get("configs", {})}}
     rare = (mia or {}).get("rare") or ag.rare_classes(cfg, summ)
     base_p = res / "scorecard_baseline.json"
     if freeze_baseline and base_p.exists():

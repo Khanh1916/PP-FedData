@@ -110,14 +110,14 @@ class Attr:
     dead: np.ndarray | None = None
 
 
-def attributes(schema: dict[str, Any]) -> list[Attr]:
+def attributes(schema: dict[str, Any], fine: int = FINE) -> list[Attr]:
     from ppfeddata.models.generate import dead_category_mask
 
     dead = dead_category_mask(schema)
     out = []
     for b in schema["blocks"]:
         if b["type"] == "numeric":
-            out.append(Attr(b["name"], "numeric", b["start"], 1, FINE))
+            out.append(Attr(b["name"], "numeric", b["start"], 1, int(fine)))
         elif b["type"] in ("binary", "na_flag"):
             out.append(Attr(b["name"], "flag", b["start"], 1, 2))
         else:
@@ -130,7 +130,7 @@ def discretise_fine(X: np.ndarray, attrs: Sequence[Attr], clip: float) -> np.nda
     F = np.zeros((len(X), len(attrs)), dtype=np.int64)
     for j, a in enumerate(attrs):
         if a.kind == "numeric":
-            F[:, j] = np.clip(np.floor((X[:, a.start] + clip) / (2 * clip) * FINE), 0, FINE - 1)
+            F[:, j] = np.clip(np.floor((X[:, a.start] + clip) / (2 * clip) * a.n_fine), 0, a.n_fine - 1)
         elif a.kind == "flag":
             F[:, j] = (X[:, a.start] >= 0.5).astype(np.int64)
         else:
@@ -343,7 +343,7 @@ def sample(model: MarginalModel, schema: dict[str, Any], class_counts: Sequence[
                     cand = np.flatnonzero(m == v)
                     w = np.maximum(model.fine[j][c, cand], 0.0) + 1e-3
                     fine[rows] = cand[_draw(np.tile(w / w.sum(), (len(rows), 1)), rng)]
-            width = 2 * model.clip / FINE
+            width = 2 * model.clip / at.n_fine
             raw[:, at.start] = -model.clip + (fine + rng.random(n)) * width
         elif at.kind == "flag":
             raw[:, at.start] = np.where(C[:, j] == 1, 30.0, -30.0)
