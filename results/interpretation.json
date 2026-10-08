@@ -6878,24 +6878,24 @@
     ],
     "min_dcr_ratio": [
      {
-      "config": "MGd-eps10-TSTR-rf",
+      "config": "MGr-eps1-TSTR-rf",
       "seed": 2,
-      "value": 0.87389806
+      "value": 0.81710683
      },
      {
-      "config": "MGd-eps1-TSTR-rf",
+      "config": "MGr-eps1-TSTR-rf",
       "seed": 1,
-      "value": 0.87506629
+      "value": 0.83491115
      },
      {
-      "config": "MGs-eps10-TSTR-rf",
-      "seed": 2,
-      "value": 0.87689834
+      "config": "MGr-eps1-TSTR-rf",
+      "seed": 0,
+      "value": 0.84563956
      }
     ],
     "dup_rate_max": 0.01,
     "dcr_ratio_min": 0.5,
-    "n_generators_checked": 128
+    "n_generators_checked": 144
    },
    "notes": []
   },
@@ -7002,7 +7002,7 @@
     "n_above_redflag": 7,
     "n_above_redflag_in_matrix": 0,
     "n_above_seed_std_max": 42,
-    "n_configurations": 185,
+    "n_configurations": 201,
     "n_in_matrix": 49,
     "max_std_in_matrix": 0.03696463,
     "redflag": 0.05,
@@ -7051,7 +7051,7 @@
     ]
    },
    "notes": [
-    "42 of 185 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
+    "42 of 201 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
    ]
   },
   {
@@ -7450,7 +7450,17 @@
      "MGs-eps5_2",
      "MGs-eps10_0",
      "MGs-eps10_1",
-     "MGs-eps10_2"
+     "MGs-eps10_2",
+     "MGr-eps1_0",
+     "MGr-eps1_1",
+     "MGr-eps1_2",
+     "MGr-eps10_0",
+     "MGr-eps10_1",
+     "MGr-eps10_2",
+     "MGs-a0.1-eps5_0",
+     "MGs-a10-eps5_0",
+     "MGs-k10-eps5_0",
+     "MGs-k20-eps5_0"
     ]
    },
    "notes": [
@@ -7950,39 +7960,39 @@
    "cutoff": 10,
    "seeds": {
     "0": {
-     "clients": 5,
-     "cells": 20,
-     "thin": 4,
-     "empty": 1,
+     "clients": 20,
+     "cells": 80,
+     "thin": 15,
+     "empty": 6,
      "min_by_class": {
-      "DELAYED": 240,
+      "DELAYED": 0,
       "SYN": 0,
-      "INVALID": 1,
-      "WILL": 2
+      "INVALID": 0,
+      "WILL": 1
      }
     },
     "1": {
-     "clients": 5,
-     "cells": 20,
-     "thin": 2,
-     "empty": 0,
+     "clients": 20,
+     "cells": 80,
+     "thin": 24,
+     "empty": 7,
      "min_by_class": {
-      "DELAYED": 29,
-      "SYN": 30,
-      "INVALID": 1,
-      "WILL": 8
+      "DELAYED": 1,
+      "SYN": 4,
+      "INVALID": 0,
+      "WILL": 0
      }
     },
     "2": {
-     "clients": 5,
-     "cells": 20,
-     "thin": 1,
-     "empty": 0,
+     "clients": 20,
+     "cells": 80,
+     "thin": 25,
+     "empty": 4,
      "min_by_class": {
-      "DELAYED": 20,
-      "SYN": 68,
-      "INVALID": 77,
-      "WILL": 1
+      "DELAYED": 0,
+      "SYN": 0,
+      "INVALID": 0,
+      "WILL": 2
      }
     }
    }

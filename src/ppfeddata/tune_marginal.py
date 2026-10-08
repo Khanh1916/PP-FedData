@@ -119,12 +119,55 @@ def search_bn(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: t
     return out
 
 
-def final_name(variant: str, eps: float) -> str:
-    return f"MG{variant}-eps{eps:g}"
+REFINE_PATH = Path("./configs/best_marginal_refine.yaml")
+REFINE_GRID = {"alpha": [0.1, 1.0, 10.0], "fuse": [False, True], "root": [0, "mi"]}
 
 
-def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: list[int] | None = None, variants: tuple[str, ...] = ("d", "l", "s", "b"),
-              resume: bool = True) -> list[str]:
+def search_refine(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: tuple[int, ...] = (0, 1, 2), n_jobs: int = -1) -> dict[str, Any]:
+    """O3 (extra): post-processing of the released tree (`marginal.refine`: smoothing, fused marginals + IPF, root by mutual information),
+    chosen by the mean of 3 seeds on validation; kept only when it beats the plain sampler (alpha 1, no fusion, root 0) by more than the
+    seed std. One fit per seed (Skellam, distributed), every post-processing applied to the same fit."""
+    import itertools as it
+
+    data, schema = load_data(cfg)
+    X, y = data["train"]["X"], np.asarray(data["train"]["y"], dtype=np.int64)
+    rare, delta, k, spc = rare_labels(cfg, schema), float(cfg["dp"]["delta"]), len(schema["label_map"]), int(cfg["tune"]["syn_per_class"])
+    best0 = yaml.safe_load(BEST_PATH.read_text(encoding="utf-8"))["searches"]
+    out = yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8")) if REFINE_PATH.exists() else {}
+    for eps in [float(e) for e in (eps_list or cfg["dp"]["epsilons"])]:
+        b = best0[f"eps{eps:g}"]["best"]
+        fits = {s: mg.fit(X, y, _parts(cfg, y, schema, s), schema, eps, delta, bins=int(b["bins"]), split=b["split"], seed=s, mechanism="skellam")
+                for s in seeds}
+        rows = []
+        for alpha, fuse, root in it.product(REFINE_GRID["alpha"], REFINE_GRID["fuse"], REFINE_GRID["root"]):
+            res = []
+            for s in seeds:
+                Xs, ys = mg.sample(mg.refine(fits[s], alpha=alpha, fuse=fuse, root=root), schema, [spc] * k, s)
+                res.append(val_scores_xy(cfg, Xs, ys, schema, data, s, rare, n_jobs=n_jobs))
+            r = {"alpha": alpha, "fuse": fuse, "root": root}
+            for m_ in ("macro_f1", "bin_f1", "rare_recall"):
+                r[f"{m_}_mean"], r[f"{m_}_std"] = float(np.mean([x[m_] for x in res])), float(np.std([x[m_] for x in res]))
+            rows.append(r)
+            logger.info("MG-refine eps %g alpha %g fuse %s root %s -> val macro-F1 %.4f +- %.4f, rare %.3f", eps, alpha, fuse, root,
+                        r["macro_f1_mean"], r["macro_f1_std"], r["rare_recall_mean"])
+        plain = next(r for r in rows if r["alpha"] == 1.0 and not r["fuse"] and r["root"] == 0)
+        best = max(rows, key=lambda r: r["macro_f1_mean"])
+        if best["macro_f1_mean"] <= plain["macro_f1_mean"] + max(best["macro_f1_std"], plain["macro_f1_std"]):
+            best = plain
+        chosen = None if best is plain else {"alpha": best["alpha"], "fuse": best["fuse"], "root": best["root"]}
+        out.setdefault("searches", {})[f"eps{eps:g}"] = {"epsilon": eps, "seeds": list(seeds), "chosen": chosen, "rows": rows,
+                                                         "rule": "mean of 3 seeds on validation; kept only when it beats alpha 1 / no fusion / root 0 by more than the seed std"}
+        REFINE_PATH.write_text(yaml.safe_dump(out, sort_keys=False), encoding="utf-8")
+    return out
+
+
+def final_name(variant: str, eps: float, tag: str = "") -> str:
+    """`MGs-eps5`, or with a robustness tag (O4) `MGs-a0.1-eps5`."""
+    return f"MG{variant}-{tag}-eps{eps:g}" if tag else f"MG{variant}-eps{eps:g}"
+
+
+def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: list[int] | None = None, variants: tuple[str, ...] = ("d", "l", "s", "b", "r"),
+              resume: bool = True, tag: str = "") -> list[str]:
     from ppfeddata.eval.overhead import Timer
     from ppfeddata.eval.runs import RunLedger, runs_csv_path
     from ppfeddata.fl import mg_app
@@ -136,6 +179,7 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
 
     best = yaml.safe_load(BEST_PATH.read_text(encoding="utf-8"))["searches"]
     bn_best = yaml.safe_load(BN_PATH.read_text(encoding="utf-8"))["searches"] if BN_PATH.exists() else {}
+    ref_best = yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8"))["searches"] if REFINE_PATH.exists() else {}
     data, schema = load_data(cfg)
     X, y = data["train"]["X"], np.asarray(data["train"]["y"], dtype=np.int64)
     ledger, mode, delta, K = RunLedger(runs_csv_path(cfg)), cfg["label_mode"], float(cfg["dp"]["delta"]), int(cfg["fl"]["num_clients"])
@@ -148,7 +192,10 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
             opts = (bn_best.get(f"eps{eps:g}") or {}).get("chosen_options")
             if v == "b" and opts is None:                 # O3(b) kept the tree at this epsilon: nothing new to run
                 continue
-            name = final_name(v, eps)
+            ref = (ref_best.get(f"eps{eps:g}") or {}).get("chosen")
+            if v == "r" and ref is None:                  # O3 extra kept the plain sampler: nothing new to run
+                continue
+            name = final_name(v, eps, tag)
             names.append(name)
             for seed in seeds:
                 if resume and _all_done(ledger, [name], seed, mode):
@@ -159,9 +206,9 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
                     if v == "b":                      # O3(b): per-class Bayesian network chosen on 3 seeds, Skellam split over the clients (simulated sum)
                         m = bn.fit(X, y, _parts(cfg, y, schema, seed), schema, eps, delta, seed=seed, mechanism="skellam",
                                    **{"bins": int(s["bins"]), "split": s["split"], **opts})
-                    elif v == "s":                    # O2: Skellam noise, the releases through Flower's real SecAgg+ (fl/mg_app.py)
+                    elif v in ("s", "r"):             # O2: Skellam noise, the releases through Flower's real SecAgg+ (fl/mg_app.py)
                         fl = mg_app.run(cfg, seed, name, eps, int(s["bins"]), s["split"], "skellam", resume=resume)
-                        m = fl["model"]
+                        m = fl["model"] if v == "s" else mg.refine(fl["model"], **ref)      # O3 extra: post-processing, no privacy cost
                     else:
                         m = mg.fit(X, y, _parts(cfg, y, schema, seed), schema, eps, delta, bins=int(s["bins"]), split=s["split"],
                                    noise_share=None if v == "d" else 1.0, seed=seed)
@@ -169,6 +216,7 @@ def run_final(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: l
                 cells = int(i["n_cells"])
                 if fl is not None:
                     cost = {"bytes_per_round": fl["bytes_total"] / 3, "sa_bytes_per_round": fl["bytes_total"] / 3, "bytes_estimated": False,
+                            "mg_refine": str(ref) if v == "r" else None,
                             "fl_total_s": fl["seconds"], "cvae_train_s": fl["seconds"], "sa_max_abs_diff": fl["max_abs_diff"], "dp_mechanism": "skellam",
                             **{f"dp_eps_honest_{h}": e for h, e in i["eps_by_honest_clients"].items()}}
                 elif v == "b":                        # bytes = cells x the bytes per released value measured through SecAgg+ for MGs

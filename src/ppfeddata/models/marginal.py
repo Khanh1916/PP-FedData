@@ -200,6 +200,106 @@ def max_spanning_tree(w: np.ndarray) -> list[tuple[int, int]]:
     return edges
 
 
+# --------------------------------------------------------------------------------------------------
+# O3 (extra): post-processing of the released tables (no privacy cost)
+# --------------------------------------------------------------------------------------------------
+def _noise_var(model: "MarginalModel", stage: str) -> float:
+    s = model.info["scales"][stage]
+    return float(s) ** 2 if model.info.get("mechanism", "gaussian") == "gaussian" else float(s)
+
+
+def reorient(edges: Sequence[tuple[int, int]], root: int) -> list[tuple[int, int]]:
+    """The same undirected tree as directed edges (parent, child) from `root`, parents first (breadth-first)."""
+    adj: dict[int, list[int]] = {}
+    for a, b in edges:
+        adj.setdefault(a, []).append(b)
+        adj.setdefault(b, []).append(a)
+    out, seen, queue = [], {root}, [root]
+    while queue:
+        a = queue.pop(0)
+        for b in sorted(adj.get(a, [])):
+            if b not in seen:
+                seen.add(b)
+                out.append((a, b))
+                queue.append(b)
+    return out
+
+
+def fused_marginals(model: "MarginalModel") -> list[np.ndarray]:
+    """Per attribute, the per-class coarse marginal [n_coarse, k] combining every independent noisy estimate by inverse variance per cell:
+    the fine release summed over the coarse bin, the attribute's own table (root table, or the child side of its edge) and the parent side
+    of each of its child edges. Each estimate is a sum of noisy cells of a different table, so the estimates are independent."""
+    vf, ve = _noise_var(model, "fine"), _noise_var(model, "edges")
+    A, k = len(model.attrs), model.n_classes
+    nc = [int(m.max()) + 1 for m in model.maps]
+    est: list[list[tuple[np.ndarray, np.ndarray]]] = [[] for _ in range(A)]
+    for j in range(A):
+        m = model.maps[j]
+        cnt = np.bincount(m, minlength=nc[j]).astype(float)                     # fine bins in each coarse bin
+        fsum = np.stack([np.bincount(m, weights=model.fine[j][c], minlength=nc[j]) for c in range(k)], 1)
+        est[j].append((fsum, np.repeat((cnt * vf)[:, None], k, 1)))
+    root = model.info.get("root", 0)
+    est[root].append((model.root_table, np.full(model.root_table.shape, ve)))
+    for (a, b), t in zip(model.edges, model.edge_tables):
+        est[b].append((t.sum(0), np.full((nc[b], k), nc[a] * ve)))            # child side
+        est[a].append((t.sum(1), np.full((nc[a], k), nc[b] * ve)))            # parent side
+    out = []
+    for j in range(A):
+        w = sum(1.0 / v for _, v in est[j])
+        out.append(np.maximum(sum(e / v for e, v in est[j]) / w, 0.0))
+    return out
+
+
+def _ipf(J: np.ndarray, r: np.ndarray, c: np.ndarray, iters: int = 50) -> np.ndarray:
+    """Rake a non-negative table to row sums r and column sums c (c rescaled to the total of r)."""
+    r = r + 1e-9
+    c = (c + 1e-9) * (r.sum() / (c.sum() + 1e-9))
+    for _ in range(iters):
+        J = J * (r / np.maximum(J.sum(1), 1e-12))[:, None]
+        J = J * (c / np.maximum(J.sum(0), 1e-12))[None, :]
+    return J
+
+
+def refine(model: "MarginalModel", alpha: float = 1.0, fuse: bool = False, root: str | int = 0) -> "MarginalModel":
+    """A post-processed copy of a tree model (O3 extra; no privacy cost, it uses only released tables):
+    - `root`: 0 (as released) or "mi" (the attribute with the largest total noisy mutual information; the same undirected tree re-oriented);
+    - `fuse`: the root distribution becomes the fused marginal, and every edge table is raked (IPF) to the fused marginals of its parent and
+      child, starting from max(table, 0) + alpha;
+    - `alpha`: pseudo-count of the sampler (after fusion the tables are already smoothed, so a tiny value is used)."""
+    import copy
+
+    m = copy.deepcopy(model)
+    A, k = len(m.attrs), m.n_classes
+    if root == "mi":
+        if m.info.get("mi") is None:
+            raise ValueError("this model has no stored mutual information (fitted before O3 extra)")
+        r = int(np.argmax(np.asarray(m.info["mi"]).sum(1)))
+        if r != m.info.get("root", 0):
+            # re-orient: rebuild the directed joint tables from the undirected pairs (parent, child, class)
+            joint = {frozenset((a, b)): (a, b, t) for (a, b), t in zip(m.edges, m.edge_tables)}
+            fm = fused_marginals(m)
+            new_edges = reorient(m.edges, r)
+            tabs = []
+            for a, b in new_edges:
+                pa, ch, t = joint[frozenset((a, b))]
+                tabs.append(t if (pa, ch) == (a, b) else np.transpose(t, (1, 0, 2)))
+            m.edges, m.edge_tables, m.root_table = new_edges, tabs, fm[r]
+            m.info["root"] = r
+    if fuse:
+        fm = fused_marginals(m)
+        m.root_table = fm[m.info.get("root", 0)] + alpha
+        tabs = []
+        for (a, b), t in zip(m.edges, m.edge_tables):
+            J = np.maximum(t, 0.0) + alpha
+            tabs.append(np.stack([_ipf(J[:, :, c], fm[a][:, c], fm[b][:, c]) for c in range(k)], 2))
+        m.edge_tables = tabs
+        m.info["alpha"] = 1e-6
+    else:
+        m.info["alpha"] = float(alpha)
+    m.info["refine"] = {"alpha": float(alpha), "fuse": bool(fuse), "root": root}
+    return m
+
+
 def mutual_information(t: np.ndarray) -> float:
     p = np.maximum(t, 0.0) + 1e-3
     p /= p.sum()
@@ -271,11 +371,15 @@ def client_tables(stage: str, F: np.ndarray, y: np.ndarray, attrs: Sequence[Attr
     return [_count((C[:, 0], y), (nc[0], k))] + [_count((C[:, a], C[:, b], y), (nc[a], nc[b], k)) for a, b in edges]
 
 
-def tree_from_pairs(pt: Sequence[np.ndarray], A: int) -> list[tuple[int, int]]:
+def mi_matrix(pt: Sequence[np.ndarray], A: int) -> np.ndarray:
     W = np.zeros((A, A))
     for (i, j), t in zip(pair_list(A), pt):
         W[i, j] = W[j, i] = mutual_information(t)
-    return max_spanning_tree(W)
+    return W
+
+
+def tree_from_pairs(pt: Sequence[np.ndarray], A: int) -> list[tuple[int, int]]:
+    return max_spanning_tree(mi_matrix(pt, A))
 
 
 def fit(X: np.ndarray, y: np.ndarray, parts: Sequence[np.ndarray], schema: dict[str, Any], eps: float, delta: float, bins: int = 8,
@@ -293,14 +397,15 @@ def fit(X: np.ndarray, y: np.ndarray, parts: Sequence[np.ndarray], schema: dict[
     fine = _noisy_sum([client_tables("fine", F, yy, attrs, k) for F, yy in zip(Fc, yc)], sc["fine"], share, rng, mechanism)
     maps = coarse_maps(fine, attrs, bins)
     pt = _noisy_sum([client_tables("pairs", F, yy, attrs, k, maps) for F, yy in zip(Fc, yc)], sc["pairs"], share, rng, mechanism)
-    edges = tree_from_pairs(pt, A)
+    W = mi_matrix(pt, A)
+    edges = max_spanning_tree(W)
     tabs = _noisy_sum([client_tables("edges", F, yy, attrs, k, maps, edges) for F, yy in zip(Fc, yc)], sc["edges"], share, rng, mechanism)
     return assemble(attrs, k, clip, fine, maps, edges, tabs, sc, eps, delta, share, mechanism, bins, split, K,
-                    n_cells=int(sum(t.size for t in fine) + sum(t.size for t in pt) + sum(t.size for t in tabs)))
+                    n_cells=int(sum(t.size for t in fine) + sum(t.size for t in pt) + sum(t.size for t in tabs)), mi=W)
 
 
-def assemble(attrs, k, clip, fine, maps, edges, tabs, scales, eps, delta, share, mechanism, bins, split, K, n_cells) -> MarginalModel:
-    info = {"eps_target": float(eps), "delta": float(delta), "noise_share": share, "mechanism": mechanism, **privacy_info(scales, len(attrs), delta, share, mechanism),
+def assemble(attrs, k, clip, fine, maps, edges, tabs, scales, eps, delta, share, mechanism, bins, split, K, n_cells, mi=None) -> MarginalModel:
+    info = {"root": 0, "mi": None if mi is None else np.asarray(mi).tolist(), "eps_target": float(eps), "delta": float(delta), "noise_share": share, "mechanism": mechanism, **privacy_info(scales, len(attrs), delta, share, mechanism),
             "scales": dict(scales), "bins": int(bins), "split": list(split), "n_cells": int(n_cells), "tree": [list(e) for e in edges], "num_clients": K}
     if mechanism == "gaussian":
         info["sigmas"] = dict(scales)
@@ -320,15 +425,16 @@ def _draw(p: np.ndarray, rng: np.random.Generator) -> np.ndarray:
     return (p.cumsum(1) > rng.random((len(p), 1))).argmax(1)
 
 
-def sample(model: MarginalModel, schema: dict[str, Any], class_counts: Sequence[int], seed: int, alpha: float = 1.0) -> tuple[np.ndarray, np.ndarray]:
+def sample(model: MarginalModel, schema: dict[str, Any], class_counts: Sequence[int], seed: int, alpha: float | None = None) -> tuple[np.ndarray, np.ndarray]:
     from ppfeddata.models.generate import postprocess
 
+    alpha = model.info.get("alpha", 1.0) if alpha is None else alpha        # O3: `refine` may set the smoothing
     rng = np.random.default_rng(seed)
     k, A = model.n_classes, len(model.attrs)
     y = np.repeat(np.arange(k), np.asarray(class_counts, dtype=np.int64))
     n = len(y)
     C = np.zeros((n, A), dtype=np.int64)
-    C[:, 0] = _draw(_probs(model.root_table, alpha, 0)[:, y].T, rng)
+    C[:, model.info.get("root", 0)] = _draw(_probs(model.root_table, alpha, 0)[:, y].T, rng)
     for (a, b), t in zip(model.edges, model.edge_tables):
         p = _probs(t, alpha, 1)                              # [parent, child, k], normalised over the child
         C[:, b] = _draw(p[C[:, a], :, y], rng)

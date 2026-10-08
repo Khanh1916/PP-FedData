@@ -162,7 +162,7 @@ def loglik_tree(model: mg.MarginalModel, X: np.ndarray, y: np.ndarray, alpha: fl
     F = mg.discretise_fine(X, model.attrs, model.clip)
     y = np.asarray(y, dtype=np.int64)
     C = _coarse(F, model.maps)
-    out = np.log(mg._probs(model.root_table, alpha, 0)[C[:, 0], y])
+    out = np.log(mg._probs(model.root_table, alpha, 0)[C[:, model.info.get("root", 0)], y])
     for (a, b), t in zip(model.edges, model.edge_tables):
         out += np.log(mg._probs(t, alpha, 1)[C[:, a], C[:, b], y])
     for c in range(model.n_classes):

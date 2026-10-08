@@ -1,0 +1,361 @@
+searches:
+  eps1:
+    epsilon: 1.0
+    seeds:
+    - 0
+    - 1
+    - 2
+    chosen:
+      alpha: 1.0
+      fuse: true
+      root: 0
+    rows:
+    - alpha: 0.1
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.351779096442028
+      macro_f1_std: 0.016513919671670825
+      bin_f1_mean: 0.8422829132824395
+      bin_f1_std: 0.010024881044483753
+      rare_recall_mean: 0.20645833333333333
+      rare_recall_std: 0.023836756747137863
+    - alpha: 0.1
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.33792174126217017
+      macro_f1_std: 0.01402929145841614
+      bin_f1_mean: 0.8263869615450973
+      bin_f1_std: 0.003271096987496907
+      rare_recall_mean: 0.19283333333333333
+      rare_recall_std: 0.014752942267749704
+    - alpha: 0.1
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.3782195525572398
+      macro_f1_std: 0.00920451542224255
+      bin_f1_mean: 0.8720979414250327
+      bin_f1_std: 0.0028158814206541345
+      rare_recall_mean: 0.25983333333333336
+      rare_recall_std: 0.0052651896663104426
+    - alpha: 0.1
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.36940269375654705
+      macro_f1_std: 0.021699243790937656
+      bin_f1_mean: 0.8491979457328057
+      bin_f1_std: 0.0050607832770541965
+      rare_recall_mean: 0.23754166666666668
+      rare_recall_std: 0.034714060151791834
+    - alpha: 1.0
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3578155547053146
+      macro_f1_std: 0.01904895606752569
+      bin_f1_mean: 0.8460198633921635
+      bin_f1_std: 0.010694170903083146
+      rare_recall_mean: 0.21291666666666664
+      rare_recall_std: 0.025928052161488895
+    - alpha: 1.0
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.3581346148694397
+      macro_f1_std: 0.0037879078203732143
+      bin_f1_mean: 0.8349118583323261
+      bin_f1_std: 0.004905947577696228
+      rare_recall_mean: 0.2107083333333333
+      rare_recall_std: 0.002189780557245168
+    - alpha: 1.0
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.38044773645498037
+      macro_f1_std: 0.011712614465811353
+      bin_f1_mean: 0.8678398478940114
+      bin_f1_std: 0.00033951960917120397
+      rare_recall_mean: 0.2710416666666667
+      rare_recall_std: 0.02573286916679823
+    - alpha: 1.0
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.36485960026734543
+      macro_f1_std: 0.023855332021289706
+      bin_f1_mean: 0.845779654378016
+      bin_f1_std: 0.003885037096403003
+      rare_recall_mean: 0.2343333333333333
+      rare_recall_std: 0.025919814921321404
+    - alpha: 10.0
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3214453723771084
+      macro_f1_std: 0.008723485790690275
+      bin_f1_mean: 0.8112141293639104
+      bin_f1_std: 0.006484716900092736
+      rare_recall_mean: 0.16520833333333332
+      rare_recall_std: 0.008646611410771787
+    - alpha: 10.0
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.34300515417370486
+      macro_f1_std: 0.012993607465638157
+      bin_f1_mean: 0.8239814873686163
+      bin_f1_std: 0.004882360188295882
+      rare_recall_mean: 0.19154166666666664
+      rare_recall_std: 0.014329577996422496
+    - alpha: 10.0
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.3676113044521263
+      macro_f1_std: 0.006206790102738409
+      bin_f1_mean: 0.8654610897921674
+      bin_f1_std: 0.0010358605773082457
+      rare_recall_mean: 0.2507083333333333
+      rare_recall_std: 0.003171049598406757
+    - alpha: 10.0
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.359148927224979
+      macro_f1_std: 0.019660843107143784
+      bin_f1_mean: 0.8429946201735223
+      bin_f1_std: 0.0036381593407857
+      rare_recall_mean: 0.216125
+      rare_recall_std: 0.022752975995826714
+    rule: mean of 3 seeds on validation; kept only when it beats alpha 1 / no fusion
+      / root 0 by more than the seed std
+  eps5:
+    epsilon: 5.0
+    seeds:
+    - 0
+    - 1
+    - 2
+    chosen: null
+    rows:
+    - alpha: 0.1
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3923477367334162
+      macro_f1_std: 0.0045825971308484864
+      bin_f1_mean: 0.886960489898232
+      bin_f1_std: 0.0066147457168695455
+      rare_recall_mean: 0.2841666666666667
+      rare_recall_std: 0.013316004364005844
+    - alpha: 0.1
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.4018164857132897
+      macro_f1_std: 0.010894158975277098
+      bin_f1_mean: 0.8945903897586153
+      bin_f1_std: 0.005906108538229395
+      rare_recall_mean: 0.3169166666666667
+      rare_recall_std: 0.015392548702393491
+    - alpha: 0.1
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.39235505732723314
+      macro_f1_std: 0.019356443825064955
+      bin_f1_mean: 0.89282088666033
+      bin_f1_std: 0.002996617769301845
+      rare_recall_mean: 0.2789166666666667
+      rare_recall_std: 0.024983814204845155
+    - alpha: 0.1
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.3851380242833949
+      macro_f1_std: 0.008099064557528858
+      bin_f1_mean: 0.8924879299946246
+      bin_f1_std: 0.004518973723044138
+      rare_recall_mean: 0.3097916666666667
+      rare_recall_std: 0.010050566595415844
+    - alpha: 1.0
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3951383107300546
+      macro_f1_std: 0.007036029098775508
+      bin_f1_mean: 0.8877654416073506
+      bin_f1_std: 0.0015402978512971417
+      rare_recall_mean: 0.28679166666666667
+      rare_recall_std: 0.011819093544863015
+    - alpha: 1.0
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.39167366984769075
+      macro_f1_std: 0.010996794513675428
+      bin_f1_mean: 0.8875396701342143
+      bin_f1_std: 0.0012607419270201437
+      rare_recall_mean: 0.3085833333333334
+      rare_recall_std: 0.00967725712976337
+    - alpha: 1.0
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.394103118518302
+      macro_f1_std: 0.01175661136757801
+      bin_f1_mean: 0.8938259563689296
+      bin_f1_std: 0.0060244743900030534
+      rare_recall_mean: 0.28654166666666664
+      rare_recall_std: 0.01888460940083808
+    - alpha: 1.0
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.38262844217307707
+      macro_f1_std: 0.01036852730387138
+      bin_f1_mean: 0.8910544981848346
+      bin_f1_std: 0.0043287771588143556
+      rare_recall_mean: 0.29183333333333333
+      rare_recall_std: 0.009743765813186511
+    - alpha: 10.0
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3813078954040133
+      macro_f1_std: 0.007516539040124411
+      bin_f1_mean: 0.8836471271087546
+      bin_f1_std: 0.005154534144092477
+      rare_recall_mean: 0.26899999999999996
+      rare_recall_std: 0.007282971005480294
+    - alpha: 10.0
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.38529369942375197
+      macro_f1_std: 0.012006069652763804
+      bin_f1_mean: 0.8827854344441167
+      bin_f1_std: 0.003420189742906002
+      rare_recall_mean: 0.27899999999999997
+      rare_recall_std: 0.025692289699440953
+    - alpha: 10.0
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.3712695531415753
+      macro_f1_std: 0.007658585067715258
+      bin_f1_mean: 0.8831732374659104
+      bin_f1_std: 0.0014650252140076061
+      rare_recall_mean: 0.25245833333333334
+      rare_recall_std: 0.011584082709572738
+    - alpha: 10.0
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.3792840995773024
+      macro_f1_std: 0.005243645830799572
+      bin_f1_mean: 0.8856973091797388
+      bin_f1_std: 0.005250318269610472
+      rare_recall_mean: 0.26887500000000003
+      rare_recall_std: 0.0149342308138049
+    rule: mean of 3 seeds on validation; kept only when it beats alpha 1 / no fusion
+      / root 0 by more than the seed std
+  eps10:
+    epsilon: 10.0
+    seeds:
+    - 0
+    - 1
+    - 2
+    chosen:
+      alpha: 0.1
+      fuse: false
+      root: 0
+    rows:
+    - alpha: 0.1
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3963386150448571
+      macro_f1_std: 0.011127593042248486
+      bin_f1_mean: 0.8876583095562331
+      bin_f1_std: 0.007742422137199845
+      rare_recall_mean: 0.33316666666666667
+      rare_recall_std: 0.008429445744267842
+    - alpha: 0.1
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.38901413506171983
+      macro_f1_std: 0.00894739920229506
+      bin_f1_mean: 0.8989627628624256
+      bin_f1_std: 0.007719393950485635
+      rare_recall_mean: 0.32858333333333334
+      rare_recall_std: 0.018563610610247396
+    - alpha: 0.1
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.3815538773678935
+      macro_f1_std: 0.00705208043583957
+      bin_f1_mean: 0.894457489591382
+      bin_f1_std: 0.013475801954427552
+      rare_recall_mean: 0.31025
+      rare_recall_std: 0.01727745399839531
+    - alpha: 0.1
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.37975432717683555
+      macro_f1_std: 0.008087950128274716
+      bin_f1_mean: 0.8959413650422734
+      bin_f1_std: 0.007853781783928454
+      rare_recall_mean: 0.309375
+      rare_recall_std: 0.014251096449045599
+    - alpha: 1.0
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.38430731883248664
+      macro_f1_std: 0.0013844546577683721
+      bin_f1_mean: 0.8924548416292106
+      bin_f1_std: 0.006301689597960496
+      rare_recall_mean: 0.30325
+      rare_recall_std: 0.009155485605180468
+    - alpha: 1.0
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.3884419088725674
+      macro_f1_std: 0.002971631614270607
+      bin_f1_mean: 0.9002329093778018
+      bin_f1_std: 0.0052867336493561375
+      rare_recall_mean: 0.314375
+      rare_recall_std: 0.013743559097506948
+    - alpha: 1.0
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.3915179923744048
+      macro_f1_std: 0.007692732877849226
+      bin_f1_mean: 0.8965372001043656
+      bin_f1_std: 0.01043675621877389
+      rare_recall_mean: 0.32508333333333334
+      rare_recall_std: 0.013015348844942863
+    - alpha: 1.0
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.38361689556687956
+      macro_f1_std: 0.004017431380861926
+      bin_f1_mean: 0.8950080309058421
+      bin_f1_std: 0.007100495231255692
+      rare_recall_mean: 0.31174999999999997
+      rare_recall_std: 0.014153547847330254
+    - alpha: 10.0
+      fuse: false
+      root: 0
+      macro_f1_mean: 0.3868493750726654
+      macro_f1_std: 0.006175827191796069
+      bin_f1_mean: 0.8717079198003347
+      bin_f1_std: 0.011279731323254298
+      rare_recall_mean: 0.274375
+      rare_recall_std: 0.013318611664384045
+    - alpha: 10.0
+      fuse: false
+      root: mi
+      macro_f1_mean: 0.3784321458893085
+      macro_f1_std: 0.00548206662552742
+      bin_f1_mean: 0.8815728808419161
+      bin_f1_std: 0.0076642306380582444
+      rare_recall_mean: 0.2924583333333333
+      rare_recall_std: 0.013797015579062336
+    - alpha: 10.0
+      fuse: true
+      root: 0
+      macro_f1_mean: 0.3925842640360273
+      macro_f1_std: 0.011226843523953155
+      bin_f1_mean: 0.8832538086291607
+      bin_f1_std: 0.011460787710384897
+      rare_recall_mean: 0.31850000000000006
+      rare_recall_std: 0.011226364059658846
+    - alpha: 10.0
+      fuse: true
+      root: mi
+      macro_f1_mean: 0.38525108647327405
+      macro_f1_std: 0.004501458738649628
+      bin_f1_mean: 0.8863237971885574
+      bin_f1_std: 0.007415519708758041
+      rare_recall_mean: 0.29887500000000006
+      rare_recall_std: 0.009836687281126025
+    rule: mean of 3 seeds on validation; kept only when it beats alpha 1 / no fusion
+      / root 0 by more than the seed std

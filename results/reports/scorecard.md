@@ -9,7 +9,7 @@ Utility on the real test split, mean ± std over seeds; the classifier of each p
 | M1-eps1 (rf) | yes | no | 0.227 ± 0.030 | 0.805 ± 0.050 | 0.132 ± 0.019 | 0.000 ± 0.001 | n/a | 1.00 | no | 0.497 | 1.000 | 1.46 | 30 | 44 | 279 |
 | M1-eps5 (mlp) | yes | no | 0.258 ± 0.018 | 0.859 ± 0.029 | 0.158 ± 0.028 | -0.001 ± 0.001 | n/a | 5.00 | no | 0.496 | 1.000 | 1.46 | 30 | 44 | 272 |
 | M1-eps10 (mlp) | yes | no | 0.243 ± 0.037 | 0.827 ± 0.051 | 0.112 ± 0.043 | -0.000 ± 0.001 | n/a | 10.00 | no | 0.496 | 1.000 | 1.46 | 30 | 44 | 290 |
-| M2 (mlp) | yes | **yes** | 0.417 ± 0.006 | 0.924 ± 0.009 | 0.308 ± 0.005 | 0.001 ± 0.001 | 0.001 ± 0.001 (2) | ∞ | yes | n/a | 1.000 | 6.40 | 30 | 192 | 87 |
+| M2 (mlp) | yes | no | 0.417 ± 0.006 | 0.924 ± 0.009 | 0.308 ± 0.005 | 0.001 ± 0.001 | 0.001 ± 0.001 (2) | ∞ | yes | n/a | 1.000 | 6.40 | 30 | 192 | 87 |
 | M3-eps5 (mlp) | yes | no | 0.256 ± 0.030 | 0.837 ± 0.034 | 0.130 ± 0.041 | 0.000 ± 0.001 | n/a | 5.00 | yes | n/a | 1.000 | 2.25 | 30 | 68 | 277 |
 | M1-eps1 (residual noise) (mlp) | no | no | 0.266 ± 0.025 | 0.847 ± 0.055 | 0.151 ± 0.042 | 0.000 ± 0.001 | n/a | 1.00 | no | n/a | 1.000 | 1.46 | 30 | 44 | 279 |
 | M1-eps5 (residual noise) (mlp) | no | no | 0.285 ± 0.023 | 0.887 ± 0.018 | 0.163 ± 0.016 | -0.000 ± 0.001 | n/a | 5.00 | no | n/a | 1.000 | 1.46 | 30 | 44 | 272 |
@@ -34,13 +34,15 @@ Utility on the real test split, mean ± std over seeds; the classifier of each p
 | MGl-eps1 (rf) | yes | no | 0.253 ± 0.029 | 0.773 ± 0.041 | 0.087 ± 0.026 | -0.001 ± 0.001 | n/a | 1.00 | no | n/a | 1.000 | 0.52 | 3 | 2 | 1 |
 | MGl-eps10 (rf) | yes | **yes** | 0.413 ± 0.007 | 0.899 ± 0.009 | 0.306 ± 0.008 | 0.001 ± 0.001 | n/a | 10.00 | no | n/a | 1.000 | 0.31 | 3 | 1 | 1 |
 | MGl-eps5 (rf) | yes | no | 0.374 ± 0.010 | 0.866 ± 0.017 | 0.226 ± 0.008 | -0.000 ± 0.001 | n/a | 5.00 | no | n/a | 1.000 | 0.28 | 3 | 1 | 1 |
-| MGs-eps1 (rf) | yes | **yes** | 0.342 ± 0.008 | 0.825 ± 0.008 | 0.189 ± 0.018 | -0.002 ± 0.001 | 0.000 ± 0.001 (1) | 1.00 (2.4) | yes | 0.512 | 1.000 | 0.20 | 3 | 1 | 22 |
+| MGr-eps1 (rf) | yes | **yes** | 0.389 ± 0.010 | 0.875 ± 0.011 | 0.253 ± 0.012 | -0.002 ± 0.001 | n/a | 1.00 (2.4) | yes | 0.514 | 1.000 | 0.20 | 3 | 1 | 20 |
+| MGr-eps10 (mlp) | yes | no | 0.433 ± 0.008 | 0.915 ± 0.007 | 0.318 ± 0.005 | 0.001 ± 0.001 | n/a | 10.00 (36.0) | yes | 0.531 | 1.000 | 0.16 | 3 | 0 | 22 |
+| MGs-eps1 (rf) | yes | no | 0.342 ± 0.008 | 0.825 ± 0.008 | 0.189 ± 0.018 | -0.002 ± 0.001 | 0.000 ± 0.001 (1) | 1.00 (2.4) | yes | 0.512 | 1.000 | 0.20 | 3 | 1 | 22 |
 | MGs-eps10 (mlp) | yes | **yes** | 0.429 ± 0.008 | 0.906 ± 0.011 | 0.331 ± 0.021 | 0.002 ± 0.001 | 0.001 ± 0.001 (1) | 10.00 (36.0) | yes | 0.531 | 1.000 | 0.16 | 3 | 0 | 19 |
 | MGs-eps5 (rf) | yes | **yes** | 0.408 ± 0.003 | 0.901 ± 0.002 | 0.293 ± 0.007 | 0.001 ± 0.001 | 0.000 ± 0.001 (2) | 5.00 (14.2) | yes | 0.522 | 1.000 | 0.15 | 3 | 0 | 21 |
 
 Not valid (kept out of the front): M1-eps1 (residual noise): per-class residual std from train data without DP; M1-eps5 (residual noise): per-class residual std from train data without DP; M1-eps10 (residual noise): per-class residual std from train data without DP; M3-eps5 (residual noise): per-class residual std from train data without DP.
 
-Dominated: M1-eps1 by MGd-eps1; M1-eps5 by M3o-eps5 (plain), MGd-eps5, MGl-eps5, MGs-eps5; M1-eps10 by M1-eps1, M1-eps5, M1o-eps10, M1o-eps10 (plain), M1o-eps5, M1o-eps5 (plain), M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGs-eps10, MGs-eps5; M3-eps5 by M3o-eps5, M3o-eps5 (plain), MGd-eps1, MGd-eps5, MGs-eps5; M1o-eps10 by M1o-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGs-eps10, MGs-eps5; M1o-eps10 (plain) by M1-eps1, M1-eps5, M1o-eps10, M1o-eps5, M1o-eps5 (plain), M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGs-eps10, MGs-eps5; M1o-eps5 by MGd-eps5, MGl-eps5, MGs-eps5; M1o-eps5 (plain) by MGd-eps1, MGd-eps5, MGl-eps5, MGs-eps5; M1o-eps1 by M1-eps1, MGd-eps1; M1o-eps1 (plain) by M1-eps1, M1o-eps1, MGd-eps1, MGl-eps1; M3o-eps10 by M3-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGs-eps10, MGs-eps5; M3o-eps10 (plain) by M3-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGs-eps10, MGs-eps5; M3o-eps5 by M3o-eps5 (plain), MGd-eps1, MGd-eps5, MGs-eps5; M3o-eps5 (plain) by MGd-eps5, MGs-eps5; M3o-eps1 by MGd-eps1; M3o-eps1 (plain) by MGd-eps1; MGl-eps1 by MGd-eps1; MGl-eps5 by MGd-eps5.
+Dominated: M1-eps1 by MGd-eps1; M1-eps5 by M3o-eps5 (plain), MGd-eps5, MGl-eps5, MGs-eps5; M1-eps10 by M1-eps1, M1-eps5, M1o-eps10, M1o-eps10 (plain), M1o-eps5, M1o-eps5 (plain), M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGr-eps10, MGs-eps10, MGs-eps5; M2 by MGr-eps10; M3-eps5 by M3o-eps5, M3o-eps5 (plain), MGd-eps1, MGd-eps5, MGs-eps5; M1o-eps10 by M1o-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGr-eps10, MGs-eps10, MGs-eps5; M1o-eps10 (plain) by M1-eps1, M1-eps5, M1o-eps10, M1o-eps5, M1o-eps5 (plain), M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGr-eps10, MGs-eps10, MGs-eps5; M1o-eps5 by MGd-eps5, MGl-eps5, MGs-eps5; M1o-eps5 (plain) by MGd-eps1, MGd-eps5, MGl-eps5, MGs-eps5; M1o-eps1 by M1-eps1, MGd-eps1; M1o-eps1 (plain) by M1-eps1, M1o-eps1, MGd-eps1, MGl-eps1; M3o-eps10 by M3-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGr-eps10, MGs-eps10, MGs-eps5; M3o-eps10 (plain) by M3-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGr-eps10, MGs-eps10, MGs-eps5; M3o-eps5 by M3o-eps5 (plain), MGd-eps1, MGd-eps5, MGs-eps5; M3o-eps5 (plain) by MGd-eps5, MGs-eps5; M3o-eps1 by MGd-eps1; M3o-eps1 (plain) by MGd-eps1; MGl-eps1 by MGd-eps1; MGl-eps5 by MGd-eps5; MGr-eps10 by MGs-eps10; MGs-eps1 by MGr-eps1.
 
 ## Reference: the classifier trained directly by FL (releases no data)
 
@@ -88,6 +90,8 @@ An entry of the optimisation round is compared with the baseline row of the same
 | MGl-eps1 | M1-eps1 | +0.026 (no change) | -0.032 (no change) | -0.046 (worse) | -0.001 (worse) | n/a |
 | MGl-eps10 | M1-eps10 | +0.170 (better) | +0.072 (better) | +0.194 (better) | +0.001 (better) | n/a |
 | MGl-eps5 | M1-eps5 | +0.116 (better) | +0.007 (no change) | +0.068 (better) | +0.000 (no change) | n/a |
+| MGr-eps1 | M1-eps1 | +0.162 (better) | +0.070 (better) | +0.121 (better) | -0.003 (worse) | n/a |
+| MGr-eps10 | M1-eps10 | +0.190 (better) | +0.088 (better) | +0.206 (better) | +0.001 (better) | n/a |
 | MGs-eps1 | M1-eps1 | +0.115 (better) | +0.019 (no change) | +0.056 (better) | -0.002 (worse) | n/a |
 | MGs-eps10 | M1-eps10 | +0.185 (better) | +0.078 (better) | +0.219 (better) | +0.002 (better) | n/a |
 | MGs-eps5 | M1-eps5 | +0.151 (better) | +0.043 (better) | +0.135 (better) | +0.002 (better) | n/a |

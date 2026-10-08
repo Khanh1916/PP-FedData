@@ -88,7 +88,8 @@ def val_scores_xy(cfg: dict[str, Any], Xs, ys, schema, data, seed: int, rare: li
 
 
 def rare_labels(cfg: dict[str, Any], schema: dict[str, Any], limit: int = 5000) -> list[int]:
-    lm, q = schema["label_map"], cfg.get("quota", {})
+    lm = schema["label_map"]
+    q = cfg.get("quota_11class" if cfg.get("label_mode") == "11class" else "quota", {}) or {}      # O4: the 11-class quotas in that mode
     r = [int(v) for c, v in lm.items() if c in q and q[c][0] <= limit]
     return sorted(r) or sorted(lm.values())[-4:]
 

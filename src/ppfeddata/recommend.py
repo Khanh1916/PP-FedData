@@ -41,6 +41,8 @@ class Requirement:
     priority: str = "macro"
     min_rare_recall: float | None = None
     note: str = ""
+    honest_clients: int | None = None          # O4: epsilon must hold when only h clients add their share of the distributed noise
+    max_mia: float | None = None               # O4: calibrated model-access MIA AUC must stay below (configurations not attacked are excluded)
 
 
 # example requirements of IoT / MQTT deployments (section 9.10 of the report and the demo page)
@@ -51,6 +53,8 @@ SCENARIOS = [
     Requirement("strict-privacy", False, True, 1.0, note="sensitive deployments (e.g. healthcare IoT): epsilon <= 1"),
     Requirement("low-bandwidth", False, True, 10.0, max_mb_round=2.0, max_mb_total=100.0, note="gateways on NB-IoT / LoRa / metered 4G backhaul"),
     Requirement("rare-attacks", False, True, 5.0, priority="rare", note="the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most"),
+    Requirement("honest-majority", False, True, 10.0, honest_clients=3, max_mia=0.55,
+                note="brokers of 5 operators, at most 2 may collude with the aggregator; the released model must resist the membership attack (AUC < 0.55)"),
 ]
 
 
@@ -66,8 +70,12 @@ def effective(row: dict[str, Any], req: Requirement) -> dict[str, Any]:
     """The row with the epsilon that holds under the trust assumption and the MB totals."""
     r = dict(row)
     eps = _num(r.get("eps"))
-    if r.get("dp_mode") == "distributed" and not req.trust_clients:
-        eps = _num(r.get("eps_one_honest", eps))
+    if r.get("dp_mode") == "distributed":
+        h = 1 if not req.trust_clients else req.honest_clients
+        if h is not None:
+            curve = {int(k): _num(v) for k, v in (r.get("eps_honest") or {}).items()}
+            # measured curve when there is one; otherwise only h = 1 is known (the one-honest epsilon, conservative for h > 1)
+            eps = curve.get(int(h), _num(r.get("eps_one_honest", eps)))
     r["eps_eff"] = eps if r.get("dp") else math.inf
     r["mb_round"] = _num(r.get("bytes_per_round")) / 1e6
     r["mb_total"] = _num(r.get("bytes_total")) / 1e6
@@ -85,6 +93,8 @@ def reasons(r: dict[str, Any], req: Requirement) -> list[str]:
         v = _num(r.get(key))
         if lim is not None and not math.isnan(v) and v > lim:
             out.append(f"{v:.3g} {unit} > {lim:g}")
+    if req.max_mia is not None and not (_num(r.get("mia_auc")) < req.max_mia):
+        out.append("membership attack not measured" if math.isnan(_num(r.get("mia_auc"))) else f"MIA AUC {_num(r.get('mia_auc')):.3f} >= {req.max_mia:g}")
     if req.min_rare_recall is not None and not (_num(r.get("rare_recall")) >= req.min_rare_recall):
         out.append(f"rare-class recall {_num(r.get('rare_recall')):.3f} < {req.min_rare_recall:g}")
     return out
@@ -160,7 +170,8 @@ def render(results: list[dict[str, Any]]) -> str:
         L += [f"## {q['name']}", "", f"{q['note']}" if q.get("note") else "", "",
               f"Requirement: server trusted **{'yes' if q['trust_server'] else 'no'}**, clients trusted **{'yes' if q['trust_clients'] else 'no'}**, "
               f"ε ≤ {q['max_eps'] if q['max_eps'] is not None else '∞'}, MB/round ≤ {q['max_mb_round'] or '∞'}, MB total ≤ {q['max_mb_total'] or '∞'}, "
-              f"rounds ≤ {q['max_rounds'] or '∞'}, priority **{q['priority']}**" + (f", rare recall ≥ {q['min_rare_recall']}" if q.get("min_rare_recall") else "") + ".", ""]
+              f"rounds ≤ {q['max_rounds'] or '∞'}, priority **{q['priority']}**" + (f", rare recall ≥ {q['min_rare_recall']}" if q.get("min_rare_recall") else "")
+              + (f", at least {q['honest_clients']} honest clients" if q.get("honest_clients") else "") + (f", MIA AUC < {q['max_mia']}" if q.get("max_mia") else "") + ".", ""]
         if b is None:
             L += ["No valid configuration meets this requirement.", ""]
             continue
@@ -183,7 +194,7 @@ def _jsonable(x: Any) -> Any:
 def render_html(scorecard: dict[str, Any]) -> str:
     """A static page (no server): the valid rows of the scorecard and filters for the requirement; the same rules as `reasons` in JS."""
     rows = [effective(r, Requirement()) for r in scorecard["rows"] if r.get("valid") and not r.get("reference")]
-    keep = ("label", "method", "dp", "dp_mode", "secagg", "eps", "eps_one_honest", "tstr_f1", "tstr_f1_std", "bin_f1", "bin_f1_std", "rare_recall",
+    keep = ("label", "method", "dp", "dp_mode", "secagg", "eps", "eps_one_honest", "eps_honest", "mia_auc", "tstr_f1", "tstr_f1_std", "bin_f1", "bin_f1_std", "rare_recall",
             "rare_recall_std", "mb_round", "mb_total", "rounds")
     data = json.dumps(_jsonable([{k: r.get(k) for k in keep} for r in rows]), ensure_ascii=False)
     scen = json.dumps([asdict(s) for s in SCENARIOS], ensure_ascii=False)
@@ -239,7 +250,8 @@ tr.out{color:var(--muted)} tr.front td:first-child{font-weight:600;color:var(--a
 <div class="f">
 <label>Kịch bản mẫu<select id="scn"><option value="">(tự chọn)</option></select></label>
 <label>Tin server?<select id="ts"><option value="1">có</option><option value="0">không</option></select></label>
-<label>Tin các client?<select id="tc"><option value="1">có</option><option value="0">không (có thể thông đồng)</option></select></label>
+<label>Số client trung thực tối thiểu<select id="tc"><option value="">tất cả (tin các client)</option><option>4</option><option>3</option><option>2</option><option value="1">1 (các client khác có thể thông đồng)</option></select></label>
+<label>MIA AUC tối đa<input id="mia" type="number" min="0.5" max="1" step="0.01" placeholder="không giới hạn"></label>
 <label>ε tối đa<select id="eps"><option value="">không cần DP</option><option>1</option><option>5</option><option>10</option></select></label>
 <label>MB / vòng tối đa<input id="mbr" type="number" min="0" step="0.1" placeholder="∞"></label>
 <label>MB tổng tối đa<input id="mbt" type="number" min="0" step="1" placeholder="∞"></label>
@@ -256,14 +268,14 @@ const $=id=>document.getElementById(id), num=v=>(v===null||v===undefined||v===""
 const fmt=(v,d=3)=>{v=num(v);return isNaN(v)?"n/a":(v===Infinity?"∞":v.toFixed(d))};
 SC.forEach((s,i)=>{const o=document.createElement("option");o.value=i;o.textContent=s.name+" - "+s.note;$("scn").appendChild(o)});
 $("scn").onchange=()=>{const s=SC[$("scn").value];if(!s){draw();return}
- $("ts").value=s.trust_server?"1":"0";$("tc").value=s.trust_clients?"1":"0";$("eps").value=s.max_eps??"";$("mbr").value=s.max_mb_round??"";
+ $("ts").value=s.trust_server?"1":"0";$("tc").value=s.trust_clients?(s.honest_clients?String(s.honest_clients):""):"1";$("mia").value=s.max_mia??"";$("eps").value=s.max_eps??"";$("mbr").value=s.max_mb_round??"";
  $("mbt").value=s.max_mb_total??"";$("rnd").value=s.max_rounds??"";$("pri").value={macro:"tstr_f1",binary:"bin_f1",rare:"rare_recall"}[s.priority];$("rr").value=s.min_rare_recall??"";draw()};
 document.querySelectorAll("select,input").forEach(e=>{if(e.id!=="scn")e.addEventListener("input",()=>{$("scn").value="";draw()})});
-function effEps(r,tc){if(!r.dp)return Infinity;return (r.dp_mode==="distributed"&&!tc)?num(r.eps_one_honest):num(r.eps)}
+function effEps(r,h){if(!r.dp)return Infinity;if(r.dp_mode!=="distributed"||!h)return num(r.eps);const c=r.eps_honest||{};return (c[h]!==undefined&&c[h]!==null)?num(c[h]):num(r.eps_one_honest)}
 function cmp(a,b,m){const x=num(a[m]),y=num(b[m]);if(isNaN(x)||isNaN(y))return 0;const t=Math.max(num(a[m+"_std"])||0,num(b[m+"_std"])||0);return x>y+t?1:(y>x+t?-1:0)}
 function low(x,y,rel){if(isNaN(x)||isNaN(y)||(x===Infinity&&y===Infinity))return 0;if(x===Infinity||y===Infinity)return x===Infinity?-1:1;return x<y*(1-rel)?1:(y<x*(1-rel)?-1:0)}
 function dom(a,b){const c=["tstr_f1","bin_f1","rare_recall"].map(m=>cmp(a,b,m));c.push(low(a.e,b.e,TOL),(a.secagg?1:0)-(b.secagg?1:0),low(num(a.mb_round),num(b.mb_round),.05),low(num(a.mb_total),num(b.mb_total),.05));return c.every(v=>v>=0)&&c.some(v=>v>0)}
-function draw(){const ts=$("ts").value==="1",tc=$("tc").value==="1",E=num($("eps").value),MR=num($("mbr").value),MT=num($("mbt").value),RN=num($("rnd").value),RR=num($("rr").value),P=$("pri").value;
+function draw(){const ts=$("ts").value==="1",tc=$("tc").value,MI=num($("mia").value),E=num($("eps").value),MR=num($("mbr").value),MT=num($("mbt").value),RN=num($("rnd").value),RR=num($("rr").value),P=$("pri").value;
  const rs=ROWS.map(r=>{const e=effEps(r,tc),w=[];
   if(!ts&&!(r.secagg||r.dp_mode==="local"))w.push("server thấy cập nhật");
   if(!isNaN(E)&&!(e<=E*(1+TOL)))w.push(e===Infinity?"không có DP":"ε "+fmt(e,2)+" > "+E);
@@ -271,6 +283,7 @@ function draw(){const ts=$("ts").value==="1",tc=$("tc").value==="1",E=num($("eps
   if(!isNaN(MT)&&num(r.mb_total)>MT)w.push(fmt(r.mb_total,1)+" MB tổng");
   if(!isNaN(RN)&&num(r.rounds)>RN)w.push(fmt(r.rounds,0)+" vòng");
   if(!isNaN(RR)&&!(num(r.rare_recall)>=RR))w.push("recall hiếm "+fmt(r.rare_recall));
+  if(!isNaN(MI)&&!(num(r.mia_auc)<MI))w.push(isNaN(num(r.mia_auc))?"chưa đo MIA":"MIA "+fmt(r.mia_auc));
   return {...r,e,w}});
  const ok=rs.filter(r=>!r.w.length);ok.forEach(r=>r.front=!ok.some(o=>o!==r&&dom(o,r)));
  rs.sort((a,b)=>(a.w.length?1:0)-(b.w.length?1:0)||(b.front?1:0)-(a.front?1:0)||num(b[P])-num(a[P]));

@@ -58,6 +58,7 @@
    "rounds": 30.0,
    "bytes_total": 126676800.0,
    "eps_one_honest": "inf",
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -98,6 +99,7 @@
    "rounds": 30.0,
    "bytes_total": 43732800.0,
    "eps_one_honest": 0.996977369540466,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -140,6 +142,7 @@
    "rounds": 30.0,
    "bytes_total": 43732800.0,
    "eps_one_honest": 4.997721462763728,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -185,6 +188,7 @@
    "rounds": 30.0,
    "bytes_total": 43732800.0,
    "eps_one_honest": 9.997649611053417,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -202,6 +206,7 @@
     "MGd-eps5",
     "MGl-eps10",
     "MGl-eps5",
+    "MGr-eps10",
     "MGs-eps10",
     "MGs-eps5"
    ],
@@ -242,10 +247,13 @@
    "rounds": 30.0,
    "bytes_total": 191995080.0,
    "eps_one_honest": "inf",
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
-   "dominated_by": [],
-   "pareto": true
+   "dominated_by": [
+    "MGr-eps10"
+   ],
+   "pareto": false
   },
   {
    "label": "M3-eps5",
@@ -282,6 +290,7 @@
    "rounds": 30.0,
    "bytes_total": 67578420.0,
    "eps_one_honest": 4.997721462763728,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -328,6 +337,7 @@
    "rounds": 30.0,
    "bytes_total": 43732800.0,
    "eps_one_honest": 0.996977369540466,
+   "eps_honest": {},
    "valid": false,
    "invalid_reason": "per-class residual std from train data without DP",
    "dominated_by": [],
@@ -368,6 +378,7 @@
    "rounds": 30.0,
    "bytes_total": 43732800.0,
    "eps_one_honest": 4.997721462763728,
+   "eps_honest": {},
    "valid": false,
    "invalid_reason": "per-class residual std from train data without DP",
    "dominated_by": [],
@@ -408,6 +419,7 @@
    "rounds": 30.0,
    "bytes_total": 43732800.0,
    "eps_one_honest": 9.997649611053417,
+   "eps_honest": {},
    "valid": false,
    "invalid_reason": "per-class residual std from train data without DP",
    "dominated_by": [],
@@ -448,6 +460,7 @@
    "rounds": 30.0,
    "bytes_total": 67578420.0,
    "eps_one_honest": 4.997721462763728,
+   "eps_honest": {},
    "valid": false,
    "invalid_reason": "per-class residual std from train data without DP",
    "dominated_by": [],
@@ -488,6 +501,7 @@
    "rounds": 30.0,
    "bytes_total": 41870400.0,
    "eps_one_honest": 9.996875573007175,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -500,6 +514,7 @@
     "MGd-eps5",
     "MGl-eps10",
     "MGl-eps5",
+    "MGr-eps10",
     "MGs-eps10",
     "MGs-eps5"
    ],
@@ -540,6 +555,7 @@
    "rounds": 30.0,
    "bytes_total": 41870400.0,
    "eps_one_honest": 9.996875573007175,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -556,6 +572,7 @@
     "MGd-eps5",
     "MGl-eps10",
     "MGl-eps5",
+    "MGr-eps10",
     "MGs-eps10",
     "MGs-eps5"
    ],
@@ -596,6 +613,7 @@
    "rounds": 50.0,
    "bytes_total": 26776000.0,
    "eps_one_honest": 4.999378729000501,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -640,6 +658,7 @@
    "rounds": 50.0,
    "bytes_total": 26776000.0,
    "eps_one_honest": 4.999378729000501,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -685,6 +704,7 @@
    "rounds": 30.0,
    "bytes_total": 41870400.0,
    "eps_one_honest": 0.9999506792200886,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -728,6 +748,7 @@
    "rounds": 30.0,
    "bytes_total": 41870400.0,
    "eps_one_honest": 0.9999506792200886,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -773,6 +794,7 @@
    "rounds": 30.0,
    "bytes_total": 64784610.0,
    "eps_one_honest": 9.996875573007175,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -783,6 +805,7 @@
     "MGd-eps1",
     "MGd-eps10",
     "MGd-eps5",
+    "MGr-eps10",
     "MGs-eps10",
     "MGs-eps5"
    ],
@@ -823,6 +846,7 @@
    "rounds": 30.0,
    "bytes_total": 64784610.0,
    "eps_one_honest": 9.996875573007175,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -833,6 +857,7 @@
     "MGd-eps1",
     "MGd-eps10",
     "MGd-eps5",
+    "MGr-eps10",
     "MGs-eps10",
     "MGs-eps5"
    ],
@@ -873,6 +898,7 @@
    "rounds": 50.0,
    "bytes_total": 43460100.0,
    "eps_one_honest": 4.999378729000501,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -918,6 +944,7 @@
    "rounds": 50.0,
    "bytes_total": 43460100.0,
    "eps_one_honest": 4.999378729000501,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -961,6 +988,7 @@
    "rounds": 30.0,
    "bytes_total": 64785879.99999999,
    "eps_one_honest": 0.9999506792200886,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -1003,6 +1031,7 @@
    "rounds": 30.0,
    "bytes_total": 64785879.99999999,
    "eps_one_honest": 0.9999506792200886,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -1045,6 +1074,13 @@
    "rounds": 3.0,
    "bytes_total": 1161701.8763955494,
    "eps_one_honest": 36.038479294722855,
+   "eps_honest": {
+    "1": 36.038479294722855,
+    "2": 19.75167330508281,
+    "3": 14.0833050925798,
+    "4": 11.506011337886932,
+    "5": 9.99999458023253
+   },
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1085,6 +1121,7 @@
    "rounds": 3.0,
    "bytes_total": 1319345.27216349,
    "eps_one_honest": 2.293612871782914,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1125,6 +1162,7 @@
    "rounds": 3.0,
    "bytes_total": 918592.6553749384,
    "eps_one_honest": 26.64575623750813,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1165,6 +1203,7 @@
    "rounds": 3.0,
    "bytes_total": 828200.5190784738,
    "eps_one_honest": 12.4230686231219,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1205,6 +1244,7 @@
    "rounds": 3.0,
    "bytes_total": 1561300.3465828,
    "eps_one_honest": 1.0000000000000009,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
@@ -1247,6 +1287,7 @@
    "rounds": 3.0,
    "bytes_total": 927080.1799098178,
    "eps_one_honest": 10.000000000000002,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1287,10 +1328,107 @@
    "rounds": 3.0,
    "bytes_total": 832080.5302944186,
    "eps_one_honest": 5.000000000000005,
+   "eps_honest": {},
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [
     "MGd-eps5"
+   ],
+   "pareto": false
+  },
+  {
+   "label": "MGr-eps1",
+   "method": "MG",
+   "variant": "standard",
+   "optimised": true,
+   "dp": true,
+   "secagg": true,
+   "dp_mode": "distributed",
+   "eps_target": 1.0,
+   "eps": 0.9999998342281304,
+   "tstr_config": "MGr-eps1-TSTR-rf",
+   "tstr_classifier": "rf",
+   "n_seeds": 3,
+   "tstr_f1": 0.3893990943141031,
+   "tstr_f1_std": 0.0095371942854061,
+   "bin_f1": 0.8747844202184053,
+   "bin_f1_std": 0.0107863575461944,
+   "rare_recall": 0.2529666666666667,
+   "rare_recall_std": 0.01192660424801999,
+   "taug_config": "MGr-eps1-TAug-rf",
+   "taug_classifier": "rf",
+   "taug_gain": -0.0020560088275203836,
+   "taug_gain_std": 0.0009637395450937,
+   "taugr_config": null,
+   "taugr_classifier": null,
+   "taugr_gain": null,
+   "taugr_gain_std": null,
+   "taugr_ratio": null,
+   "mia_auc": 0.51379048,
+   "c2st": 0.999641261234568,
+   "bytes_per_round": 201436.77777777772,
+   "fl_total_s": 20.15320983333247,
+   "rounds": 3.0,
+   "bytes_total": 604310.3333333331,
+   "eps_one_honest": 2.426914426490092,
+   "eps_honest": {
+    "1": 2.426914426490092,
+    "2": 1.6515809726325823,
+    "3": 1.3218314889366605,
+    "4": 1.129344358247398,
+    "5": 0.9999998342281304
+   },
+   "valid": true,
+   "invalid_reason": null,
+   "dominated_by": [],
+   "pareto": true
+  },
+  {
+   "label": "MGr-eps10",
+   "method": "MG",
+   "variant": "standard",
+   "optimised": true,
+   "dp": true,
+   "secagg": true,
+   "dp_mode": "distributed",
+   "eps_target": 10.0,
+   "eps": 9.99999458023253,
+   "tstr_config": "MGr-eps10-TSTR-mlp",
+   "tstr_classifier": "mlp",
+   "n_seeds": 3,
+   "tstr_f1": 0.4327417310836014,
+   "tstr_f1_std": 0.0075418242601213,
+   "bin_f1": 0.9152465480277652,
+   "bin_f1_std": 0.0066223791149236,
+   "rare_recall": 0.3181666666666667,
+   "rare_recall_std": 0.005140417190159687,
+   "taug_config": "MGr-eps10-TAug-rf",
+   "taug_classifier": "rf",
+   "taug_gain": 0.0012627456907466916,
+   "taug_gain_std": 0.0013165606598962,
+   "taugr_config": null,
+   "taugr_classifier": null,
+   "taugr_gain": null,
+   "taugr_gain_std": null,
+   "taugr_ratio": null,
+   "mia_auc": 0.53133505,
+   "c2st": 0.9995019850617284,
+   "bytes_per_round": 157570.77777777778,
+   "fl_total_s": 22.136792266666514,
+   "rounds": 3.0,
+   "bytes_total": 472712.3333333334,
+   "eps_one_honest": 36.038479294722855,
+   "eps_honest": {
+    "1": 36.038479294722855,
+    "2": 19.75167330508281,
+    "3": 14.0833050925798,
+    "4": 11.506011337886932,
+    "5": 9.99999458023253
+   },
+   "valid": true,
+   "invalid_reason": null,
+   "dominated_by": [
+    "MGs-eps10"
    ],
    "pareto": false
   },
@@ -1329,10 +1467,19 @@
    "rounds": 3.0,
    "bytes_total": 604310.3333333331,
    "eps_one_honest": 2.426914426490092,
+   "eps_honest": {
+    "1": 2.426914426490092,
+    "2": 1.6515809726325823,
+    "3": 1.3218314889366605,
+    "4": 1.129344358247398,
+    "5": 0.9999998342281304
+   },
    "valid": true,
    "invalid_reason": null,
-   "dominated_by": [],
-   "pareto": true
+   "dominated_by": [
+    "MGr-eps1"
+   ],
+   "pareto": false
   },
   {
    "label": "MGs-eps10",
@@ -1369,6 +1516,13 @@
    "rounds": 3.0,
    "bytes_total": 472755.3333333334,
    "eps_one_honest": 36.038479294722855,
+   "eps_honest": {
+    "1": 36.038479294722855,
+    "2": 19.75167330508281,
+    "3": 14.0833050925798,
+    "4": 11.506011337886932,
+    "5": 9.99999458023253
+   },
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1409,6 +1563,13 @@
    "rounds": 3.0,
    "bytes_total": 448121.3333333334,
    "eps_one_honest": 14.218642676630964,
+   "eps_honest": {
+    "1": 14.218642676630964,
+    "2": 8.844253268078903,
+    "3": 6.833204548508295,
+    "4": 5.710765301042703,
+    "5": 4.999997979927501
+   },
    "valid": true,
    "invalid_reason": null,
    "dominated_by": [],
@@ -1513,13 +1674,12 @@
  ],
  "front": [
   "B3",
-  "M2",
   "MGb-eps10",
   "MGd-eps1",
   "MGd-eps10",
   "MGd-eps5",
   "MGl-eps10",
-  "MGs-eps1",
+  "MGr-eps1",
   "MGs-eps10",
   "MGs-eps5"
  ],
@@ -1927,6 +2087,34 @@
    "rare_recall_effect": "better",
    "taug_gain": 0.00036819885444822065,
    "taug_gain_effect": "no change",
+   "taugr_gain": null,
+   "taugr_gain_effect": "no change"
+  },
+  {
+   "label": "MGr-eps1",
+   "baseline": "M1-eps1",
+   "tstr_f1": 0.1623710622096169,
+   "tstr_f1_effect": "better",
+   "bin_f1": 0.06956713282538174,
+   "bin_f1_effect": "better",
+   "rare_recall": 0.12068333333333334,
+   "rare_recall_effect": "better",
+   "taug_gain": -0.0025313241325665703,
+   "taug_gain_effect": "worse",
+   "taugr_gain": null,
+   "taugr_gain_effect": "no change"
+  },
+  {
+   "label": "MGr-eps10",
+   "baseline": "M1-eps10",
+   "tstr_f1": 0.18956681319246882,
+   "tstr_f1_effect": "better",
+   "bin_f1": 0.08780012460670628,
+   "bin_f1_effect": "better",
+   "rare_recall": 0.20615000000000006,
+   "rare_recall_effect": "better",
+   "taug_gain": 0.0013481798233458964,
+   "taug_gain_effect": "better",
    "taugr_gain": null,
    "taugr_gain_effect": "no change"
   },

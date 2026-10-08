@@ -796,6 +796,59 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     L += ["**Not tested here:** real devices or a real network; clients that drop out during SecAgg; "
           + (f"a number of clients other than {nc}" if nc else "a different number of clients") + "; M3 with an epsilon other than 5; a deployment whose rare classes are rarer or less rare than the quotas of this study (extension A2 was not run); "
           "a classifier trained by FL (9.9).", ""]
+    return L + _guide_o4(cfg)
+
+
+def _guide_o4(cfg: dict[str, Any]) -> list[str]:
+    """Section 9.10, part 2 (optimisation round O4): the deployment requirements of `ppfeddata recommend` with FedDP-Marginal and the
+    federation / 11-class robustness of `ppfeddata robustness`. Read from results/recommend.json and results/robustness.json."""
+    import json as _json
+    from pathlib import Path as _P
+
+    res = _P(cfg["compute"]["runs_csv"]).parent
+    rec = _json.loads((res / "recommend.json").read_text(encoding="utf-8")) if (res / "recommend.json").exists() else None
+    rob = _json.loads((res / "robustness.json").read_text(encoding="utf-8")) if (res / "robustness.json").exists() else None
+    if not rec and not rob:
+        return []
+    num = lambda x, d=3: "n/a" if x is None or x != x else f"{x:.{d}f}"      # noqa: E731
+    L = ["#### 9.10b After the optimisation round: FedDP-Marginal per deployment requirement", "",
+         "The optimisation round replaced the CVAE by FedDP-Marginal (federated DP marginals with a Chow-Liu tree, Skellam noise split over the clients "
+         "and summed by Flower SecAgg+; SPEC_DEVIATIONS O2.3-O3.3). `ppfeddata recommend` filters the valid configurations of the scorecard by the requirement "
+         "of an IoT / MQTT deployment and picks from their front; every number below is read from `results/recommend.json` (TSTR on the real test split, mean over seeds).", ""]
+    if rec:
+        rows = []
+        for r in rec:
+            q, b = r["requirement"], r.get("best")
+            need = [("server untrusted" if not q["trust_server"] else "server trusted"),
+                    (f"≥ {q['honest_clients']} honest clients" if q.get("honest_clients") else ("clients may collude" if not q["trust_clients"] else "clients trusted")),
+                    f"ε ≤ {q['max_eps']:g}" if q.get("max_eps") else "no DP needed"]
+            if q.get("max_mb_total"):
+                need.append(f"≤ {q['max_mb_total']:g} MB in total")
+            if q.get("max_mia"):
+                need.append(f"MIA AUC < {q['max_mia']:g}")
+            rows.append({"scenario": q["name"], "requirement": ", ".join(need) + f"; priority {q['priority']}",
+                         "recommended": b["label"] if b else "none", "TSTR macro-F1": num(b and b.get("tstr_f1")), "rare recall": num(b and b.get("rare_recall")),
+                         "ε that holds": num(b and b.get("eps_eff"), 2), "MB per run": num(b and b.get("mb_total"), 2),
+                         "ties": ", ".join(r.get("ties_with_best") or []) or "-"})
+        L += [_table(rows), ""]
+    if rob:
+        fd = {r["config"]: r for r in rob.get("federation_distributed", [])}
+        fl = {r["config"]: r for r in rob.get("federation_local", [])}
+        e11 = {r["config"]: r for r in rob.get("eleven_classes", [])}
+        L += ["**What the IoT / MQTT setting changes** (`results/reports/robustness.md`):", ""]
+        if fd:
+            vals = [r["tstr_f1"] for r in fd.values()]
+            oh = {int(r["num_clients"]): r.get("eps_one_honest") for r in fd.values() if r.get("num_clients") == r.get("num_clients")}
+            L += [f"- **Non-IID degree and number of gateways do not change the distributed generator** (ε 5, Dirichlet α 0.1-10, 5-20 clients: TSTR macro-F1 "
+                  f"{min(vals):.3f}-{max(vals):.3f}), because only sums over the clients are released. What changes is the trust: each client adds 1/K of the noise, so "
+                  "the ε that holds when only one client is honest grows with K (" + ", ".join(f"K {k}: {num(v, 1)}" for k, v in sorted(oh.items())) + ")."]
+        if fl:
+            L += ["- **Local DP (no trust in the other clients) pays for the number of clients:** every client adds the full noise, so the sum carries K times the variance (ε 5, "
+                  + ", ".join(f"{k}: {num(r['tstr_f1'])}" for k, r in fl.items()) + ")."]
+        if e11:
+            L += ["- **11 classes (DoS and DDoS separated):** " + ", ".join(f"{k} {num(r['tstr_f1'])}" for k, r in e11.items())
+                  + "; DoS and DDoS of the same attack are near chance even for real data (C5), so the 6-class mode remains the main one."]
+        L += [""]
     return L
 
 

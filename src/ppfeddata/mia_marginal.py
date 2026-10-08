@@ -35,9 +35,11 @@ def fit_score(X, y, idx_fit, schema, eps, delta, setting: dict[str, Any], K: int
     opts = dict(setting.get("options") or {})
     kw = {"bins": int(opts.pop("bins", setting["bins"])), "split": opts.pop("split", setting["split"])}
     parts = _split(idx_fit, K, seed)
-    if setting.get("options") is None:                       # the tree of O2
+    if setting.get("options") is None:                       # the tree of O2 (with the post-processing of O3.3 for MGr)
         m = mg.fit(X, y, parts, schema, eps, delta, seed=seed, mechanism="skellam", **kw)
-        return bn.loglik_tree(m, X, y)
+        if setting.get("refine"):
+            m = mg.refine(m, **setting["refine"])
+        return bn.loglik_tree(m, X, y, alpha=m.info.get("alpha", 1.0))
     m = bn.fit(X, y, parts, schema, eps, delta, seed=seed, mechanism="skellam", **kw, **opts)
     return bn.loglik(m, X, y)
 
@@ -61,14 +63,18 @@ def default_settings(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
     """The released configurations: MGs (tree, settings of configs/best_marginal.yaml) at every epsilon, and MGb where O3(b) chose options."""
     import yaml
 
-    from ppfeddata.tune_marginal import BEST_PATH, BN_PATH
+    from ppfeddata.tune_marginal import BEST_PATH, BN_PATH, REFINE_PATH
 
     best = yaml.safe_load(BEST_PATH.read_text(encoding="utf-8"))["searches"]
     bnb = yaml.safe_load(BN_PATH.read_text(encoding="utf-8"))["searches"] if BN_PATH.exists() else {}
+    rfb = yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8"))["searches"] if REFINE_PATH.exists() else {}
     out = {}
     for e in cfg["dp"]["epsilons"]:
         b = best[f"eps{float(e):g}"]["best"]
         out[f"MGs-eps{float(e):g}"] = {"eps": float(e), "bins": int(b["bins"]), "split": list(b["split"]), "options": None}
+        ref = (rfb.get(f"eps{float(e):g}") or {}).get("chosen")
+        if ref is not None:
+            out[f"MGr-eps{float(e):g}"] = {"eps": float(e), "bins": int(b["bins"]), "split": list(b["split"]), "options": None, "refine": dict(ref)}
         opts = (bnb.get(f"eps{float(e):g}") or {}).get("chosen_options")
         if opts is not None:
             out[f"MGb-eps{float(e):g}"] = {"eps": float(e), "bins": int(b["bins"]), "split": list(b["split"]), "options": dict(opts)}

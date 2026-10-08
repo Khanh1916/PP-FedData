@@ -57,3 +57,18 @@ def test_files_are_written(tmp_path):
     assert "## consortium" in md and "Recommended:" in md
     html = (tmp_path / "reports" / "recommend.html").read_text(encoding="utf-8")
     assert "__ROWS__" not in html and "MGd-eps5" in html and json.loads((tmp_path / "recommend.json").read_text(encoding="utf-8"))
+
+
+def test_honest_clients_use_the_measured_curve_and_mia_limit_excludes():
+    extra = _gen("MGd-eps5", 0.38, 0.38, eps=5.0, bytes_=3e5)
+    for r in extra:
+        r.update(rounds_mean=3.0, dp_eps_one_honest_mean=12.4, dp_eps_honest_3_mean=6.8, dp_eps_honest_5_mean=5.0)
+    s = pd.concat([_summary(), pd.DataFrame(extra)], ignore_index=True)
+    card = sc._from_json(json.loads(json.dumps(sc._jsonable(sc.build(s, rare=RARE)))))
+    ok = {x["label"]: x for x in rc.recommend(card, rc.Requirement("x", False, True, 10.0, honest_clients=3))["meets"]}
+    assert ok["MGd-eps5"]["eps_eff"] == 6.8
+    rej = {x["label"]: x["rejected_because"] for x in rc.recommend(card, rc.Requirement("x", False, True, 5.0, honest_clients=3))["rejected"]}
+    assert "6.8" in rej["MGd-eps5"][0]
+    mia = rc.recommend(card, rc.Requirement("x", max_mia=0.55))
+    assert all("membership attack not measured" in x["rejected_because"] or any("MIA" in w for w in x["rejected_because"]) for x in mia["rejected"]
+               if x["label"] == "MGd-eps5")

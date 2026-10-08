@@ -103,7 +103,7 @@ def optimised_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
     out = []
     for p in prefixes:
         base = p[:-len("-plain")] if p.endswith("-plain") else p
-        g = re.match(r"MG(?P<kind>[dlsb])-eps(?P<eps>[0-9.]+)$", base)
+        g = re.match(r"MG(?P<kind>[dlsbr])-eps(?P<eps>[0-9.]+)$", base)
         if g:                                                    # O3: marginal generator, distributed (SecAgg) or local DP
             out.append(dict(label=base, eps=float(g["eps"]), cfgs=gen(p), optimised=True, plain=False, method="MG", secagg=g["kind"] != "l",
                             dp_mode="local" if g["kind"] == "l" else "distributed"))
@@ -167,6 +167,8 @@ def candidate_rows(summ: pd.DataFrame, df: pd.DataFrame | None = None, mia: dict
             r[c] = _val(rt, c)[0]
         r["bytes_total"] = r["bytes_per_round"] * r["rounds"]          # one round of DP-FedSGD is one step: compare the whole run too
         r["eps_one_honest"] = float(rt.get("dp_eps_one_honest_mean", math.nan)) if r["dp_mode"] == "distributed" else r["eps"]
+        r["eps_honest"] = {h: float(rt[f"dp_eps_honest_{h}_mean"]) for h in range(1, 21)                     # O4: epsilon with h honest clients
+                           if f"dp_eps_honest_{h}_mean" in rt.index and not pd.isna(rt[f"dp_eps_honest_{h}_mean"])} if r["dp_mode"] == "distributed" else {}
         r["valid"] = not (e.get("twin") and r["dp"])
         r["invalid_reason"] = "per-class residual std from train data without DP" if not r["valid"] else None
         rows.append(r)

@@ -184,7 +184,7 @@ def main(grid: Grid, context: Context) -> None:
                             clipping_range=p["clipping_range"], quantization_range=p["quantization_range"], modulus_range=p["modulus_range"])
     (rdir / "mg_rounds.jsonl").unlink(missing_ok=True)
     out: dict[str, list[np.ndarray]] = {}
-    maps = edges = None
+    maps = edges = W = None
     n_cells = 0
     for i, stage in enumerate(mg.STAGES, start=1):
         strategy.payload = json.dumps({"stage": stage, "scale": scales[stage], "maps": [m.tolist() for m in maps] if maps is not None else None,
@@ -215,9 +215,10 @@ def main(grid: Grid, context: Context) -> None:
         if stage == "fine":
             maps = mg.coarse_maps(tabs, attrs, int(sp["bins"]))
         elif stage == "pairs":
-            edges = mg.tree_from_pairs(tabs, A)
+            W = mg.mi_matrix(tabs, A)
+            edges = mg.max_spanning_tree(W)
     model = mg.assemble(attrs, k, clip, out["fine"], maps, edges, out["edges"], scales, float(sp["eps"]), float(sp["delta"]), float(sp["noise_share"]),
-                        sp["mechanism"], int(sp["bins"]), sp["split"], K, n_cells)
+                        sp["mechanism"], int(sp["bins"]), sp["split"], K, n_cells, mi=W)
     model.info["eps_by_honest_clients"] = mg.eps_honest_curve(scales, A, float(sp["delta"]), K, sp["mechanism"])
     with open(rdir / "mg_model.pkl", "wb") as fh:
         pickle.dump(model, fh)

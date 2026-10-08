@@ -10,28 +10,45 @@
    "max_rounds": null,
    "priority": "macro",
    "min_rare_recall": null,
-   "note": "one operator owns the server and every gateway (in-house IDS lab): no DP needed, best detection"
+   "note": "one operator owns the server and every gateway (in-house IDS lab): no DP needed, best detection",
+   "honest_clients": null,
+   "max_mia": null
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-eps10",
+   "label": "MGr-eps10",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
    "eps_eff": 9.99999458023253,
-   "tstr_f1": 0.4285058147054687,
-   "tstr_f1_std": 0.0077193655804001,
-   "bin_f1": 0.9058194443750892,
-   "rare_recall": 0.3306166666666666,
-   "mb_round": 0.15758511111111112,
+   "tstr_f1": 0.4327417310836014,
+   "tstr_f1_std": 0.0075418242601213,
+   "bin_f1": 0.9152465480277652,
+   "rare_recall": 0.3181666666666667,
+   "mb_round": 0.15757077777777778,
    "rounds": 3.0,
-   "mb_total": 0.47275533333333336
+   "mb_total": 0.47271233333333335
   },
   "ties_with_best": [
+   "MGs-eps10",
    "B3"
   ],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
   "front": [
+   {
+    "label": "MGr-eps10",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 9.99999458023253,
+    "tstr_f1": 0.4327417310836014,
+    "tstr_f1_std": 0.0075418242601213,
+    "bin_f1": 0.9152465480277652,
+    "rare_recall": 0.3181666666666667,
+    "mb_round": 0.15757077777777778,
+    "rounds": 3.0,
+    "mb_total": 0.47271233333333335
+   },
    {
     "label": "MGs-eps10",
     "method": "MG",
@@ -75,20 +92,6 @@
     "mb_total": 0.8282005190784738
    },
    {
-    "label": "M2",
-    "method": "M2",
-    "dp_mode": null,
-    "secagg": true,
-    "eps_eff": "inf",
-    "tstr_f1": 0.4166270409724761,
-    "tstr_f1_std": 0.0059623501915198,
-    "bin_f1": 0.9235167618831222,
-    "rare_recall": 0.30773333333333336,
-    "mb_round": 6.399836,
-    "rounds": 30.0,
-    "mb_total": 191.99508
-   },
-   {
     "label": "MGs-eps5",
     "method": "MG",
     "dp_mode": "distributed",
@@ -103,15 +106,15 @@
     "mb_total": 0.44812133333333337
    },
    {
-    "label": "MGs-eps1",
+    "label": "MGr-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3421473519639738,
-    "tstr_f1_std": 0.0080070146790652,
-    "bin_f1": 0.824683212008862,
-    "rare_recall": 0.18853333333333333,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
     "mb_round": 0.20143677777777771,
     "rounds": 3.0,
     "mb_total": 0.6043103333333332
@@ -119,6 +122,7 @@
   ],
   "meets": [
    "MGb-eps10",
+   "MGr-eps10",
    "MGs-eps10",
    "MGd-eps10",
    "B3",
@@ -126,6 +130,7 @@
    "M2",
    "MGl-eps10",
    "MGs-eps5",
+   "MGr-eps1",
    "MGl-eps5",
    "MGd-eps1",
    "MGs-eps1",
@@ -160,7 +165,9 @@
    "max_rounds": null,
    "priority": "macro",
    "min_rare_recall": null,
-   "note": "gateways of one company, aggregation in a third-party cloud: server not trusted, epsilon <= 5"
+   "note": "gateways of one company, aggregation in a third-party cloud: server not trusted, epsilon <= 5",
+   "honest_clients": null,
+   "max_mia": null
   },
   "priority_metric": "tstr_f1",
   "best": {
@@ -211,15 +218,15 @@
     "mb_total": 0.44812133333333337
    },
    {
-    "label": "MGs-eps1",
+    "label": "MGr-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3421473519639738,
-    "tstr_f1_std": 0.0080070146790652,
-    "bin_f1": 0.824683212008862,
-    "rare_recall": 0.18853333333333333,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
     "mb_round": 0.20143677777777771,
     "rounds": 3.0,
     "mb_total": 0.6043103333333332
@@ -228,6 +235,7 @@
   "meets": [
    "MGd-eps5",
    "MGs-eps5",
+   "MGr-eps1",
    "MGl-eps5",
    "MGd-eps1",
    "MGs-eps1",
@@ -276,6 +284,9 @@
    "MGl-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGr-eps10": [
+    "epsilon 10 > 5"
+   ],
    "MGs-eps10": [
     "epsilon 10 > 5"
    ]
@@ -292,7 +303,9 @@
    "max_rounds": null,
    "priority": "macro",
    "min_rare_recall": null,
-   "note": "brokers of different companies that may collude with the aggregator: epsilon must hold with one honest client"
+   "note": "brokers of different companies that may collude with the aggregator: epsilon must hold with one honest client",
+   "honest_clients": null,
+   "max_mia": null
   },
   "priority_metric": "tstr_f1",
   "best": {
@@ -327,18 +340,18 @@
     "mb_total": 0.9270801799098177
    },
    {
-    "label": "MGl-eps5",
+    "label": "MGr-eps1",
     "method": "MG",
-    "dp_mode": "local",
-    "secagg": false,
-    "eps_eff": 5.000000000000005,
-    "tstr_f1": 0.3740031716604591,
-    "tstr_f1_std": 0.0104592736413326,
-    "bin_f1": 0.8662291511526465,
-    "rare_recall": 0.22551666666666667,
-    "mb_round": 0.27736017676480623,
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 2.426914426490092,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
+    "mb_round": 0.20143677777777771,
     "rounds": 3.0,
-    "mb_total": 0.8320805302944185
+    "mb_total": 0.6043103333333332
    },
    {
     "label": "MGd-eps1",
@@ -353,34 +366,6 @@
     "mb_round": 0.43978175738783,
     "rounds": 3.0,
     "mb_total": 1.31934527216349
-   },
-   {
-    "label": "MGs-eps1",
-    "method": "MG",
-    "dp_mode": "distributed",
-    "secagg": true,
-    "eps_eff": 2.426914426490092,
-    "tstr_f1": 0.3421473519639738,
-    "tstr_f1_std": 0.0080070146790652,
-    "bin_f1": 0.824683212008862,
-    "rare_recall": 0.18853333333333333,
-    "mb_round": 0.20143677777777771,
-    "rounds": 3.0,
-    "mb_total": 0.6043103333333332
-   },
-   {
-    "label": "M3o-eps5 (plain)",
-    "method": "M3",
-    "dp_mode": "local",
-    "secagg": true,
-    "eps_eff": 4.999378729000501,
-    "tstr_f1": 0.2723689641437431,
-    "tstr_f1_std": 0.0168081031136906,
-    "bin_f1": 0.8474238004867143,
-    "rare_recall": 0.15685000000000002,
-    "mb_round": 0.869202,
-    "rounds": 50.0,
-    "mb_total": 43.4601
    },
    {
     "label": "MGl-eps1",
@@ -441,6 +426,7 @@
   ],
   "meets": [
    "MGl-eps10",
+   "MGr-eps1",
    "MGl-eps5",
    "MGd-eps1",
    "MGs-eps1",
@@ -479,6 +465,9 @@
    "MGd-eps5": [
     "epsilon 12.4 > 10"
    ],
+   "MGr-eps10": [
+    "epsilon 36 > 10"
+   ],
    "MGs-eps10": [
     "epsilon 36 > 10"
    ],
@@ -498,19 +487,21 @@
    "max_rounds": null,
    "priority": "macro",
    "min_rare_recall": null,
-   "note": "sensitive deployments (e.g. healthcare IoT): epsilon <= 1"
+   "note": "sensitive deployments (e.g. healthcare IoT): epsilon <= 1",
+   "honest_clients": null,
+   "max_mia": null
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-eps1",
+   "label": "MGr-eps1",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
    "eps_eff": 0.9999998342281304,
-   "tstr_f1": 0.3421473519639738,
-   "tstr_f1_std": 0.0080070146790652,
-   "bin_f1": 0.824683212008862,
-   "rare_recall": 0.18853333333333333,
+   "tstr_f1": 0.3893990943141031,
+   "tstr_f1_std": 0.0095371942854061,
+   "bin_f1": 0.8747844202184053,
+   "rare_recall": 0.2529666666666667,
    "mb_round": 0.20143677777777771,
    "rounds": 3.0,
    "mb_total": 0.6043103333333332
@@ -519,21 +510,22 @@
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 1",
   "front": [
    {
-    "label": "MGs-eps1",
+    "label": "MGr-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3421473519639738,
-    "tstr_f1_std": 0.0080070146790652,
-    "bin_f1": 0.824683212008862,
-    "rare_recall": 0.18853333333333333,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
     "mb_round": 0.20143677777777771,
     "rounds": 3.0,
     "mb_total": 0.6043103333333332
    }
   ],
   "meets": [
+   "MGr-eps1",
    "MGd-eps1",
    "MGs-eps1",
    "MGl-eps1",
@@ -599,6 +591,9 @@
    "MGl-eps5": [
     "epsilon 5 > 1"
    ],
+   "MGr-eps10": [
+    "epsilon 10 > 1"
+   ],
    "MGs-eps10": [
     "epsilon 10 > 1"
    ],
@@ -618,26 +613,44 @@
    "max_rounds": null,
    "priority": "macro",
    "min_rare_recall": null,
-   "note": "gateways on NB-IoT / LoRa / metered 4G backhaul"
+   "note": "gateways on NB-IoT / LoRa / metered 4G backhaul",
+   "honest_clients": null,
+   "max_mia": null
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-eps10",
+   "label": "MGr-eps10",
    "method": "MG",
    "dp_mode": "distributed",
    "secagg": true,
    "eps_eff": 9.99999458023253,
-   "tstr_f1": 0.4285058147054687,
-   "tstr_f1_std": 0.0077193655804001,
-   "bin_f1": 0.9058194443750892,
-   "rare_recall": 0.3306166666666666,
-   "mb_round": 0.15758511111111112,
+   "tstr_f1": 0.4327417310836014,
+   "tstr_f1_std": 0.0075418242601213,
+   "bin_f1": 0.9152465480277652,
+   "rare_recall": 0.3181666666666667,
+   "mb_round": 0.15757077777777778,
    "rounds": 3.0,
-   "mb_total": 0.47275533333333336
+   "mb_total": 0.47271233333333335
   },
-  "ties_with_best": [],
+  "ties_with_best": [
+   "MGs-eps10"
+  ],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
   "front": [
+   {
+    "label": "MGr-eps10",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 9.99999458023253,
+    "tstr_f1": 0.4327417310836014,
+    "tstr_f1_std": 0.0075418242601213,
+    "bin_f1": 0.9152465480277652,
+    "rare_recall": 0.3181666666666667,
+    "mb_round": 0.15757077777777778,
+    "rounds": 3.0,
+    "mb_total": 0.47271233333333335
+   },
    {
     "label": "MGs-eps10",
     "method": "MG",
@@ -681,15 +694,15 @@
     "mb_total": 0.44812133333333337
    },
    {
-    "label": "MGs-eps1",
+    "label": "MGr-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3421473519639738,
-    "tstr_f1_std": 0.0080070146790652,
-    "bin_f1": 0.824683212008862,
-    "rare_recall": 0.18853333333333333,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
     "mb_round": 0.20143677777777771,
     "rounds": 3.0,
     "mb_total": 0.6043103333333332
@@ -697,11 +710,13 @@
   ],
   "meets": [
    "MGb-eps10",
+   "MGr-eps10",
    "MGs-eps10",
    "MGd-eps10",
    "MGd-eps5",
    "MGl-eps10",
    "MGs-eps5",
+   "MGr-eps1",
    "MGl-eps5",
    "MGd-eps1",
    "MGs-eps1",
@@ -758,7 +773,9 @@
    "max_rounds": null,
    "priority": "rare",
    "min_rare_recall": null,
-   "note": "the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most"
+   "note": "the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most",
+   "honest_clients": null,
+   "max_mia": null
   },
   "priority_metric": "rare_recall",
   "best": {
@@ -809,15 +826,15 @@
     "mb_total": 0.8282005190784738
    },
    {
-    "label": "MGs-eps1",
+    "label": "MGr-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3421473519639738,
-    "tstr_f1_std": 0.0080070146790652,
-    "bin_f1": 0.824683212008862,
-    "rare_recall": 0.18853333333333333,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
     "mb_round": 0.20143677777777771,
     "rounds": 3.0,
     "mb_total": 0.6043103333333332
@@ -826,6 +843,7 @@
   "meets": [
    "MGs-eps5",
    "MGd-eps5",
+   "MGr-eps1",
    "MGl-eps5",
    "MGs-eps1",
    "MGd-eps1",
@@ -874,8 +892,174 @@
    "MGl-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGr-eps10": [
+    "epsilon 10 > 5"
+   ],
    "MGs-eps10": [
     "epsilon 10 > 5"
+   ]
+  }
+ },
+ {
+  "requirement": {
+   "name": "honest-majority",
+   "trust_server": false,
+   "trust_clients": true,
+   "max_eps": 10.0,
+   "max_mb_round": null,
+   "max_mb_total": null,
+   "max_rounds": null,
+   "priority": "macro",
+   "min_rare_recall": null,
+   "note": "brokers of 5 operators, at most 2 may collude with the aggregator; the released model must resist the membership attack (AUC < 0.55)",
+   "honest_clients": 3,
+   "max_mia": 0.55
+  },
+  "priority_metric": "tstr_f1",
+  "best": {
+   "label": "MGs-eps5",
+   "method": "MG",
+   "dp_mode": "distributed",
+   "secagg": true,
+   "eps_eff": 6.833204548508295,
+   "tstr_f1": 0.4083561734297294,
+   "tstr_f1_std": 0.0025025915386084,
+   "bin_f1": 0.9014290391662256,
+   "rare_recall": 0.29296666666666665,
+   "mb_round": 0.14937377777777777,
+   "rounds": 3.0,
+   "mb_total": 0.44812133333333337
+  },
+  "ties_with_best": [],
+  "command": "python -m ppfeddata.cli tune-marginal --final --eps 5",
+  "front": [
+   {
+    "label": "MGs-eps5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 6.833204548508295,
+    "tstr_f1": 0.4083561734297294,
+    "tstr_f1_std": 0.0025025915386084,
+    "bin_f1": 0.9014290391662256,
+    "rare_recall": 0.29296666666666665,
+    "mb_round": 0.14937377777777777,
+    "rounds": 3.0,
+    "mb_total": 0.44812133333333337
+   },
+   {
+    "label": "MGr-eps1",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "secagg": true,
+    "eps_eff": 1.3218314889366605,
+    "tstr_f1": 0.3893990943141031,
+    "tstr_f1_std": 0.0095371942854061,
+    "bin_f1": 0.8747844202184053,
+    "rare_recall": 0.2529666666666667,
+    "mb_round": 0.20143677777777771,
+    "rounds": 3.0,
+    "mb_total": 0.6043103333333332
+   },
+   {
+    "label": "M1-eps1",
+    "method": "M1",
+    "dp_mode": "local",
+    "secagg": false,
+    "eps_eff": 0.996977369540466,
+    "tstr_f1": 0.2270280321044862,
+    "tstr_f1_std": 0.0303133422147699,
+    "bin_f1": 0.8052172873930236,
+    "rare_recall": 0.13228333333333334,
+    "mb_round": 1.45776,
+    "rounds": 30.0,
+    "mb_total": 43.7328
+   }
+  ],
+  "meets": [
+   "MGs-eps5",
+   "MGr-eps1",
+   "MGs-eps1",
+   "M1-eps5",
+   "M1-eps10",
+   "M1-eps1"
+  ],
+  "rejected": {
+   "B3": [
+    "the server sees the client updates in the clear",
+    "no DP"
+   ],
+   "M2": [
+    "no DP",
+    "membership attack not measured"
+   ],
+   "M3-eps5": [
+    "membership attack not measured"
+   ],
+   "M1o-eps10": [
+    "membership attack not measured"
+   ],
+   "M1o-eps10 (plain)": [
+    "membership attack not measured"
+   ],
+   "M1o-eps5": [
+    "membership attack not measured"
+   ],
+   "M1o-eps5 (plain)": [
+    "membership attack not measured"
+   ],
+   "M1o-eps1": [
+    "membership attack not measured"
+   ],
+   "M1o-eps1 (plain)": [
+    "membership attack not measured"
+   ],
+   "M3o-eps10": [
+    "membership attack not measured"
+   ],
+   "M3o-eps10 (plain)": [
+    "membership attack not measured"
+   ],
+   "M3o-eps5": [
+    "membership attack not measured"
+   ],
+   "M3o-eps5 (plain)": [
+    "membership attack not measured"
+   ],
+   "M3o-eps1": [
+    "membership attack not measured"
+   ],
+   "M3o-eps1 (plain)": [
+    "membership attack not measured"
+   ],
+   "MGb-eps10": [
+    "epsilon 14.1 > 10"
+   ],
+   "MGd-eps1": [
+    "membership attack not measured"
+   ],
+   "MGd-eps10": [
+    "epsilon 26.6 > 10",
+    "membership attack not measured"
+   ],
+   "MGd-eps5": [
+    "epsilon 12.4 > 10",
+    "membership attack not measured"
+   ],
+   "MGl-eps1": [
+    "membership attack not measured"
+   ],
+   "MGl-eps10": [
+    "membership attack not measured"
+   ],
+   "MGl-eps5": [
+    "membership attack not measured"
+   ],
+   "MGr-eps10": [
+    "epsilon 14.1 > 10"
+   ],
+   "MGs-eps10": [
+    "epsilon 14.1 > 10"
    ]
   }
  }

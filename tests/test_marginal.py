@@ -92,6 +92,42 @@ def test_skellam_fit_releases_integers_and_reports_epsilon_by_honest_clients():
     assert Xs.shape == (300, 12)
 
 
+def test_reorient_keeps_the_tree_and_puts_parents_first():
+    e = [(0, 1), (1, 3), (3, 2), (0, 4)]
+    r = mg.reorient(e, 3)
+    assert {frozenset(x) for x in r} == {frozenset(x) for x in e} and r[0][0] == 3
+    placed = {3}
+    for a, b in r:
+        assert a in placed
+        placed.add(b)
+
+
+def test_fusion_reduces_the_error_of_the_marginals_and_refine_keeps_a_valid_sampler():
+    from ppfeddata.models import marginal_bn as bn
+    s = _schema()
+    X, y = synthetic_data(3000)
+    parts = [np.arange(0, 1000), np.arange(1000, 2000), np.arange(2000, 3000)]
+    exact = mg.fit(X, y, parts, s, eps=1e7, delta=1e-5, bins=8, mechanism="skellam")
+    truth = mg.fused_marginals(exact)
+    errs_fine, errs_fused = [], []
+    for seed in range(5):
+        m = mg.fit(X, y, parts, s, eps=1.0, delta=1e-5, bins=8, mechanism="skellam", seed=seed)
+        fm = mg.fused_marginals(m)
+        for j in range(len(m.attrs)):
+            fine = np.stack([np.bincount(m.maps[j], weights=m.fine[j][c], minlength=fm[j].shape[0]) for c in range(3)], 1)
+            if fine.shape == truth[j].shape and np.array_equal(m.maps[j], exact.maps[j]):
+                errs_fine.append(((fine - truth[j]) ** 2).mean())
+                errs_fused.append(((fm[j] - truth[j]) ** 2).mean())
+    assert errs_fused and np.mean(errs_fused) < np.mean(errs_fine)
+    m = mg.fit(X, y, parts, s, eps=5.0, delta=1e-5, bins=8, mechanism="skellam")
+    for kw in ({"fuse": True}, {"root": "mi"}, {"root": "mi", "fuse": True, "alpha": 0.1}):
+        r = mg.refine(m, **kw)
+        Xs, ys = mg.sample(r, s, [300, 300, 300], 0)
+        assert Xs.shape == (900, 12) and np.all(np.isfinite(bn.loglik_tree(r, X, y)))
+        assert np.mean(Xs[np.arange(900), 7 + ys] == 1) > 0.9
+    assert m.info["root"] == 0 and mg.refine(m, root="mi").info["root"] == int(np.argmax(np.asarray(m.info["mi"]).sum(1)))
+
+
 def test_mg_rows_in_the_scorecard():
     from ppfeddata import aggregate as ag
     from ppfeddata import scorecard as sc
@@ -113,3 +149,13 @@ def test_flower_encoding_keeps_integers_exact():
     p = mg_app.secagg_params({"fl": {"num_clients": 5}, "secagg": {}})["params"]
     assert p["quantization_range"] == 2 * p["clipping_range"]          # quantisation step 1: integers are not rounded
     assert 5 * p["quantization_range"] < p["modulus_range"] == 2 ** 32
+
+
+def test_robustness_names_and_report_render():
+    from ppfeddata import robustness as rb
+    from ppfeddata.tune_marginal import final_name
+    assert final_name("s", 5.0, "a0.1") == "MGs-a0.1-eps5" and final_name("s", 5.0) == "MGs-eps5"
+    r = {"config": "MGs-k20-eps5", "classifier": "rf", "n_seeds": 1, "tstr_f1": 0.4, "tstr_f1_std": 0.0, "bin_f1": 0.9, "rare_recall": 0.3,
+         "eps": 5.0, "eps_one_honest": 40.0, "num_clients": 20, "alpha": 0.5, "mb_per_run": 1.2}
+    md = rb.render({"federation_distributed": [r], "federation_local": [], "eleven_classes": [], "six_classes_reference": []})
+    assert "| MGs-k20-eps5 | rf | 1 | 0.400 ± 0.000 |" in md and "| 20 |" in md

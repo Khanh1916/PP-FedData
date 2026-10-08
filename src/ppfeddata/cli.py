@@ -158,6 +158,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_tm = sub.add_parser("tune-marginal", help="Optimisation O3: second generator = federated DP marginals + Chow-Liu tree; grid (coarse bins x budget split) per epsilon on validation (seed 0) -> configs/best_marginal.yaml; `--final`: every seed as MGd-eps<e> (distributed noise via SecAgg) and MGl-eps<e> (local DP)")
     p_tm.add_argument("--eps", nargs="+", type=float, default=None, help="default dp.epsilons")
     p_tm.add_argument("--final", action="store_true")
+    p_tm.add_argument("--refine", action="store_true", help="O3 extra: post-processing of the released tree (smoothing, fused marginals + IPF, root by mutual information), 3 seeds on validation -> configs/best_marginal_refine.yaml")
     p_tm.add_argument("--bn", action="store_true", help="O3(b): try the per-class Bayesian-network options one at a time and their combinations, 3 seeds on validation -> configs/best_marginal_bn.yaml")
     p_tm.add_argument("--seeds", nargs="+", type=int, default=None)
     p_tm.add_argument("--jobs", type=int, default=-1, help="RF jobs of the validation scoring")
@@ -170,8 +171,12 @@ def build_parser() -> argparse.ArgumentParser:
     p_rc.add_argument("--max-rounds", type=int, default=None)
     p_rc.add_argument("--priority", choices=["macro", "binary", "rare"], default="macro")
     p_rc.add_argument("--min-rare-recall", type=float, default=None)
+    p_rc.add_argument("--honest-clients", type=int, default=None, help="distributed DP must hold with only this many honest clients (measured curve)")
+    p_rc.add_argument("--max-mia", type=float, default=None, help="calibrated model-access MIA AUC must stay below this (not attacked = excluded)")
     p_mm = sub.add_parser("mia-marginal", help="Optimisation O3(a): membership inference with access to the released FedDP-Marginal tables (log-likelihood, calibrated by a reference model), positive controls without noise -> results/mia_marginal.json")
     p_mm.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_rb = sub.add_parser("robustness", help="Optimisation O4: FedDP-Marginal under other federations (Dirichlet alpha 0.1 / 10, 10 / 20 clients) and with 11 classes -> results/robustness.json, results/reports/robustness.md")
+    p_rb.add_argument("--report-only", action="store_true", help="only rewrite the report from the ledger")
     p_tr = sub.add_parser("taug-rare", help="Optimisation round: TAugR = real data + synthetic rows for the rare classes only, ratio chosen on validation (seed 0), from the saved synthetic sets of the scorecard generators -> results/runs.csv (`<prefix>-TAugR-<clf>`); run `aggregate` and `scorecard` after it")
     p_tr.add_argument("--prefixes", nargs="+", default=None, help="generator prefixes, default the valid rows of the scorecard")
     p_tr.add_argument("--seeds", nargs="+", type=int, default=None)
@@ -480,8 +485,12 @@ def main(argv: list[str] | None = None) -> None:
                 logger.info("O2 bandwidth: %s", run_m3o_level(c, a.m3_eps, lv, a.seeds))
 
     def cmd_tune_marginal(a):
-        from ppfeddata.tune_marginal import run_final, search, search_bn
+        from ppfeddata.tune_marginal import run_final, search, search_bn, search_refine
         c = load_config(a.config)
+        if a.refine:
+            for e, s_ in search_refine(c, a.eps, n_jobs=a.jobs)["searches"].items():
+                logger.info("MG-refine %s: chosen %s", e, s_["chosen"])
+            return
         if a.bn:
             for e, s_ in search_bn(c, a.eps, n_jobs=a.jobs)["searches"].items():
                 logger.info("MG-bn %s: chosen %s", e, s_["chosen"])
@@ -496,9 +505,9 @@ def main(argv: list[str] | None = None) -> None:
         from ppfeddata.recommend import Requirement, run
         c = load_config(a.config)
         custom = any([a.untrusted_server, a.untrusted_clients, a.max_eps is not None, a.max_mb_round is not None, a.max_mb_total is not None,
-                      a.max_rounds is not None, a.priority != "macro", a.min_rare_recall is not None])
+                      a.max_rounds is not None, a.priority != "macro", a.min_rare_recall is not None, a.honest_clients is not None, a.max_mia is not None])
         req = Requirement("custom", not a.untrusted_server, not a.untrusted_clients, a.max_eps, a.max_mb_round, a.max_mb_total, a.max_rounds,
-                          a.priority, a.min_rare_recall) if custom else None
+                          a.priority, a.min_rare_recall, honest_clients=a.honest_clients, max_mia=a.max_mia) if custom else None
         for r in run(c, req):
             b = r["best"]
             logger.info("%s: %s", r["requirement"]["name"], f"{b['label']} ({r['priority_metric']} {b.get(r['priority_metric']):.3f}, epsilon {b['eps_eff']:.3g}); "
@@ -509,6 +518,12 @@ def main(argv: list[str] | None = None) -> None:
         r = run_all(load_config(a.config), seeds=a.seeds)
         for n, v in {**r["controls"], **r["configs"]}.items():
             logger.info("%s: calibrated AUC %.3f, plain %.3f", n, v["calibrated"]["auc_mean"]["mean"], v["plain"]["auc_mean"]["mean"])
+
+    def cmd_robustness(a):
+        from ppfeddata.robustness import report, run
+        c = load_config(a.config)
+        out = report(c) if a.report_only else run(c)
+        logger.info("robustness: %d federation rows, %d local rows, %d 11-class rows", len(out["federation_distributed"]), len(out["federation_local"]), len(out["eleven_classes"]))
 
     def cmd_taug_rare(a):
         from ppfeddata.eval.taug_rare import run
@@ -577,6 +592,7 @@ def main(argv: list[str] | None = None) -> None:
         "secagg-bits": cmd_secagg_bits,
         "tune-marginal": cmd_tune_marginal,
         "recommend": cmd_recommend,
+        "robustness": cmd_robustness,
         "mia-marginal": cmd_mia_marginal,
         "accept": cmd_accept,
     }
