@@ -15,8 +15,8 @@ Requirement: server trusted **yes**, clients trusted **yes**, ε ≤ ∞, MB/rou
 | MGr-eps10 | 0.433 | 0.915 | 0.318 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
 | MGs-eps10 | 0.429 | 0.906 | 0.331 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
 | B3 | 0.420 | 0.929 | 0.367 | ∞ | no | no | 4.22 | 30 | 126.7 |
-| MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
 | MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 | MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
 ## cloud-aggregator
@@ -25,15 +25,15 @@ gateways of one company, aggregation in a third-party cloud: server not trusted,
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
 
-**Recommended: MGd-eps5** (ties within the seed std: MGs-eps5). Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
+**Recommended: MGs-eps5**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
-| MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
 | MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 | MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGr-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGr-eps10 (epsilon 10 > 5); MGs-cap25-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5); MGs-strm1-eps10 (epsilon 10 > 5); MGs-t2-eps10 (epsilon 10 > 5); MGs-t3-eps10 (epsilon 10 > 5).
 
 ## consortium
 
@@ -46,14 +46,15 @@ Requirement: server trusted **no**, clients trusted **no**, ε ≤ 10.0, MB/roun
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
 | MGl-eps10 | 0.413 | 0.899 | 0.306 | 10.00 | no | local | 0.31 | 3 | 0.9 |
-| MGr-eps1 | 0.389 | 0.875 | 0.253 | 2.43 | yes | distributed | 0.20 | 3 | 0.6 |
-| MGd-eps1 | 0.349 | 0.821 | 0.187 | 2.29 | yes | distributed | 0.44 | 3 | 1.3 |
+| MGs-t2-eps5 | 0.396 | 0.891 | 0.260 | 7.63 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.83 | yes | distributed | 0.20 | 3 | 0.6 |
+| MGr-t2-eps1 | 0.341 | 0.843 | 0.194 | 1.46 | yes | distributed | 0.21 | 3 | 0.6 |
 | MGl-eps1 | 0.253 | 0.773 | 0.087 | 1.00 | no | local | 0.52 | 3 | 1.6 |
 | M1-eps1 | 0.227 | 0.805 | 0.132 | 1.00 | no | local | 1.46 | 30 | 43.7 |
 | M3o-eps1 (plain) | 0.184 | 0.611 | 0.063 | 1.00 | yes | local | 2.16 | 30 | 64.8 |
 | M3o-eps1 | 0.170 | 0.688 | 0.037 | 1.00 | yes | local | 2.16 | 30 | 64.8 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP); MGb-eps10 (epsilon 36 > 10); MGd-eps10 (epsilon 26.6 > 10); MGd-eps5 (epsilon 12.4 > 10); MGr-eps10 (epsilon 36 > 10); MGs-eps10 (epsilon 36 > 10); MGs-eps5 (epsilon 14.2 > 10).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP); MGb-eps10 (epsilon 36 > 10); MGd-eps10 (epsilon 26.6 > 10); MGd-eps5 (epsilon 12.4 > 10); MGr-eps10 (epsilon 36 > 10); MGs-cap25-eps10 (epsilon 27.5 > 10); MGs-cap25-eps5 (epsilon 13 > 10); MGs-eps10 (epsilon 36 > 10); MGs-eps5 (epsilon 14.2 > 10); MGs-strm1-eps10 (epsilon 36 > 10); MGs-strm2-eps5 (epsilon 13.3 > 10); MGs-t2-eps10 (epsilon 16.3 > 10); MGs-t3-eps10 (epsilon 23.3 > 10).
 
 ## strict-privacy
 
@@ -61,13 +62,14 @@ sensitive deployments (e.g. healthcare IoT): epsilon <= 1
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 1.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
 
-**Recommended: MGr-eps1**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 1`.
+**Recommended: MGr-t3-eps1** (ties within the seed std: MGr-eps1). Command: `python -m ppfeddata.cli privacy-units --stage final`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 | MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps5 (epsilon 5 > 1); M1-eps10 (epsilon 10 > 1); M2 (no DP); M3-eps5 (epsilon 5 > 1); M1o-eps10 (epsilon 10 > 1); M1o-eps10 (plain) (epsilon 10 > 1); M1o-eps5 (epsilon 5 > 1); M1o-eps5 (plain) (epsilon 5 > 1); M3o-eps10 (epsilon 10 > 1); M3o-eps10 (plain) (epsilon 10 > 1); M3o-eps5 (epsilon 5 > 1); M3o-eps5 (plain) (epsilon 5 > 1); MGb-eps10 (epsilon 10 > 1); MGd-eps10 (epsilon 10 > 1); MGd-eps5 (epsilon 5 > 1); MGl-eps10 (epsilon 10 > 1); MGl-eps5 (epsilon 5 > 1); MGr-eps10 (epsilon 10 > 1); MGs-eps10 (epsilon 10 > 1); MGs-eps5 (epsilon 5 > 1).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps5 (epsilon 5 > 1); M1-eps10 (epsilon 10 > 1); M2 (no DP); M3-eps5 (epsilon 5 > 1); M1o-eps10 (epsilon 10 > 1); M1o-eps10 (plain) (epsilon 10 > 1); M1o-eps5 (epsilon 5 > 1); M1o-eps5 (plain) (epsilon 5 > 1); M3o-eps10 (epsilon 10 > 1); M3o-eps10 (plain) (epsilon 10 > 1); M3o-eps5 (epsilon 5 > 1); M3o-eps5 (plain) (epsilon 5 > 1); MGb-eps10 (epsilon 10 > 1); MGd-eps10 (epsilon 10 > 1); MGd-eps5 (epsilon 5 > 1); MGl-eps10 (epsilon 10 > 1); MGl-eps5 (epsilon 5 > 1); MGr-eps10 (epsilon 10 > 1); MGs-cap25-eps10 (epsilon 10 > 1); MGs-cap25-eps5 (epsilon 5 > 1); MGs-eps10 (epsilon 10 > 1); MGs-eps5 (epsilon 5 > 1); MGs-strm1-eps10 (epsilon 10 > 1); MGs-strm2-eps5 (epsilon 5 > 1); MGs-t2-eps10 (epsilon 10 > 1); MGs-t2-eps5 (epsilon 5 > 1); MGs-t3-eps10 (epsilon 10 > 1); MGs-t3-eps5 (epsilon 5 > 1).
 
 ## low-bandwidth
 
@@ -81,8 +83,8 @@ Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 10.0, MB/rou
 |---|---|---|---|---|---|---|---|---|---|
 | MGr-eps10 | 0.433 | 0.915 | 0.318 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
 | MGs-eps10 | 0.429 | 0.906 | 0.331 | 10.00 | yes | distributed | 0.16 | 3 | 0.5 |
-| MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
 | MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 | MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
 Excluded: B3 (the server sees the client updates in the clear, no DP, 4.22 MB/round > 2, 127 MB in total > 100); M2 (no DP, 6.4 MB/round > 2, 192 MB in total > 100); M3-eps5 (2.25 MB/round > 2); M3o-eps10 (2.16 MB/round > 2); M3o-eps10 (plain) (2.16 MB/round > 2); M3o-eps1 (2.16 MB/round > 2); M3o-eps1 (plain) (2.16 MB/round > 2).
@@ -93,15 +95,15 @@ the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most
 
 Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **rare**.
 
-**Recommended: MGs-eps5** (ties within the seed std: MGd-eps5). Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
+**Recommended: MGs-eps5**. Command: `python -m ppfeddata.cli tune-marginal --final --eps 5`.
 
 | configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
 |---|---|---|---|---|---|---|---|---|---|
 | MGs-eps5 | 0.408 | 0.901 | 0.293 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
-| MGd-eps5 | 0.417 | 0.909 | 0.291 | 5.00 | yes | distributed | 0.28 | 3 | 0.8 |
 | MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
+| MGr-t3-eps1 | 0.392 | 0.875 | 0.251 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGr-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps10 (epsilon 10 > 5); M2 (no DP); M1o-eps10 (epsilon 10 > 5); M1o-eps10 (plain) (epsilon 10 > 5); M3o-eps10 (epsilon 10 > 5); M3o-eps10 (plain) (epsilon 10 > 5); MGb-eps10 (epsilon 10 > 5); MGd-eps10 (epsilon 10 > 5); MGl-eps10 (epsilon 10 > 5); MGr-eps10 (epsilon 10 > 5); MGs-cap25-eps10 (epsilon 10 > 5); MGs-eps10 (epsilon 10 > 5); MGs-strm1-eps10 (epsilon 10 > 5); MGs-t2-eps10 (epsilon 10 > 5); MGs-t3-eps10 (epsilon 10 > 5).
 
 ## honest-majority
 
@@ -117,5 +119,35 @@ Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 10.0, MB/rou
 | MGr-eps1 | 0.389 | 0.875 | 0.253 | 1.32 | yes | distributed | 0.20 | 3 | 0.6 |
 | M1-eps1 | 0.227 | 0.805 | 0.132 | 1.00 | no | local | 1.46 | 30 | 43.7 |
 
-Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP, membership attack not measured); M3-eps5 (membership attack not measured); M1o-eps10 (membership attack not measured); M1o-eps10 (plain) (membership attack not measured); M1o-eps5 (membership attack not measured); M1o-eps5 (plain) (membership attack not measured); M1o-eps1 (membership attack not measured); M1o-eps1 (plain) (membership attack not measured); M3o-eps10 (membership attack not measured); M3o-eps10 (plain) (membership attack not measured); M3o-eps5 (membership attack not measured); M3o-eps5 (plain) (membership attack not measured); M3o-eps1 (membership attack not measured); M3o-eps1 (plain) (membership attack not measured); MGb-eps10 (epsilon 14.1 > 10); MGd-eps1 (membership attack not measured); MGd-eps10 (epsilon 26.6 > 10, membership attack not measured); MGd-eps5 (epsilon 12.4 > 10, membership attack not measured); MGl-eps1 (membership attack not measured); MGl-eps10 (membership attack not measured); MGl-eps5 (membership attack not measured); MGr-eps10 (epsilon 14.1 > 10); MGs-eps10 (epsilon 14.1 > 10).
+Excluded: B3 (the server sees the client updates in the clear, no DP); M2 (no DP, membership attack not measured); M3-eps5 (membership attack not measured); M1o-eps10 (membership attack not measured); M1o-eps10 (plain) (membership attack not measured); M1o-eps5 (membership attack not measured); M1o-eps5 (plain) (membership attack not measured); M1o-eps1 (membership attack not measured); M1o-eps1 (plain) (membership attack not measured); M3o-eps10 (membership attack not measured); M3o-eps10 (plain) (membership attack not measured); M3o-eps5 (membership attack not measured); M3o-eps5 (plain) (membership attack not measured); M3o-eps1 (membership attack not measured); M3o-eps1 (plain) (membership attack not measured); MGb-eps10 (epsilon 14.1 > 10); MGd-eps1 (membership attack not measured); MGd-eps10 (epsilon 26.6 > 10, membership attack not measured); MGd-eps5 (epsilon 12.4 > 10, membership attack not measured); MGl-eps1 (membership attack not measured); MGl-eps10 (membership attack not measured); MGl-eps5 (membership attack not measured); MGr-cap25-eps1 (membership attack not measured); MGr-eps10 (epsilon 14.1 > 10); MGr-strm1-eps1 (membership attack not measured); MGr-t2-eps1 (membership attack not measured); MGr-t3-eps1 (membership attack not measured); MGs-cap25-eps10 (epsilon 13.5 > 10, membership attack not measured); MGs-cap25-eps5 (membership attack not measured); MGs-eps10 (epsilon 14.1 > 10); MGs-strm1-eps10 (epsilon 14.1 > 10, membership attack not measured); MGs-strm2-eps5 (membership attack not measured); MGs-t2-eps10 (membership attack not measured); MGs-t2-eps5 (membership attack not measured); MGs-t3-eps10 (membership attack not measured); MGs-t3-eps5 (membership attack not measured).
+
+## session-privacy
+
+epsilon must cover a whole TCP session of a device, not one packet
+
+Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 5.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
+
+**Recommended: MGs-strm2-eps5**. Command: `python -m ppfeddata.cli privacy-units --stage final`.
+
+| configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
+|---|---|---|---|---|---|---|---|---|---|
+| MGs-strm2-eps5 | 0.371 | 0.860 | 0.249 | 5.00 | yes | distributed | 0.15 | 3 | 0.4 |
+| MGr-strm1-eps1 | 0.353 | 0.808 | 0.190 | 1.00 | yes | distributed | 0.20 | 3 | 0.6 |
+
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps1 (epsilon protects one packet, not one stream); M1-eps5 (epsilon protects one packet, not one stream); M1-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); M2 (no DP); M3-eps5 (epsilon protects one packet, not one stream); M1o-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); M1o-eps10 (plain) (epsilon 10 > 5, epsilon protects one packet, not one stream); M1o-eps5 (epsilon protects one packet, not one stream); M1o-eps5 (plain) (epsilon protects one packet, not one stream); M1o-eps1 (epsilon protects one packet, not one stream); M1o-eps1 (plain) (epsilon protects one packet, not one stream); M3o-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); M3o-eps10 (plain) (epsilon 10 > 5, epsilon protects one packet, not one stream); M3o-eps5 (epsilon protects one packet, not one stream); M3o-eps5 (plain) (epsilon protects one packet, not one stream); M3o-eps1 (epsilon protects one packet, not one stream); M3o-eps1 (plain) (epsilon protects one packet, not one stream); MGb-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGd-eps1 (epsilon protects one packet, not one stream); MGd-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGd-eps5 (epsilon protects one packet, not one stream); MGl-eps1 (epsilon protects one packet, not one stream); MGl-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGl-eps5 (epsilon protects one packet, not one stream); MGr-eps1 (epsilon protects one packet, not one stream); MGr-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGr-t2-eps1 (epsilon protects one packet, not one stream); MGr-t3-eps1 (epsilon protects one packet, not one stream); MGs-cap25-eps10 (epsilon 10 > 5); MGs-eps1 (epsilon protects one packet, not one stream); MGs-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGs-eps5 (epsilon protects one packet, not one stream); MGs-strm1-eps10 (epsilon 10 > 5); MGs-t2-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGs-t2-eps5 (epsilon protects one packet, not one stream); MGs-t3-eps10 (epsilon 10 > 5, epsilon protects one packet, not one stream); MGs-t3-eps5 (epsilon protects one packet, not one stream).
+
+## capture-privacy
+
+epsilon must cover a whole capture (all traffic recorded at one gateway in one session)
+
+Requirement: server trusted **no**, clients trusted **yes**, ε ≤ 10.0, MB/round ≤ ∞, MB total ≤ ∞, rounds ≤ ∞, priority **macro**.
+
+**Recommended: MGs-cap25-eps5**. Command: `python -m ppfeddata.cli privacy-units --stage final`.
+
+| configuration (front) | TSTR macro-F1 | binary F1 | rare recall | ε | SecAgg | DP | MB / round | rounds | MB total |
+|---|---|---|---|---|---|---|---|---|---|
+| MGs-cap25-eps5 | 0.203 | 0.763 | 0.082 | 5.00 | yes | distributed | 0.16 | 3 | 0.5 |
+| MGr-cap25-eps1 | 0.154 | 0.672 | 0.051 | 1.00 | yes | distributed | 0.77 | 3 | 2.3 |
+
+Excluded: B3 (the server sees the client updates in the clear, no DP); M1-eps1 (epsilon protects one packet, not one capture); M1-eps5 (epsilon protects one packet, not one capture); M1-eps10 (epsilon protects one packet, not one capture); M2 (no DP); M3-eps5 (epsilon protects one packet, not one capture); M1o-eps10 (epsilon protects one packet, not one capture); M1o-eps10 (plain) (epsilon protects one packet, not one capture); M1o-eps5 (epsilon protects one packet, not one capture); M1o-eps5 (plain) (epsilon protects one packet, not one capture); M1o-eps1 (epsilon protects one packet, not one capture); M1o-eps1 (plain) (epsilon protects one packet, not one capture); M3o-eps10 (epsilon protects one packet, not one capture); M3o-eps10 (plain) (epsilon protects one packet, not one capture); M3o-eps5 (epsilon protects one packet, not one capture); M3o-eps5 (plain) (epsilon protects one packet, not one capture); M3o-eps1 (epsilon protects one packet, not one capture); M3o-eps1 (plain) (epsilon protects one packet, not one capture); MGb-eps10 (epsilon protects one packet, not one capture); MGd-eps1 (epsilon protects one packet, not one capture); MGd-eps10 (epsilon protects one packet, not one capture); MGd-eps5 (epsilon protects one packet, not one capture); MGl-eps1 (epsilon protects one packet, not one capture); MGl-eps10 (epsilon protects one packet, not one capture); MGl-eps5 (epsilon protects one packet, not one capture); MGr-eps1 (epsilon protects one packet, not one capture); MGr-eps10 (epsilon protects one packet, not one capture); MGr-strm1-eps1 (epsilon protects one stream, not one capture); MGr-t2-eps1 (epsilon protects one packet, not one capture); MGr-t3-eps1 (epsilon protects one packet, not one capture); MGs-eps1 (epsilon protects one packet, not one capture); MGs-eps10 (epsilon protects one packet, not one capture); MGs-eps5 (epsilon protects one packet, not one capture); MGs-strm1-eps10 (epsilon protects one stream, not one capture); MGs-strm2-eps5 (epsilon protects one stream, not one capture); MGs-t2-eps10 (epsilon protects one packet, not one capture); MGs-t2-eps5 (epsilon protects one packet, not one capture); MGs-t3-eps10 (epsilon protects one packet, not one capture); MGs-t3-eps5 (epsilon protects one packet, not one capture).
 

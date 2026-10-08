@@ -11309,19 +11309,19 @@
       "value": 0.81710683
      },
      {
-      "config": "MGr-eps1-TSTR-rf",
+      "config": "MGr-t3-eps1-TSTR-rf",
       "seed": 1,
-      "value": 0.83491115
+      "value": 0.82023263
      },
      {
-      "config": "MGr-eps1-TSTR-rf",
-      "seed": 0,
-      "value": 0.84563956
+      "config": "MGr-t2-eps1-TSTR-rf",
+      "seed": 2,
+      "value": 0.83314153
      }
     ],
     "dup_rate_max": 0.01,
     "dcr_ratio_min": 0.5,
-    "n_generators_checked": 144
+    "n_generators_checked": 180
    },
    "notes": []
   },
@@ -11418,17 +11418,17 @@
      "by_method": {
       "M1": 25,
       "M3": 12,
-      "MG": 3,
+      "MG": 9,
       "A1": 2
      },
      "by_protocol": {
-      "TSTR": 42
+      "TSTR": 48
      }
     },
     "n_above_redflag": 7,
     "n_above_redflag_in_matrix": 0,
-    "n_above_seed_std_max": 42,
-    "n_configurations": 201,
+    "n_above_seed_std_max": 48,
+    "n_configurations": 249,
     "n_in_matrix": 73,
     "max_std_in_matrix": 0.03696463,
     "redflag": 0.05,
@@ -11450,6 +11450,7 @@
      "M3o-t12-eps10-TSTR-rf",
      "M1-eps1-plain-TSTR-rf",
      "M1o-t12-eps10-TSTR-mlp",
+     "MGs-cap25-eps5-TSTR-rf",
      "M1d-t21-eps1-TSTR-rf",
      "M1d-t21-eps10-plain-TSTR-mlp",
      "MGl-eps1-TSTR-mlp",
@@ -11459,6 +11460,7 @@
      "M1d-t21-eps10-plain-TSTR-rf",
      "M1o-t33-eps1-plain-TSTR-rf",
      "M3d-t21-eps5-plain-TSTR-rf",
+     "MGs-cap25-eps5-TSTR-mlp",
      "M1d-t21-eps1-plain-TSTR-rf",
      "M3d-t21-eps5-plain-TSTR-mlp",
      "M1d-t21-eps5-TSTR-rf",
@@ -11468,16 +11470,14 @@
      "A1-a0.1-TSTR-mlp",
      "M1o-t27-eps5-plain-TSTR-rf",
      "M1o-t27-eps5-plain-TSTR-mlp",
+     "MGs-cap25-eps10-TSTR-mlp",
+     "MGr-t2-eps1-TSTR-rf",
      "MGd-eps1-TSTR-rf",
-     "M1o-t27-eps5-TSTR-mlp",
-     "M1d-t21-eps1-TSTR-mlp",
-     "M1-eps10-TSTR-mlp",
-     "M3o-t33-eps1-TSTR-rf",
-     "M1d-t21-eps5-TSTR-mlp"
+     "M1o-t27-eps5-TSTR-mlp"
     ]
    },
    "notes": [
-    "42 of 201 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
+    "48 of 249 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
    ]
   },
   {
@@ -11886,7 +11886,43 @@
      "MGs-a0.1-eps5_0",
      "MGs-a10-eps5_0",
      "MGs-k10-eps5_0",
-     "MGs-k20-eps5_0"
+     "MGs-k20-eps5_0",
+     "MGr-strm1-eps1_0",
+     "MGr-strm1-eps1_1",
+     "MGr-strm1-eps1_2",
+     "MGr-cap25-eps1_0",
+     "MGr-cap25-eps1_1",
+     "MGr-cap25-eps1_2",
+     "MGr-t3-eps1_0",
+     "MGr-t3-eps1_1",
+     "MGr-t3-eps1_2",
+     "MGr-t2-eps1_0",
+     "MGr-t2-eps1_1",
+     "MGr-t2-eps1_2",
+     "MGs-strm2-eps5_0",
+     "MGs-strm2-eps5_1",
+     "MGs-strm2-eps5_2",
+     "MGs-cap25-eps5_0",
+     "MGs-cap25-eps5_1",
+     "MGs-cap25-eps5_2",
+     "MGs-t3-eps5_0",
+     "MGs-t3-eps5_1",
+     "MGs-t3-eps5_2",
+     "MGs-t2-eps5_0",
+     "MGs-t2-eps5_1",
+     "MGs-t2-eps5_2",
+     "MGs-strm1-eps10_0",
+     "MGs-strm1-eps10_1",
+     "MGs-strm1-eps10_2",
+     "MGs-cap25-eps10_0",
+     "MGs-cap25-eps10_1",
+     "MGs-cap25-eps10_2",
+     "MGs-t3-eps10_0",
+     "MGs-t3-eps10_1",
+     "MGs-t3-eps10_2",
+     "MGs-t2-eps10_0",
+     "MGs-t2-eps10_1",
+     "MGs-t2-eps10_2"
     ]
    },
    "notes": [
@@ -12758,39 +12794,39 @@
    "cutoff": 10,
    "seeds": {
     "0": {
-     "clients": 20,
-     "cells": 80,
-     "thin": 15,
-     "empty": 6,
+     "clients": 5,
+     "cells": 20,
+     "thin": 4,
+     "empty": 1,
      "min_by_class": {
-      "DELAYED": 0,
+      "DELAYED": 240,
       "SYN": 0,
-      "INVALID": 0,
-      "WILL": 1
+      "INVALID": 1,
+      "WILL": 2
      }
     },
     "1": {
-     "clients": 20,
-     "cells": 80,
-     "thin": 24,
-     "empty": 7,
+     "clients": 5,
+     "cells": 20,
+     "thin": 2,
+     "empty": 0,
      "min_by_class": {
-      "DELAYED": 1,
-      "SYN": 4,
-      "INVALID": 0,
-      "WILL": 0
+      "DELAYED": 29,
+      "SYN": 30,
+      "INVALID": 1,
+      "WILL": 8
      }
     },
     "2": {
-     "clients": 20,
-     "cells": 80,
-     "thin": 25,
-     "empty": 4,
+     "clients": 5,
+     "cells": 20,
+     "thin": 1,
+     "empty": 0,
      "min_by_class": {
-      "DELAYED": 0,
-      "SYN": 0,
-      "INVALID": 0,
-      "WILL": 2
+      "DELAYED": 20,
+      "SYN": 68,
+      "INVALID": 77,
+      "WILL": 1
      }
     }
    }

@@ -40,6 +40,38 @@ def _read(p: Path) -> dict[str, Any] | None:
     return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
 
 
+def load_privacy_units(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Results of the follow-up round P1 (group-level DP, honest-client threshold), or {} before it ran."""
+    runs = (cfg.get("compute") or {}).get("runs_csv")
+    return (_read(Path(runs).parent / "privacy_units.json") or {}) if runs else {}
+
+
+def _group_dp_text(pu: dict[str, Any]) -> tuple[str, str]:
+    """Sentences on the unit-level epsilon and on the threshold t of FedDP-Marginal, from results/privacy_units.json."""
+    by = {(r.get("unit"), round(float(r["eps"]))): r for r in pu.get("units") or [] if r.get("eps") is not None}
+    eps = sorted({e for _, e in by})
+    st = [f"{by[('stream', e)]['tstr_f1']:.3f} vs {by[('packet', e)]['tstr_f1']:.3f} at epsilon {e:g}" for e in eps if ("stream", e) in by and ("packet", e) in by]
+    loss = [by[("packet", e)]["tstr_f1"] - by[("stream", e)]["tstr_f1"] for e in eps if ("stream", e) in by and ("packet", e) in by]
+    cap = [by[("capture", e)] for e in eps if ("capture", e) in by]
+    unit = ""
+    if st and cap:
+        unit = (" FedDP-Marginal now offers epsilon for a whole unit (follow-up round P1: each unit held by one client, at most m of its rows used): a TCP stream costs "
+                f"{min(loss):.2f}-{max(loss):.2f} TSTR macro-F1 ({'; '.join(st)}), a whole capture does not fit the data (TSTR macro-F1 {min(r['tstr_f1'] for r in cap):.2f}-"
+                f"{max(r['tstr_f1'] for r in cap):.2f}, {int(cap[0].get('rows_kept') or 0):,} rows kept), so captures stay protected only through the group bound.")
+    tb = {(int(r["t"]), round(float(r["eps"]))): r for r in pu.get("thresholds") or [] if r.get("eps") is not None}
+    k = max((t for t, _ in tb), default=0)
+    parts = []
+    for t in sorted({t for t, _ in tb if t < k}, reverse=True):
+        d = [tb[(t, e)]["tstr_f1"] - tb[(k, e)]["tstr_f1"] for e in eps if (t, e) in tb and (k, e) in tb]
+        if d:
+            parts.append(f"t = {t} changed TSTR macro-F1 by {min(d):+.3f} to {max(d):+.3f}")
+    thr = ""
+    if parts:
+        thr = (" With a threshold t (every client adds 1/t of the noise, follow-up round P1) the epsilon holds with any t honest clients and is smaller when all are "
+               f"honest; on this data {', '.join(parts)} across epsilon {', '.join(f'{e:g}' for e in sorted({e for _, e in tb}))}.")
+    return unit, thr
+
+
 def load_manifest(cfg: dict[str, Any]) -> dict[str, Any] | None:
     return _read(manifest_path(cfg))
 
@@ -117,9 +149,11 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         sm = [v["rows_per_stream_mean"] for v in uc.values()]
         sizes = (f" In the train split a stream gives {min(sm):.1f}-{max(sm):.1f} rows on average, but one capture group gives up to {min(gm)}-{max(gm)} rows of a rare class, "
                  "so the correlated unit of this data is the capture, not the stream (section 9.10).")
+    grp, honest_t = _group_dp_text(load_privacy_units(cfg))
     add("Packet-level data, record-level epsilon",
         "The data are packet-level and epsilon is per record (one packet). Packets of one TCP stream and of one capture are correlated, so what DP protects about a whole attack session "
-        "or capture is much weaker than epsilon suggests (group privacy)." + sizes, "spec Definition of Done; sections 9.8, 9.10")
+        "or capture is much weaker than epsilon suggests (group privacy)." + sizes + grp,
+        "spec Definition of Done; sections 9.8, 9.10" + ("; results/reports/privacy_units.md" if grp else ""))
     add("Labels are not protected",
         "As in the spec, the claim of epsilon is scoped to the features of a record: the class label is treated as known side information. Epsilon is not claimed to hide labels, class "
         "counts or which classes a client holds.", "spec Definition of Done")
@@ -205,7 +239,8 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     add("Distributed DP assumes honest clients",
         "The distributed variant of FedDP-Marginal splits the noise over the clients: its epsilon holds when every client adds its share. If only h of the K clients do (the others "
         "collude with the aggregator), the epsilon is larger; it is reported for every h (at epsilon 5 with 5 clients: 14.2 with one honest client) and it grows with the number of "
-        "clients. The local variant (every client adds the full noise) needs no such trust but loses utility.", "SPEC_DEVIATIONS O2.3, O4.2; results/reports/robustness.md")
+        "clients. The local variant (every client adds the full noise) needs no such trust but loses utility." + honest_t,
+        "SPEC_DEVIATIONS O2.3, O4.2" + (", P1.2" if honest_t else "") + "; results/reports/robustness.md")
     add("Pairwise dependencies only",
         "FedDP-Marginal models each class with a Chow-Liu tree: every attribute depends on one parent. Higher-order structure (degree 2, a structure per class) was tried and did "
         "not help on this data, but it may on others; within a coarse bin the numeric values are drawn uniformly inside a fine bin.", "SPEC_DEVIATIONS O3.2")

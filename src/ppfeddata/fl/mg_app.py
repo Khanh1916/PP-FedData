@@ -171,7 +171,8 @@ def main(grid: Grid, context: Context) -> None:
     schema = json.loads((Path(sp["data_dir"]) / "feature_schema.json").read_text(encoding="utf-8"))
     attrs, k, clip = mg.attributes(schema), len(schema["label_map"]), float(schema["settings"]["clip_sigma"])
     A, K = len(attrs), int(sp["num_clients"])
-    scales = mg.noise_scales(float(sp["eps"]), float(sp["delta"]), A, sp["split"], sp["mechanism"])
+    rows, ht = int(sp.get("rows", 1)), sp.get("honest_t")          # follow-up round: group DP (records per unit), honest-client threshold
+    scales = mg.noise_scales(float(sp["eps"]), float(sp["delta"]), A, sp["split"], sp["mechanism"], rows)
     p = sp["secagg"]["params"]
     strategy = _strategy_class()(K)
     tap = secagg.TapGrid(grid)
@@ -218,8 +219,9 @@ def main(grid: Grid, context: Context) -> None:
             W = mg.mi_matrix(tabs, A)
             edges = mg.max_spanning_tree(W)
     model = mg.assemble(attrs, k, clip, out["fine"], maps, edges, out["edges"], scales, float(sp["eps"]), float(sp["delta"]), float(sp["noise_share"]),
-                        sp["mechanism"], int(sp["bins"]), sp["split"], K, n_cells, mi=W)
-    model.info["eps_by_honest_clients"] = mg.eps_honest_curve(scales, A, float(sp["delta"]), K, sp["mechanism"])
+                        sp["mechanism"], int(sp["bins"]), sp["split"], K, n_cells, mi=W, rows=rows, honest_t=ht)
+    model.info["eps_by_honest_clients"] = mg.eps_honest_curve(scales, A, float(sp["delta"]), K, sp["mechanism"], rows, float(sp["noise_share"]))
+    model.info["unit"] = sp.get("unit")
     with open(rdir / "mg_model.pkl", "wb") as fh:
         pickle.dump(model, fh)
 
@@ -227,8 +229,10 @@ def main(grid: Grid, context: Context) -> None:
 # --------------------------------------------------------------------------------------------------
 # Launcher (one process per run, as fl/run.py)
 # --------------------------------------------------------------------------------------------------
-def run(cfg: dict[str, Any], seed: int, name: str, eps: float, bins: int, split, mechanism: str = "skellam", resume: bool = True) -> dict[str, Any]:
-    """FedDP-Marginal with distributed noise through Flower SecAgg+; returns the model and the per-stage measurements."""
+def run(cfg: dict[str, Any], seed: int, name: str, eps: float, bins: int, split, mechanism: str = "skellam", resume: bool = True,
+        rows: int = 1, honest_t: int | None = None, parts_path: str | Path | None = None, unit: str | None = None) -> dict[str, Any]:
+    """FedDP-Marginal with distributed noise through Flower SecAgg+; returns the model and the per-stage measurements. Follow-up round:
+    `parts_path` = a unit partition capped at `rows` records per unit (`group_dp.capped_parts`), `honest_t` = threshold of honest clients."""
     from ppfeddata.data.preprocess import processed_dir
     from ppfeddata.eval.runs import run_id
     from ppfeddata.partition import make_partition, partition_path
@@ -238,13 +242,17 @@ def run(cfg: dict[str, Any], seed: int, name: str, eps: float, bins: int, split,
     classes = [c for c, _ in sorted(schema["label_map"].items(), key=lambda kv: kv[1])]
     y = np.load(ddir / "train.npz")["y"]
     alpha, K = float(cfg["fl"]["dirichlet_alpha"]), int(cfg["fl"]["num_clients"])
-    make_partition(cfg, y, classes, alpha, seed, K)
+    if parts_path is None:
+        make_partition(cfg, y, classes, alpha, seed, K)
     rid = run_id(name, seed, cfg["label_mode"])
     rdir = Path(cfg["compute"]["artifacts_dir"]) / rid
     rdir.mkdir(parents=True, exist_ok=True)
     sp = {"run_id": rid, "seed": int(seed), "eps": float(eps), "delta": float(cfg["dp"]["delta"]), "bins": int(bins), "split": list(split),
-          "mechanism": mechanism, "noise_share": 1.0 / K, "num_clients": K, "data_dir": str(ddir), "partition_path": str(partition_path(cfg, alpha, seed)),
-          "artifacts_dir": str(cfg["compute"]["artifacts_dir"]), "secagg": secagg_params(cfg), "label_mode": cfg["label_mode"]}
+          "mechanism": mechanism, "noise_share": 1.0 / (honest_t or K), "num_clients": K, "data_dir": str(ddir),
+          "partition_path": str(parts_path or partition_path(cfg, alpha, seed)), "artifacts_dir": str(cfg["compute"]["artifacts_dir"]),
+          "secagg": secagg_params(cfg), "label_mode": cfg["label_mode"]}
+    if rows != 1 or honest_t or unit:                         # only then, so the specs of the earlier runs stay equal (resume)
+        sp.update(rows=int(rows), honest_t=honest_t, unit=unit)
     model_p, spec_p = rdir / "mg_model.pkl", rdir / "spec.json"
     same = spec_p.exists() and json.loads(spec_p.read_text(encoding="utf-8")) == sp
     if not (resume and same and model_p.exists()):

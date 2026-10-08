@@ -43,6 +43,7 @@ class Requirement:
     note: str = ""
     honest_clients: int | None = None          # O4: epsilon must hold when only h clients add their share of the distributed noise
     max_mia: float | None = None               # O4: calibrated model-access MIA AUC must stay below (configurations not attacked are excluded)
+    unit: str = "packet"                       # P1: the protected unit epsilon must cover: packet (record), stream (TCP stream) or capture
 
 
 # example requirements of IoT / MQTT deployments (section 9.10 of the report and the demo page)
@@ -55,6 +56,10 @@ SCENARIOS = [
     Requirement("rare-attacks", False, True, 5.0, priority="rare", note="the rare MQTT attacks (DELAYED, SYN, INVALID, WILL) matter most"),
     Requirement("honest-majority", False, True, 10.0, honest_clients=3, max_mia=0.55,
                 note="brokers of 5 operators, at most 2 may collude with the aggregator; the released model must resist the membership attack (AUC < 0.55)"),
+    Requirement("session-privacy", False, True, 5.0, unit="stream",
+                note="epsilon must cover a whole TCP session of a device, not one packet"),
+    Requirement("capture-privacy", False, True, 10.0, unit="capture",
+                note="epsilon must cover a whole capture (all traffic recorded at one gateway in one session)"),
 ]
 
 
@@ -93,6 +98,9 @@ def reasons(r: dict[str, Any], req: Requirement) -> list[str]:
         v = _num(r.get(key))
         if lim is not None and not math.isnan(v) and v > lim:
             out.append(f"{v:.3g} {unit} > {lim:g}")
+    order = {"packet": 0, "stream": 1, "capture": 2}
+    if r.get("dp") and order.get(r.get("unit") or "packet", 0) < order[req.unit]:
+        out.append(f"epsilon protects one {r.get('unit') or 'packet'}, not one {req.unit}")
     if req.max_mia is not None and not (_num(r.get("mia_auc")) < req.max_mia):
         out.append("membership attack not measured" if math.isnan(_num(r.get("mia_auc"))) else f"MIA AUC {_num(r.get('mia_auc')):.3f} >= {req.max_mia:g}")
     if req.min_rare_recall is not None and not (_num(r.get("rare_recall")) >= req.min_rare_recall):
@@ -120,6 +128,8 @@ def command(label: str, eps: float | None) -> str:
         return f"python -m ppfeddata.cli tune-dp-full --final{e}"
     if base.startswith("M3f"):
         return f"python -m ppfeddata.cli tune-fedsgd --final{e}"
+    if base.startswith("MG") and any(f"-{t}" in base for t in ("strm", "cap", "t2-", "t3-")):
+        return "python -m ppfeddata.cli privacy-units --stage final"
     if base.startswith("MG"):
         return f"python -m ppfeddata.cli tune-marginal --final{e}"
     if base.startswith("M2-c"):
@@ -201,7 +211,7 @@ def render_html(scorecard: dict[str, Any]) -> str:
     return HTML.replace("__ROWS__", data).replace("__SCENARIOS__", scen).replace("__EPS_TOL__", str(sc.EPS_TOL))
 
 
-SLIM_KEYS = ("label", "method", "dp_mode", "secagg", "eps_eff", "tstr_f1", "tstr_f1_std", "bin_f1", "rare_recall", "mb_round", "rounds", "mb_total")
+SLIM_KEYS = ("label", "method", "dp_mode", "unit", "secagg", "eps_eff", "tstr_f1", "tstr_f1_std", "bin_f1", "rare_recall", "mb_round", "rounds", "mb_total")
 
 
 def slim(res: dict[str, Any]) -> dict[str, Any]:

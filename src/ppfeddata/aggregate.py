@@ -36,7 +36,7 @@ COLORS = {"baseline": "#8c8c8c", "gen": "#1f77b4", "dp": "#ff7f0e", "secagg": "#
 SUMMARY_METRICS = ["macro_f1", "balanced_acc", "pr_auc_macro", "bin_f1", "val_macro_f1", "wasserstein_mean", "js_mean", "corr_dist_mean", "c2st_auc_mean",
                    "dup_rate", "dcr_ratio_mean", "mia_auc_mean", "dp_eps_max", "dp_eps_median", "dp_sigma_min", "dp_sigma_max", "dp_ratio_to_target", "bytes_per_round",
                    "fl_total_s", "cvae_train_s", "fit_time_s", "peak_rss_gb", "fl_final_val_loss", "cvae_val_loss", "cvae_params", "sa_bytes_per_round", "sa_max_abs_w",
-                   "round_s_median", "taugr_ratio", "rounds", "dp_eps_one_honest"] + [f"dp_eps_honest_{h}" for h in range(1, 21)]
+                   "round_s_median", "taugr_ratio", "rounds", "dp_eps_one_honest", "dp_eps_all_honest", "dp_unit_rows", "dp_honest_t", "rows_kept"] + [f"dp_eps_honest_{h}" for h in range(1, 21)]
 
 
 # --------------------------------------------------------------------------------------------------
