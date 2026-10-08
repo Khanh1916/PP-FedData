@@ -105,7 +105,7 @@ The loss does not grow monotonically as the budget shrinks: the DP-trained model
 
 Criterion: paired CI excludes 0 and |diff| > std of macro-F1 over seeds.
 
-| comparison | seed | diff | 95% CI | excludes 0 | |diff| > seed std |
+| comparison | seed | diff | 95% CI | excludes 0 | \|diff\| > seed std |
 |---|---|---|---|---|---|
 | M1d-t21-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.1462 | [-0.1527, -0.1396] | True | True |
 | M1d-t21-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.1435 | [-0.1497, -0.1367] | True | True |

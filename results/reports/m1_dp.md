@@ -105,7 +105,7 @@ The loss grows as the budget shrinks and every DP level is far above the non-DP 
 
 Criterion: paired CI excludes 0 and |diff| > std of macro-F1 over seeds.
 
-| comparison | seed | diff | 95% CI | excludes 0 | |diff| > seed std |
+| comparison | seed | diff | 95% CI | excludes 0 | \|diff\| > seed std |
 |---|---|---|---|---|---|
 | M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.1586 | [-0.1652, -0.1517] | True | True |
 | M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.2330 | [-0.2386, -0.2273] | True | True |

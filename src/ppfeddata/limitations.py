@@ -192,7 +192,7 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     else:
         text = ("Most sub-classes come from a single capture file, so their validation and test rows are consecutive blocks of the same capture. Dropping the TCP streams that straddle "
                 "two blocks removes a share of the eligible rows (a bias toward short connections); the split manifest was not found, so the shares are not shown.")
-    add("Block splits inside one capture", text, "results/manifests/split_manifest_<mode>.json; SPEC_DEVIATIONS 3.3, 3.5")
+    add("Block splits inside one capture", text, f"results/manifests/split_manifest_{cfg.get('label_mode', '6class')}.json; SPEC_DEVIATIONS 3.3, 3.5")   # no <mode>: Markdown would hide it as an HTML tag
     add("Protocol filter",
         "Only rows with protocol TCP or MQTT are kept. The filter removes about 0.5 % of the Normal rows and the 128 RIPv2 rows of the attack data.", "SPEC_DEVIATIONS 2.9, 3.5")
     pol = (sch or {}).get("settings", {}).get("multi_policy", "first_only")

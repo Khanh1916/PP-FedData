@@ -353,3 +353,10 @@ class TestBaselines:
         for needle in ("Utility", "Recall per class", "Binary Normal vs Attack", "Bootstrap CI", "Paired difference", "Gate G3"):
             assert needle in text
         assert set(gate["std_ok"]) == {"B0-rf", "B1a-rf", "B1b-rf"} and "B0-rf" in gate["b0_not_perfect"]
+
+
+def test_markdown_table_escapes_pipes_in_headers_and_cells():
+    from ppfeddata.eval.baselines import _table
+    md = _table([{"config": "a|b", "|diff| > seed std": True}]).split("\n")
+    assert md[0] == r"| config | \|diff\| > seed std |" and md[2] == r"| a\|b | True |"
+    assert all(len(row.replace(r"\|", "").strip("|").split("|")) == 2 for row in md)        # 2 cells in every row: GitHub renders the table

@@ -138,7 +138,7 @@ def check_epsilon(df: pd.DataFrame | None, f5: dict[str, Any] | None) -> Item:
 def check_secagg(checks: dict[str, Any] | None) -> Item:
     crit = "T-SA1 passes (secure aggregation equals plain FedAvg within the quantisation bound)"
     if not checks or "tsa1" not in checks:
-        return Item("D6b", crit, "FAIL", "secagg_checks_<mode>.json not found")
+        return Item("D6b", crit, "FAIL", "`secagg_checks_<mode>.json` not found")
     t = checks["tsa1"]
     ok = float(t["agg_err_max"]) <= float(t["error_bound"])
     return Item("D6b", crit, "PASS" if ok else "FAIL", f"largest aggregation error {float(t['agg_err_max']):.2e} against the bound {float(t['error_bound']):.2e}")

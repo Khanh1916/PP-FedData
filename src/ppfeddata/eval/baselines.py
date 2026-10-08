@@ -208,6 +208,7 @@ def _table(rows: list[dict[str, Any]]) -> str:
     if not rows:
         return "_no rows_"
     cols = list(rows[0])
-    lines = ["| " + " | ".join(cols) + " |", "|" + "|".join("---" for _ in cols) + "|"]
-    lines += ["| " + " | ".join(str(r[c]) for c in cols) + " |" for r in rows]
+    esc = lambda v: str(v).replace("|", "\\|")                # a bare | inside a cell or header splits it (e.g. "|diff|") and breaks the table
+    lines = ["| " + " | ".join(esc(c) for c in cols) + " |", "|" + "|".join("---" for _ in cols) + "|"]
+    lines += ["| " + " | ".join(esc(r[c]) for c in cols) + " |" for r in rows]
     return "\n".join(lines)
