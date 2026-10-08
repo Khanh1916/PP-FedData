@@ -2,16 +2,18 @@
 
 Item 5 (IDS trained on synthetic data only, TSTR). Two IDS-side options, the generators unchanged:
 - `rows`: all the saved synthetic rows (20,000 per class) instead of `tune.syn_per_class` (5,000);
-- `weights`: the synthetic data are class-balanced while the real traffic is not, so the class probabilities of the classifier are multiplied
-  by a weight vector chosen on VALIDATION (coordinate search over `GRID`, maximising the mean validation macro-F1 of the 3 seeds), then the
-  arg-max is taken. The weights use the non-private validation split, like every other choice of the study.
+- `weights`: the class probabilities of the classifier are multiplied by a weight vector chosen on VALIDATION (coordinate search over
+  `GRID`, maximising the mean validation macro-F1 of the 3 seeds), then the arg-max is taken. Validation and test are class-balanced like
+  the synthetic data, so this is not a prior-shift correction: a classifier trained on synthetic rows labels too many real rows NORMAL or
+  BCF (classes whose synthetic distribution is wide), and the weights move that decision boundary. The weights use the non-private
+  validation split, like every other choice of the study; on traffic with another class mix they would have to be chosen again.
 Reported for every generator (CVAE and FedDP-Marginal alike), RF and MLP, on the real test split; an IDS improvement, not a generator one.
 
 Item 6 (local augmentation). Each client of the federation (the non-IID partition of the run seed) trains its own IDS on its own real rows,
 then on its own rows plus synthetic rows of the federation's generator for every class it holds fewer than `FILL` rows of (filled up to
 `FILL`), the generator trained by all the clients. A client then gets attack classes it rarely or never saw; this is the use of synthetic data
-that can add information (the TAug of the main study added data generated from the same rows, so it could not). RF, real test split, every
-client of 3 seeds.
+that can add information (the TAug of the main study added data generated from the same rows, so it could not). Reference: the IDS trained on
+synthetic data only (`tune.syn_per_class` rows per class, one model per seed). RF, real test split, every client of 3 seeds.
 Results: results/ids_followup.json, results/reports/ids_followup.md.
 """
 from __future__ import annotations
@@ -120,13 +122,15 @@ def item6(cfg: dict[str, Any], seeds: list[int] | None = None) -> dict[str, Any]
 
     data, schema = load_data(cfg)
     classes = [c for c, _ in sorted(schema["label_map"].items(), key=lambda kv: kv[1])]
-    k, rare = len(classes), rare_labels(cfg, schema)
+    k, rare, spc = len(classes), rare_labels(cfg, schema), int(cfg["tune"]["syn_per_class"])
     X, y = data["train"]["X"], np.asarray(data["train"]["y"], dtype=np.int64)
     seeds = list(cfg["seeds"]) if seeds is None else seeds
     rows = []
     for s in seeds:
         parts = _parts(cfg, y, schema, s)
         syn = {label: _synthetic(cfg, prefix, s) for label, prefix in GENERATORS.items()}
+        only = {label: _metrics(data["test"]["y"], _fit(cfg, "rf", *_head(Xs, ys, spc, k), s).predict(data["test"]["X"]), classes, rare)
+                for label, (Xs, ys) in syn.items()}                      # synthetic data only: the same model for every client of the seed
         for cid, idx in enumerate(parts):
             Xc, yc = X[idx], y[idx]
             cnt = np.bincount(yc, minlength=k)
@@ -137,11 +141,12 @@ def item6(cfg: dict[str, Any], seeds: list[int] | None = None) -> dict[str, Any]
                 add = np.concatenate(add)
                 Xa, ya = np.vstack([Xc, Xs[add]]), np.concatenate([yc, ys[add]])
                 r[label] = _metrics(data["test"]["y"], _fit(cfg, "rf", Xa, ya, s).predict(data["test"]["X"]), classes, rare)
+                r[f"only:{label}"] = only[label]
             rows.append(r)
             logger.info("local aug seed %d client %d (%d rows, classes %s): local %.3f, + MG-eps5 %.3f, + B3 %.3f", s, cid, len(idx), cnt.tolist(),
                         r["local"]["macro_f1"], r["MG-eps5"]["macro_f1"], r["B3"]["macro_f1"])
     summary = {}
-    for label in ["local"] + list(GENERATORS):
+    for label in ["local"] + list(GENERATORS) + [f"only:{g}" for g in GENERATORS]:
         summary[label] = {key: (float(np.mean([r[label][key] for r in rows])), float(np.std([r[label][key] for r in rows]))) for key in ("macro_f1", "bin_f1", "rare_recall")}
         if label != "local":
             d = [r[label]["macro_f1"] - r["local"]["macro_f1"] for r in rows]
@@ -156,12 +161,10 @@ def run(cfg: dict[str, Any], items: tuple[str, ...] = ("5", "6")) -> dict[str, A
     res = Path(cfg["compute"]["runs_csv"]).parent
     p = res / "ids_followup.json"
     out = json.loads(p.read_text(encoding="utf-8")) if p.exists() else {}
-    if "5" in items:
-        out["item5"] = item5(cfg)
-    if "6" in items:
-        out["item6"] = item6(cfg)
-    p.write_text(json.dumps(to_jsonable(out), indent=1), encoding="utf-8")
-    (res / "reports" / "ids_followup.md").write_text(render(out), encoding="utf-8")
+    for item in items:                                                   # saved after each item
+        out[f"item{item}"] = {"5": item5, "6": item6}[item](cfg)
+        p.write_text(json.dumps(to_jsonable(out), indent=1), encoding="utf-8")
+        (res / "reports" / "ids_followup.md").write_text(render(out), encoding="utf-8")
     return out
 
 
@@ -178,7 +181,9 @@ def render(out: dict[str, Any]) -> str:
     if out.get("item5"):
         L += ["## Item 5: IDS trained on synthetic data only (TSTR), IDS-side options", "",
               "`base` = 5,000 synthetic rows per class (as in the study); `all rows` = 20,000 per class; `+ weights` = class-probability weights chosen on "
-              "validation (mean of 3 seeds). An improvement of the IDS, not of the generator.", "",
+              "validation (mean of 3 seeds). Validation and test are class-balanced like the synthetic data, so the weights do not correct a class prior: "
+              "they mostly lower NORMAL (and BCF for most FedDP-Marginal sets), which an IDS trained on synthetic rows predicts too often. An improvement of the IDS, not of the generator; "
+              "on traffic with another class mix the weights must be chosen again.", "",
               "| generator | classifier | base macro-F1 | + weights | all rows | all rows + weights | rare recall: base → best | binary F1: base → best |",
               "|---|---|---|---|---|---|---|---|"]
         for key, r in out["item5"].items():
@@ -193,10 +198,12 @@ def render(out: dict[str, Any]) -> str:
         s = out["item6"]["summary"]
         L += ["## Item 6: local augmentation at each client (RF)", "",
               f"Each client trains its own IDS on its own real rows (`local`), then with synthetic rows of the federation's generator for every class it holds "
-              f"fewer than {FILL} rows of. {out['item6']['n']} client models (5 clients x 3 seeds).", "",
+              f"fewer than {FILL} rows of. `X only` = the IDS trained on {FILL:,} synthetic rows per class of X and nothing else (one model per seed, "
+              f"the same for every client), for reference. {out['item6']['n']} client models (5 clients x 3 seeds).", "",
               "| training data of a client | macro-F1 | binary F1 | rare recall | gain over local (macro-F1) | clients better |", "|---|---|---|---|---|---|"]
         for label, v in s.items():
-            L.append(f"| {label if label == 'local' else 'local + ' + label} | {_f(v['macro_f1'])} | {_f(v['bin_f1'])} | {_f(v['rare_recall'])} | "
+            name = label if label == "local" else (label[5:] + " only (same model for every client)" if label.startswith("only:") else "local + " + label)
+            L.append(f"| {name} | {_f(v['macro_f1'])} | {_f(v['bin_f1'])} | {_f(v['rare_recall'])} | "
                      f"{_f(v.get('gain_macro_f1')) if label != 'local' else '-'} | {v.get('clients_better', '-') if label != 'local' else '-'} |")
         L.append("")
     return "\n".join(L) + "\n"
