@@ -2,15 +2,77 @@
 
 [English](README.md) | **Tiếng Việt**
 
-Khung sinh dữ liệu bảo toàn quyền riêng tư trong học liên kết (FL) để hỗ trợ phát hiện tấn công MQTT DoS/DDoS trên IoT.
+Dữ liệu sinh bảo toàn quyền riêng tư cho học liên kết (FL): các gateway IoT / MQTT không được chia sẻ lưu lượng thô cùng tạo một tập dữ liệu sinh, dưới quyền riêng tư vi sai (DP) và tổng hợp bảo mật, để huấn luyện hệ phát hiện xâm nhập (IDS) cho tấn công MQTT DoS / DDoS.
 
-**Khung (spec v1.5).** Bộ sinh là **FedDP-Marginal**: mỗi client đếm bản ghi của mình vào các bảng có điều kiện theo lớp (biên 1 chiều, mọi cặp, rồi các cạnh của cây Chow-Liu); tổng các bảng này được công bố với quyền riêng tư vi sai (DP) và tập dữ liệu sinh được lấy mẫu từ đó để huấn luyện IDS (Random Forest, MLP). Hai biến thể bảo vệ:
-**phân tán** (nhiễu Skellam chia cho các client, cộng chính xác qua SecAgg+ của Flower; 3 vòng, tổng dưới 1 MB) và **cục bộ** (mỗi client tự thêm đủ nhiễu; không cần tin client khác). Thiết kế ban đầu, CVAE có điều kiện nhãn huấn luyện bằng FL với DP-SGD và/hoặc SecAgg+ (M1, M2, M3), được giữ làm đối chứng: dưới DP nó đạt TSTR macro-F1 0,23-0,29 so với 0,34-0,43 của FedDP-Marginal ở epsilon 1-10 (mục 9.9b của báo cáo).
-`python -m ppfeddata.cli recommend` chọn cấu hình theo yêu cầu triển khai (có tin máy chủ không, số client trung thực, ngân sách epsilon, băng thông, lớp hiếm). **Mô hình đe dọa:** máy chủ tổng hợp honest-but-curious; epsilon của biến thể phân tán được báo cáo cho mọi số client trung thực.
-Vòng tiếp theo (mục 9.11): nhiễu có thể hiệu chỉnh cho số client trung thực tối thiểu t (t = 3 trên 5 không tốn utility ở đây), epsilon có thể bảo vệ cả một TCP stream thay vì một gói tin (mất 0,02-0,04 TSTR macro-F1; bảo vệ cả capture thì không dùng được trên dữ liệu này), và một gateway thêm dòng sinh của FedDP-Marginal cho các lớp tấn công nó thiếu tăng khoảng 0,04 macro-F1.
-Sáu lớp: NORMAL, BCF, DELAYED, SYN, INVALID, WILL. Mỗi dòng dữ liệu là một gói tin (packet). Cách tiếp cận dựa trên biên không mới (MST, AIM, FLAIM); điều nghiên cứu này thêm vào là DP phân tán chính xác qua một cài đặt SecAgg thật, phép so sánh với CVAE dưới cùng FL / DP / SecAgg cho phát hiện tấn công MQTT, và hướng dẫn chọn cấu hình theo yêu cầu.
+## Tóm tắt
 
-Đặc tả: [`PP-FedData_Implementation_Spec.md`](PP-FedData_Implementation_Spec.md). Mọi chỗ làm khác spec có bằng chứng trong [`SPEC_DEVIATIONS.md`](SPEC_DEVIATIONS.md).
+| | |
+|---|---|
+| **Bài toán** | IDS cần lưu lượng tấn công có nhãn từ nhiều gateway, nhưng gói tin thô là dữ liệu riêng và mỗi gateway chỉ thấy một số lớp tấn công (dữ liệu non-IID). |
+| **Cách làm** | **FedDP-Marginal**: mỗi gateway (client FL) đếm gói tin của mình vào các bảng theo lớp và thêm phần nhiễu DP của mình; các bảng được cộng bằng tổng hợp bảo mật (Flower SecAgg+), nên máy chủ chỉ thấy tổng đã có nhiễu. Tập dữ liệu sinh được lấy mẫu từ đó để huấn luyện IDS (Random Forest, MLP). |
+| **Đối chứng** | Thiết kế ban đầu của spec: CVAE có điều kiện nhãn huấn luyện bằng FL với DP-SGD và/hoặc SecAgg+ (M1, M2, M3). |
+| **Kết quả chính** | IDS chỉ học trên dữ liệu sinh đạt macro-F1 trên test 0,39 / 0,41 / 0,43 ở ε 1 / 5 / 10, so với 0,23-0,29 của CVAE có DP và 0,42 của CVAE không DP, trong 3 vòng và dưới 1 MB lưu lượng (mục 9.9b của báo cáo). |
+| **Mô hình đe dọa** | Máy chủ tổng hợp honest-but-curious. Mặc định ε bảo vệ một gói tin; có tuỳ chọn để ε bảo vệ cả một TCP stream, hoặc vẫn đúng khi chỉ còn t gateway trung thực (mục 9.11). |
+| **Bạn nhận được** | Khung sinh dữ liệu và CLI, đánh giá đầy đủ (utility, độ trung thực, tấn công suy luận thành viên, chi phí), hướng dẫn chọn cấu hình theo yêu cầu triển khai (`recommend`), báo cáo sinh tự động và demo Streamlit. |
+| **Tính mới** | Sinh dữ liệu DP dựa trên biên không mới (MST, AIM, FLAIM). Nghiên cứu này thêm DP phân tán chính xác qua một cài đặt tổng hợp bảo mật thật, phép so sánh với CVAE dưới cùng FL / DP / SecAgg cho phát hiện tấn công MQTT, và hướng dẫn chọn cấu hình theo yêu cầu. |
+
+## Cách hoạt động
+
+```mermaid
+flowchart TB
+  subgraph S1["1. Chuẩn bị dữ liệu (Phase 1-5)"]
+    direction LR
+    raw["Capture MQTT thô<br/>59,6 triệu gói tin, không có trong repo"] --> prep["kiểm kê, hài hoà, chia theo nhóm,<br/>lấy mẫu, mã hoá"]
+  end
+  subgraph S2["2-3. Liên kết và sinh dữ liệu"]
+    direction LR
+    gw["5 gateway (non-IID)<br/>bảng đếm + phần nhiễu"] -->|"vector đã che"| sa["Máy chủ SecAgg+<br/>chỉ thấy tổng có nhiễu"] --> gen["FedDP-Marginal<br/>biên + cây Chow-Liu"] --> syn["tập dữ liệu sinh"]
+  end
+  subgraph S3["4-5. Sử dụng và đánh giá"]
+    direction LR
+    ids["IDS<br/>RF / MLP"] --> ev["đánh giá trên tập test thật<br/>utility, độ trung thực, tấn công, chi phí"] --> out["báo cáo, bảng điểm,<br/>recommend, demo"]
+  end
+  S1 -->|"tập train, chia cho các gateway"| S2
+  S2 -->|"dữ liệu sinh"| S3
+  S1 -.->|"tập test thật"| S3
+```
+
+1. **Chuẩn bị dữ liệu (Phase 1-5).** Các tệp gói tin thô được kiểm kê, hài hoà schema, chia train / val / test theo nhóm capture (nhóm của test không bao giờ xuất hiện khi huấn luyện), lấy mẫu theo hạn mức lớp và mã hoá. Sáu lớp: NORMAL, BCF, DELAYED, SYN, INVALID, WILL; mỗi dòng là một gói tin.
+2. **Liên kết.** Tập train được chia cho 5 client theo Dirichlet từng lớp (α = 0,5), nên phần lớn client thiếu một số lớp tấn công.
+3. **Sinh dữ liệu.** FedDP-Marginal chạy ba lần công bố qua Flower SecAgg+: bảng 1 chiều theo lớp, mọi cặp thuộc tính (máy chủ dựng cây Chow-Liu từ đó), rồi các bảng của cây. Mỗi client thêm một phần nhiễu Skellam; ngân sách quyền riêng tư được kế toán chính xác. Máy chủ lấy mẫu tập dữ liệu sinh từ các bảng có nhiễu.
+4. **Đánh giá.** IDS học trên dữ liệu sinh (TSTR) hoặc trên thật + sinh (TAug) được kiểm trên tập test thật; đo độ trung thực, tấn công suy luận thành viên và chi phí; mọi lựa chọn làm trên val bằng 3 seed.
+5. **Phân tích.** Sổ chạy nuôi báo cáo, bảng điểm của mọi cấu hình và hướng dẫn theo yêu cầu; các con số trong README này được sinh tự động từ đó.
+
+Các hướng CVAE (B2, B3, M1-M3) đi qua cùng các bước 1, 2, 4 và 5. Sơ đồ một lần chạy, luồng dữ liệu và bản đồ mã: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
+
+## Thuật ngữ
+
+| Tên | Nghĩa |
+|---|---|
+| **B0, B1a, B1b** | mốc học trên dữ liệu thật: chỉ dữ liệu thật, có trọng số lớp, có SMOTE |
+| **B2, B3** | CVAE huấn luyện tập trung (B2) hoặc bằng FedAvg trên các client non-IID (B3); không DP, không SecAgg |
+| **M1, M2, M3** | B3 + DP-SGD ở mỗi client (M1), + SecAgg+ (M2), + cả hai (M3). M1o / M3o: tune lại ở quy mô đầy đủ; M3f: DP-FedSGD |
+| **FedDP-Marginal (MG)** | bộ sinh của khung. MGs: nhiễu Skellam chia cho các client, cộng qua Flower SecAgg+. MGr: MGs + hậu xử lý. MGd: nhiễu Gaussian chia cho client (mô phỏng). MGl: DP cục bộ, mỗi client thêm đủ nhiễu. MGb: tuỳ chọn mạng Bayes |
+| **MG-eps1 / 5 / 10** | các cấu hình chính của khung: MGr-eps1, MGs-eps5, MGs-eps10 |
+| `-eps<e>`, **ε, δ** | ngân sách DP trên mỗi bản ghi, ε ∈ {1, 5, 10}, δ = 1e-5 |
+| `-strm<m>`, `-cap<m>`, `-t<t>` | ε bảo vệ cả một TCP stream / capture (tối đa m dòng mỗi đơn vị); nhiễu hiệu chỉnh cho t client trung thực |
+| **TRTR, TSTR, TAug, TAugR** | học trên thật; học trên dữ liệu sinh; học trên thật + sinh; thật + sinh chỉ cho lớp hiếm. Luôn kiểm trên tập test **thật** |
+| **macro-F1, binary F1, recall lớp hiếm** | F1 trung bình trên 6 lớp (chỉ số chính); tấn công hay bình thường; recall trung bình của DELAYED, SYN, INVALID, WILL |
+| **MIA, C2ST** | AUC của tấn công suy luận thành viên (0,5 = kẻ tấn công không biết gì); kiểm định bộ phân loại thật hay sinh (0,5 = không phân biệt được) |
+| **SecAgg+** | tổng hợp bảo mật của Flower: máy chủ chỉ nhận được tổng các vector của client |
+| **K, α, h, t** | số client (5); tham số non-IID Dirichlet (0,5); số client trung thực; số client trung thực mà nhiễu được hiệu chỉnh cho |
+| **Phase 0-13, O0-O5, P1-P2, G1-G4** | các bước của spec, vòng tối ưu, vòng tiếp theo, các cổng duyệt của người dùng |
+
+## Đọc gì để biết gì
+
+| Muốn... | Đọc |
+|---|---|
+| hiểu thiết kế và mã | [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md), rồi README của từng thư mục ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md); tiếng Anh) |
+| xem mọi kết quả và cách diễn giải | [results/reports/final_report.md](results/reports/final_report.md): 9.0 tóm tắt, 9.9b vì sao chọn FedDP-Marginal, 9.10b theo yêu cầu, 9.11 vòng tiếp theo |
+| chọn cấu hình cho một triển khai | [results/reports/recommend.md](results/reports/recommend.md), trang tương tác `results/reports/recommend.html` (tải về rồi mở), trang 3 của demo |
+| biết các luật công việc tuân theo | [PP-FedData_Implementation_Spec.md](PP-FedData_Implementation_Spec.md) |
+| biết vì sao có chỗ khác spec, kèm bằng chứng | [SPEC_DEVIATIONS.md](SPEC_DEVIATIONS.md) |
+| chạy lại toàn bộ | Cài đặt, Dữ liệu, Chạy từng Phase, Tái lập (bên dưới) |
 
 ## Kết quả và cách đọc
 
@@ -63,8 +125,8 @@ python -m ppfeddata.cli demo
 ```
 
 Mở trang Streamlit gồm 5 phần: (1) tổng quan dữ liệu và phân bố lớp, (2) bảng và hình kết quả, (3) đánh đổi utility - privacy - overhead, khuyến nghị và cấu hình nào cho yêu cầu nào, (4) tạo mẫu (chọn cấu hình, lớp, số lượng; tải CSV),
-(5) mô hình đe dọa và hạn chế. Demo chỉ đọc `results/` và `artifacts/` do các thí nghiệm tạo ra, và lấy mẫu từ các CVAE đã huấn luyện bằng đúng đường mã của phần đánh giá. Cấu hình có DP chỉ sinh bằng bộ giải mã thuần
-(nhiễu dư theo lớp được ước lượng từ toàn bộ train nên nằm ngoài ε). Không gửi telemetry (`.streamlit/config.toml`).
+(5) mô hình đe dọa và hạn chế. Demo chỉ đọc `results/` và `artifacts/` do các thí nghiệm tạo ra, và lấy mẫu từ các bộ sinh đã huấn luyện (FedDP-Marginal hoặc CVAE) bằng đúng đường mã của phần đánh giá. Cấu hình
+CVAE có DP chỉ sinh bằng bộ giải mã thuần (nhiễu dư theo lớp được ước lượng từ toàn bộ train nên nằm ngoài ε). Không gửi telemetry (`.streamlit/config.toml`). Các trang và dữ liệu đầu vào: [demo/README.md](demo/README.md).
 
 ## Cài đặt
 
@@ -188,16 +250,30 @@ Mọi lệnh chạy từ thư mục gốc của repo. Mọi tiến trình dài g
 ## Cấu trúc thư mục
 
 ```
-configs/        default.yaml (mọi tham số), best_cvae*.yaml (siêu tham số đã chọn), feature_decisions.yaml, label_map.yaml, exp/ (một file mỗi cấu hình thí nghiệm), local.yaml (riêng máy, không commit)
-src/ppfeddata/  data/ (Phase 1-5), models/ (CVAE, sinh mẫu, B2), fl/ (FedAvg, DP, SecAgg, M1-M3), eval/ (metric, fidelity, privacy, so sánh, ε độc lập),
-                checks/ (rò rỉ), run_experiment.py, aggregate.py, interpret.py, limitations.py, demo_lib.py, readme_gen.py, package.py, cli.py
-tests/          pytest cho mọi Phase
-demo/           app.py (Streamlit)
-notebooks/      trống; dành cho notebook chỉ để xem (không chứa logic)
-data/           inventory/, interim/, processed/, partitions/   (không commit)
-artifacts/      mô hình, dữ liệu sinh, dự đoán, log vòng FL của từng run   (không commit)
-results/        runs.csv, summary.csv (không commit); interpretation.json, figures/*.png, reports/*.md, manifests/*.json, repro/ (commit)
+PP-FedData/
+├── src/ppfeddata/        gói mã; mỗi bước một lệnh con của CLI (cli.py)
+│   ├── data/             Phase 1-4: kiểm kê, hài hoà schema, chia theo nhóm + lấy mẫu, tiền xử lý
+│   ├── checks/           Phase 5: kiểm tra rò rỉ
+│   ├── eval/             Phase 6: bộ phân loại, giao thức, chỉ số, độ trung thực, quyền riêng tư, bootstrap, sổ chạy
+│   ├── models/           bộ sinh: CVAE (cvae, train, generate) và FedDP-Marginal (marginal, marginal_bn)
+│   ├── fl/               Flower: FedAvg (B3), DP-SGD (M1), SecAgg+ (M2, M3), FedDP-Marginal qua SecAgg+ (mg_app)
+│   └── *.py              phân hoạch, điều phối thí nghiệm và tune, phân tích (aggregate, interpret, scorecard,
+│                         recommend), báo cáo (interpret_report, limitations, readme_gen), logic demo, nghiệm thu, đóng gói
+├── configs/              default.yaml (mọi tham số), best_*.yaml (thiết lập chọn trên val), exp/ (ma trận thí nghiệm),
+│                         feature_decisions.yaml, label_map.yaml; local.yaml (đường dẫn riêng máy, không commit)
+├── results/              kết quả được commit: reports/, figures/, *.json, manifests/, repro/; runs.csv và summary.csv không commit
+├── docs/                 ARCHITECTURE.md, ARCHITECTURE.vi.md: thành phần, luồng dữ liệu, cơ chế bảo vệ, bản đồ mã
+├── tests/                pytest cho mọi bước
+├── demo/                 app.py (Streamlit)
+├── notebooks/            trống; dành cho notebook chỉ để xem (không chứa logic)
+├── data/, artifacts/     do các lần chạy ghi: dữ liệu đã xử lý, phân hoạch, mô hình, dữ liệu sinh, dự đoán (không commit)
+├── PP-FedData_Implementation_Spec.md   các luật (spec v1.5)
+├── SPEC_DEVIATIONS.md    mọi chỗ lệch spec, kèm bằng chứng
+└── pyproject.toml, requirements.txt, requirements-lock.txt
 ```
+
+Mỗi thư mục có mã, thiết lập hoặc kết quả đều có README (tiếng Anh) liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),
+[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
 
 ## Thời gian chạy tham khảo
 

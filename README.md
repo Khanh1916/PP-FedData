@@ -2,15 +2,77 @@
 
 **English** | [Tiếng Việt](README.vi.md)
 
-A privacy-preserving data-generation framework for federated learning (FL), to support the detection of MQTT DoS/DDoS attacks on IoT.
+Privacy-preserving synthetic data for federated learning (FL): IoT / MQTT gateways that cannot share their raw traffic build a synthetic dataset together, under differential privacy (DP) and secure aggregation, to train an intrusion-detection system (IDS) for MQTT DoS / DDoS attacks.
 
-**Framework (spec v1.5).** The generator is **FedDP-Marginal**: every client counts its own records into class-conditional tables (1-way marginals, all pairs, then the edges of a Chow-Liu tree); the sums of these tables are released with differential privacy and a synthetic dataset is sampled from them to train the IDS (Random Forest, MLP). Two privacy variants:
-**distributed** (Skellam noise split over the clients, summed exactly through Flower's SecAgg+; three rounds, under 1 MB in total) and **local** (every client adds the full noise; no trust in the other clients). The original design, a label-conditional CVAE trained by FL with DP-SGD and/or SecAgg+ (M1, M2, M3), stays as the baseline: under DP it reaches TSTR macro-F1 0.23-0.29 against 0.34-0.43 for FedDP-Marginal at epsilon 1-10 (section 9.9b of the report).
-`python -m ppfeddata.cli recommend` picks the configuration for a deployment requirement (trusted server or not, number of honest clients, epsilon budget, bandwidth, rare classes). **Threat model:** honest-but-curious aggregation server; the epsilon of the distributed variant is also reported for any number of honest clients.
-Follow-up round (section 9.11): the noise can be calibrated for a minimum number t of honest clients (t = 3 of 5 cost no utility here), epsilon can cover a whole TCP stream instead of one packet (0.02-0.04 TSTR macro-F1; a whole capture is not usable on this data), and a gateway that adds FedDP-Marginal rows for the attack classes it lacks gains about 0.04 macro-F1.
-Six classes: NORMAL, BCF, DELAYED, SYN, INVALID, WILL. Each row of the data is one packet. The marginal-based approach is not new (MST, AIM, FLAIM); what the study adds is exact distributed DP through a real SecAgg implementation, the comparison with a CVAE under the same FL / DP / SecAgg for MQTT intrusion detection, and the requirement-driven guide.
+## At a glance
 
-Specification: [`PP-FedData_Implementation_Spec.md`](PP-FedData_Implementation_Spec.md). Every place where the work differs from the spec is recorded, with evidence, in [`SPEC_DEVIATIONS.md`](SPEC_DEVIATIONS.md) (in Vietnamese).
+| | |
+|---|---|
+| **Problem** | An IDS needs labelled attack traffic from many gateways, but the raw packets are private and each gateway sees only some of the attack classes (non-IID data). |
+| **Approach** | **FedDP-Marginal**: every gateway (FL client) counts its own packets into per-class tables and adds its share of DP noise; the tables are summed by secure aggregation (Flower SecAgg+), so the server sees only a noisy total. A synthetic dataset is sampled from it and trains the IDS (Random Forest, MLP). |
+| **Baseline** | The design the spec started from: a label-conditional CVAE trained by FL with DP-SGD and/or SecAgg+ (M1, M2, M3). |
+| **Main result** | An IDS trained on the synthetic data only reaches test macro-F1 0.39 / 0.41 / 0.43 at ε 1 / 5 / 10, against 0.23-0.29 for the CVAE with DP and 0.42 for the CVAE without DP, in 3 rounds and under 1 MB of traffic (report section 9.9b). |
+| **Threat model** | Honest-but-curious aggregation server. ε protects one packet by default; options make it cover a whole TCP stream, or hold with a minimum number t of honest gateways (section 9.11). |
+| **What you get** | The framework and its CLI, a full evaluation (utility, fidelity, membership attacks, cost), a configuration guide per deployment requirement (`recommend`), a generated report and a Streamlit demo. |
+| **Novelty** | Marginal-based DP synthesis is not new (MST, AIM, FLAIM). This work adds exact distributed DP through a real secure-aggregation implementation, a comparison with a CVAE under the same FL / DP / SecAgg for MQTT intrusion detection, and the requirement-driven guide. |
+
+## How it works
+
+```mermaid
+flowchart TB
+  subgraph S1["1. Data preparation (Phases 1-5)"]
+    direction LR
+    raw["Raw MQTT captures<br/>59.6 M packets, not in the repo"] --> prep["inventory, harmonise, group split,<br/>sampling, encoding"]
+  end
+  subgraph S2["2-3. Federation and generation"]
+    direction LR
+    gw["5 gateways (non-IID)<br/>count tables + noise share"] -->|"masked vectors"| sa["SecAgg+ server<br/>sees only the noisy sum"] --> gen["FedDP-Marginal<br/>marginals + Chow-Liu tree"] --> syn["synthetic dataset"]
+  end
+  subgraph S3["4-5. Use and evaluation"]
+    direction LR
+    ids["IDS<br/>RF / MLP"] --> ev["evaluation on the real test split<br/>utility, fidelity, attacks, cost"] --> out["report, scorecard,<br/>recommend, demo"]
+  end
+  S1 -->|"train split, divided over the gateways"| S2
+  S2 -->|"synthetic data"| S3
+  S1 -.->|"real test split"| S3
+```
+
+1. **Data preparation (Phases 1-5).** The raw packet exports are inventoried, harmonised, split into train / validation / test by capture group (test groups are never seen in training), sampled to class quotas and encoded. Six classes: NORMAL, BCF, DELAYED, SYN, INVALID, WILL; one row is one packet.
+2. **Federation.** The train split is divided over 5 clients with a per-class Dirichlet (α = 0.5), so most clients miss some attack classes.
+3. **Generation.** FedDP-Marginal runs three releases through Flower SecAgg+: per-class 1-way tables, all attribute pairs (from which the server builds a Chow-Liu tree), then the tree's tables. Each client adds a share of Skellam noise; the privacy budget is accounted exactly. The server samples a synthetic dataset from the noisy tables.
+4. **Evaluation.** An IDS trained on the synthetic data (TSTR) or on real + synthetic data (TAug) is tested on the real test split; fidelity, membership attacks and cost are measured; every choice is made on validation with 3 seeds.
+5. **Analysis.** A run ledger feeds the report, the scorecard of all configurations and the per-requirement guide; the numbers in this README are generated from it.
+
+The CVAE routes (B2, B3, M1-M3) go through the same steps 1, 2, 4 and 5. Diagrams of one run, the data flow and the code map: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+
+## Glossary
+
+| Name | Meaning |
+|---|---|
+| **B0, B1a, B1b** | references trained on real data: real only, with class weights, with SMOTE |
+| **B2, B3** | CVAE trained centrally (B2) or by FedAvg over the non-IID clients (B3); no DP, no SecAgg |
+| **M1, M2, M3** | B3 + DP-SGD at each client (M1), + SecAgg+ (M2), + both (M3). M1o / M3o: re-tuned at full scale; M3f: DP-FedSGD |
+| **FedDP-Marginal (MG)** | the framework's generator. MGs: Skellam noise split over the clients, summed by Flower SecAgg+. MGr: MGs + post-processing. MGd: Gaussian noise split (simulated). MGl: local DP, every client adds the full noise. MGb: Bayesian-network option |
+| **MG-eps1 / 5 / 10** | the framework's main configurations: MGr-eps1, MGs-eps5, MGs-eps10 |
+| `-eps<e>`, **ε, δ** | DP budget per record, ε ∈ {1, 5, 10}, δ = 1e-5 |
+| `-strm<m>`, `-cap<m>`, `-t<t>` | ε covers a whole TCP stream / capture (at most m rows per unit); noise calibrated for t honest clients |
+| **TRTR, TSTR, TAug, TAugR** | train real; train synthetic; train real + synthetic; real + synthetic for the rare classes only. Always tested on the **real** test split |
+| **macro-F1, binary F1, rare recall** | mean F1 over the 6 classes (main metric); attack vs normal; mean recall of DELAYED, SYN, INVALID, WILL |
+| **MIA, C2ST** | membership-inference attack AUC (0.5 = the attacker learns nothing); classifier test real vs synthetic (0.5 = indistinguishable) |
+| **SecAgg+** | Flower's secure aggregation: the server obtains only the sum of the clients' vectors |
+| **K, α, h, t** | number of clients (5); Dirichlet non-IID parameter (0.5); number of honest clients; number of honest clients the noise is calibrated for |
+| **Phases 0-13, O0-O5, P1-P2, G1-G4** | stages of the spec, the optimisation round, the follow-up round, the user's approval gates |
+
+## Where to read what
+
+| To... | Read |
+|---|---|
+| understand the design and the code | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), then the README of each folder ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md)) |
+| see every result and its interpretation | [results/reports/final_report.md](results/reports/final_report.md): 9.0 summary, 9.9b why FedDP-Marginal, 9.10b per requirement, 9.11 follow-up round |
+| choose a configuration for a deployment | [results/reports/recommend.md](results/reports/recommend.md), the interactive page `results/reports/recommend.html` (download and open it), demo page 3 |
+| know the rules the work follows | [PP-FedData_Implementation_Spec.md](PP-FedData_Implementation_Spec.md) |
+| know why something differs from the spec, with the evidence | [SPEC_DEVIATIONS.md](SPEC_DEVIATIONS.md) (in Vietnamese) |
+| re-run everything | Installation, Data, Running each phase, Reproducing the results (below) |
 
 ## Results and how to read them
 
@@ -64,8 +126,8 @@ python -m ppfeddata.cli demo
 
 Opens a Streamlit app with five pages (the interface is in Vietnamese): (1) data overview and class distribution, (2) tables and figures of the results, (3) utility - privacy - overhead trade-off, the recommendation and
 which configuration for which requirement, (4) sample generation (choose a configuration, a class and a number of rows; download CSV), (5) threat model and limitations. The demo only reads the `results/` and `artifacts/`
-that the experiments produced, and samples from the trained CVAEs through the same code path as the evaluation. DP configurations are sampled with the plain decoder only (the per-class residual noise is estimated on
-the whole train split, so it lies outside epsilon). No telemetry is sent (`.streamlit/config.toml`).
+that the experiments produced, and samples from the trained generators (FedDP-Marginal or a CVAE) through the same code path as the evaluation. DP configurations of the CVAE are sampled with the plain decoder only (the
+per-class residual noise is estimated on the whole train split, so it lies outside epsilon). No telemetry is sent (`.streamlit/config.toml`). Pages and their inputs: [demo/README.md](demo/README.md).
 
 ## Installation
 
@@ -190,16 +252,30 @@ Every command runs from the root of the repository. Every long process writes ch
 ## Repository layout
 
 ```
-configs/        default.yaml (every parameter), best_cvae*.yaml (selected hyper-parameters), feature_decisions.yaml, label_map.yaml, exp/ (one file per experiment configuration), local.yaml (machine-specific, not committed)
-src/ppfeddata/  data/ (Phases 1-5), models/ (CVAE, sampling, B2), fl/ (FedAvg, DP, SecAgg, M1-M3), eval/ (metrics, fidelity, privacy, comparisons, independent epsilon),
-                checks/ (leakage), run_experiment.py, aggregate.py, interpret.py, limitations.py, demo_lib.py, readme_gen.py, package.py, cli.py
-tests/          pytest for every phase
-demo/           app.py (Streamlit)
-notebooks/      empty; reserved for view-only notebooks (no logic)
-data/           inventory/, interim/, processed/, partitions/   (not committed)
-artifacts/      models, synthetic data, predictions, FL round logs of every run   (not committed)
-results/        runs.csv, summary.csv (not committed); interpretation.json, figures/*.png, reports/*.md, manifests/*.json, repro/ (committed)
+PP-FedData/
+├── src/ppfeddata/        the package; one CLI sub-command per stage (cli.py)
+│   ├── data/             Phases 1-4: inventory, harmonise, group split + sampling, preprocessing
+│   ├── checks/           Phase 5: leakage checks
+│   ├── eval/             Phase 6: classifiers, protocols, metrics, fidelity, privacy, bootstrap, run ledger
+│   ├── models/           generators: CVAE (cvae, train, generate) and FedDP-Marginal (marginal, marginal_bn)
+│   ├── fl/               Flower: FedAvg (B3), DP-SGD (M1), SecAgg+ (M2, M3), FedDP-Marginal over SecAgg+ (mg_app)
+│   └── *.py              partition, experiment control and tuning, analysis (aggregate, interpret, scorecard,
+│                         recommend), reporting (interpret_report, limitations, readme_gen), demo logic, acceptance, package
+├── configs/              default.yaml (every parameter), best_*.yaml (settings chosen on validation), exp/ (experiment matrix),
+│                         feature_decisions.yaml, label_map.yaml; local.yaml (machine paths, not committed)
+├── results/              committed results: reports/, figures/, *.json, manifests/, repro/; runs.csv and summary.csv not committed
+├── docs/                 ARCHITECTURE.md, ARCHITECTURE.vi.md: components, data flow, privacy mechanics, code map
+├── tests/                pytest for every stage
+├── demo/                 app.py (Streamlit)
+├── notebooks/            empty; reserved for view-only notebooks (no logic)
+├── data/, artifacts/     written by the runs: processed data, partitions, models, synthetic data, predictions (not committed)
+├── PP-FedData_Implementation_Spec.md   the rules (spec v1.5)
+├── SPEC_DEVIATIONS.md    every deviation from the spec, with evidence (Vietnamese)
+└── pyproject.toml, requirements.txt, requirements-lock.txt
 ```
+
+Each folder with code, settings or results has a README that lists its files and how they are produced: [src/ppfeddata](src/ppfeddata/README.md),
+[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md). How the pieces work together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Reference run times
 
