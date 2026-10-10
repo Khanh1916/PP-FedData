@@ -54,8 +54,8 @@ Các hướng CVAE (B2, B3, M1-M3) đi qua cùng các bước 1, 2, 4 và 5. Sơ
 | **M1, M2, M3** | B3 + DP-SGD ở mỗi client (M1), + SecAgg+ (M2), + cả hai (M3). M1o / M3o: tune lại ở quy mô đầy đủ; M3f: DP-FedSGD |
 | **FedDP-Marginal (MG)** | bộ sinh của khung. MGs: nhiễu Skellam chia cho các client, cộng qua Flower SecAgg+. MGr: MGs + hậu xử lý. MGd: nhiễu Gaussian chia cho client (mô phỏng). MGl: DP cục bộ, mỗi client thêm đủ nhiễu. MGb: tuỳ chọn mạng Bayes |
 | **MG-eps1 / 5 / 10** | các cấu hình chính của khung: MGr-eps1, MGs-eps5, MGs-eps10 |
-| `-eps<e>`, **ε, δ** | ngân sách DP trên mỗi bản ghi, ε ∈ {1, 5, 10}, δ = 1e-5 |
-| `-strm<m>`, `-cap<m>`, `-t<t>` | ε bảo vệ cả một TCP stream / capture (tối đa m dòng mỗi đơn vị); nhiễu hiệu chỉnh cho t client trung thực |
+| <code>-&#8288;eps&lt;e&gt;</code>, **ε, δ** | ngân sách DP trên mỗi bản ghi, ε ∈ {1, 5, 10}, δ = 1e-5 |
+| <code>-&#8288;strm&lt;m&gt;</code><br><code>-&#8288;cap&lt;m&gt;</code><br><code>-&#8288;t&lt;t&gt;</code> | ε bảo vệ cả một TCP stream / capture (tối đa m dòng mỗi đơn vị); nhiễu hiệu chỉnh cho t client trung thực |
 | **TRTR, TSTR, TAug, TAugR** | học trên thật; học trên dữ liệu sinh; học trên thật + sinh; thật + sinh chỉ cho lớp hiếm. Luôn kiểm trên tập test **thật** |
 | **macro-F1, binary F1, recall lớp hiếm** | F1 trung bình trên 6 lớp (chỉ số chính); tấn công hay bình thường; recall trung bình của DELAYED, SYN, INVALID, WILL |
 | **MIA, C2ST** | AUC của tấn công suy luận thành viên (0,5 = kẻ tấn công không biết gì); kiểm định bộ phân loại thật hay sinh (0,5 = không phân biệt được) |

@@ -54,8 +54,8 @@ The CVAE routes (B2, B3, M1-M3) go through the same steps 1, 2, 4 and 5. Diagram
 | **M1, M2, M3** | B3 + DP-SGD at each client (M1), + SecAgg+ (M2), + both (M3). M1o / M3o: re-tuned at full scale; M3f: DP-FedSGD |
 | **FedDP-Marginal (MG)** | the framework's generator. MGs: Skellam noise split over the clients, summed by Flower SecAgg+. MGr: MGs + post-processing. MGd: Gaussian noise split (simulated). MGl: local DP, every client adds the full noise. MGb: Bayesian-network option |
 | **MG-eps1 / 5 / 10** | the framework's main configurations: MGr-eps1, MGs-eps5, MGs-eps10 |
-| `-eps<e>`, **ε, δ** | DP budget per record, ε ∈ {1, 5, 10}, δ = 1e-5 |
-| `-strm<m>`, `-cap<m>`, `-t<t>` | ε covers a whole TCP stream / capture (at most m rows per unit); noise calibrated for t honest clients |
+| <code>-&#8288;eps&lt;e&gt;</code>, **ε, δ** | DP budget per record, ε ∈ {1, 5, 10}, δ = 1e-5 |
+| <code>-&#8288;strm&lt;m&gt;</code><br><code>-&#8288;cap&lt;m&gt;</code><br><code>-&#8288;t&lt;t&gt;</code> | ε covers a whole TCP stream / capture (at most m rows per unit); noise calibrated for t honest clients |
 | **TRTR, TSTR, TAug, TAugR** | train real; train synthetic; train real + synthetic; real + synthetic for the rare classes only. Always tested on the **real** test split |
 | **macro-F1, binary F1, rare recall** | mean F1 over the 6 classes (main metric); attack vs normal; mean recall of DELAYED, SYN, INVALID, WILL |
 | **MIA, C2ST** | membership-inference attack AUC (0.5 = the attacker learns nothing); classifier test real vs synthetic (0.5 = indistinguishable) |
