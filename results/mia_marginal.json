@@ -20,7 +20,7 @@
  ],
  "attack": "log-likelihood under the released tables, calibrated by a reference model",
  "config_hash": "8c86c0b143d4",
- "git_commit": "77d452090cd9b97e91e22577dd7840d892cdd174",
+ "git_commit": "2fc74dfd080050fed55c939f8523258db8fa2cb1",
  "controls": {
   "nonoise_500_bins32": {
    "per_seed": [
@@ -2314,7 +2314,7 @@
   }
  },
  "merged": {
-  "MGs-nodp": "77d452090cd9b97e91e22577dd7840d892cdd174",
-  "MGp-nodp": "77d452090cd9b97e91e22577dd7840d892cdd174"
+  "MGs-nodp": "2fc74dfd080050fed55c939f8523258db8fa2cb1",
+  "MGp-nodp": "2fc74dfd080050fed55c939f8523258db8fa2cb1"
  }
 }
