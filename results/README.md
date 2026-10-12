@@ -15,6 +15,7 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `recommend.md`, `recommend.html` | `recommend` | which configuration for which deployment requirement; the HTML page has the same filters |
 | `scorecard.md` | `scorecard` | every configuration on every metric and the Pareto front |
 | `privacy_units.md` | `privacy-units` | group-level DP (stream, capture) and honest-client threshold of FedDP-Marginal |
+| `mg_nodp.md` | `mg-nodp` | FedDP-Marginal without DP, plain and through SecAgg+: the protection matrix, the cost of DP and of SecAgg+, the attack |
 | `ids_followup.md` | `ids-followup` | IDS-side options and local augmentation at each client |
 | `robustness.md` | `robustness` | FedDP-Marginal under other federations and 11 classes |
 | `sensitivity.md` | `sensitivity` | other test groups (A4) and a per-stream cap (A5) |
@@ -38,6 +39,7 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `scorecard.json`, `scorecard_baseline.json` | `scorecard`, `scorecard --freeze-baseline` | scorecard rows and the frozen reference of the optimisation round |
 | `recommend.json` | `recommend` | requirement, front and pick of every example scenario |
 | `privacy_units.json` | `privacy-units` | rows of the P1 tables |
+| `mg_nodp.json` | `mg-nodp` | rows and paired comparisons of round Q1 (section 9.12 of the report) |
 | `ids_followup.json` | `ids-followup` | rows of the P2 tables, per client |
 | `robustness.json` | `robustness` | federations and 11-class results |
 | `sensitivity.json` | `sensitivity` | A4 / A5 verdicts |

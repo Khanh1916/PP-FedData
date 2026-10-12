@@ -11321,7 +11321,7 @@
     ],
     "dup_rate_max": 0.01,
     "dcr_ratio_min": 0.5,
-    "n_generators_checked": 180
+    "n_generators_checked": 186
    },
    "notes": []
   },
@@ -11428,7 +11428,7 @@
     "n_above_redflag": 7,
     "n_above_redflag_in_matrix": 0,
     "n_above_seed_std_max": 48,
-    "n_configurations": 249,
+    "n_configurations": 257,
     "n_in_matrix": 73,
     "max_std_in_matrix": 0.03696463,
     "redflag": 0.05,
@@ -11477,7 +11477,7 @@
     ]
    },
    "notes": [
-    "48 of 249 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
+    "48 of 257 configurations are above the softer level seed_std_max = 0.02 (a note, not a red flag)."
    ]
   },
   {

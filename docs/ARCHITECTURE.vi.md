@@ -44,7 +44,7 @@ thực tối thiểu t.
 | Tổng hợp bảo mật | Flower SecAgg+, tổng số nguyên chính xác (uint32) | Flower SecAgg+ trên trọng số đã lượng tử hoá (M2, M3) |
 | DP phân tán (chia nhiễu cho client) | có (mỗi lần công bố là một tổng) | không với DP-SGD (nhiều bước cục bộ); chỉ biến thể DP-FedSGD M3f, mô phỏng trong tiến trình |
 | Mã | `models/marginal.py`, `fl/mg_app.py` | `models/cvae.py`, `fl/core.py`, `fl/app.py`, `fl/dp_utils.py`, `fl/secagg.py` |
-| Cấu hình | MGs, MGr, MGd, MGl, MGb (+ tuỳ chọn `-strm`, `-cap`, `-t`) | B2, B3, M1, M2, M3 (+ M1o, M3o, M3f) |
+| Cấu hình | MGs, MGr, MGd, MGl, MGb (+ tuỳ chọn `-strm`, `-cap`, `-t`); không DP: MGs-nodp (SecAgg+), MGp-nodp (thường) | B2, B3, M1, M2, M3 (+ M1o, M3o, M3f) |
 
 Hướng CVAE là tiền đề của spec; dưới DP nó cách xa phiên bản không DP, nên khung chuyển sang FedDP-Marginal (mục 9.9b của báo cáo). Hai
 hướng dùng chung phần chuẩn bị dữ liệu, phân hoạch client, đánh giá và báo cáo.
@@ -84,7 +84,7 @@ flowchart TB
   C --> E["6 baseline B0, B1a, B1b"]
   C --> P["phân hoạch: Dirichlet cho 5 client<br/>data/partitions/"]
   P --> F["7-10 hướng CVAE: B2, B3, M1, M2, M3<br/>tune, tune-dp, tune-dp-full"]
-  P --> G["O2-O4 FedDP-Marginal: tune-marginal, privacy-units, robustness"]
+  P --> G["O2-O4 FedDP-Marginal: tune-marginal, privacy-units, mg-nodp, robustness"]
   E & F & G --> L[("results/runs.csv<br/>artifacts/run_id/")]
   L --> H["11-12 aggregate + diễn giải<br/>summary.csv, hình, final_report.md, khối README"]
   H --> I["scorecard -> recommend"]
@@ -98,7 +98,7 @@ flowchart TB
 | Liên kết | Phase 8-10, O2-O4, P1 | `partition.py`, `fl/*`, `group_dp.py` | tập train đã xử lý | `data/partitions/`, `artifacts/<config>_<seed>/` |
 | Bộ sinh | Phase 7-10, O1-O3 | `models/cvae.py`, `models/train.py`, `models/generate.py`, `models/marginal.py`, `models/marginal_bn.py` | dữ liệu hoặc bảng của client | `synthetic.npz`, tệp mô hình |
 | Đánh giá | từ Phase 6 | `eval/utility.py`, `eval/fidelity.py`, `eval/privacy.py`, `eval/overhead.py`, `eval/stats.py`, `eval/runs.py` | dữ liệu sinh, val / test thật | `results/runs.csv`, `artifacts/<run_id>/preds/` |
-| Điều phối thí nghiệm | Phase 11 | `run_experiment.py`, `tune*.py`, `privacy_units.py`, `robustness.py`, `sensitivity.py` | `configs/exp/*.yaml`, `configs/best_*.yaml` | các lần chạy, `configs/best_*.yaml` |
+| Điều phối thí nghiệm | Phase 11 | `run_experiment.py`, `tune*.py`, `privacy_units.py`, `mg_nodp.py`, `robustness.py`, `sensitivity.py` | `configs/exp/*.yaml`, `configs/best_*.yaml` | các lần chạy, `configs/best_*.yaml` |
 | Phân tích | Phase 11-12, O0, O4 | `aggregate.py`, `interpret.py`, `interpret_report.py`, `eval/compare.py`, `eval/dp_check.py`, `scorecard.py`, `recommend.py`, `limitations.py` | sổ chạy, dự đoán, kết quả JSON | `results/summary.csv`, `results/*.json`, `results/reports/*.md`, `results/figures/` |
 | Bàn giao | Phase 13 | `readme_gen.py`, `demo_lib.py`, `demo/app.py`, `acceptance.py`, `package.py` | mọi thứ trong `results/` | khối README, demo, `dod_checklist.md`, `results/repro/` |
 
@@ -181,6 +181,7 @@ src/ppfeddata/
   tune*.py               tìm siêu tham số và thiết lập (chỉ trên val)
   privacy_units.py       DP mức nhóm và ngưỡng client trung thực (P1)
   ids_followup.py        tuỳ chọn phía IDS, tăng cường cục bộ (P2)
+  mg_nodp.py             FedDP-Marginal không DP, thường và qua SecAgg+ (Q1)
   robustness.py, sensitivity.py   liên kết khác, cách chia khác
   fed_classifier.py, fed_protected.py   chính IDS huấn luyện bằng FL (hướng thay thế)
   mia_model.py, mia_marginal.py         tấn công suy luận thành viên lên mô hình công bố

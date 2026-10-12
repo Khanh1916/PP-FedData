@@ -79,6 +79,9 @@ def default_settings(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
         if opts is not None:
             out[f"MGb-eps{float(e):g}"] = {"eps": float(e), "bins": int(b["bins"]), "split": list(b["split"]), "options": dict(opts)}
     out.update(threshold_settings(cfg))
+    from ppfeddata.mg_nodp import nodp_settings            # round Q1: the tables released without DP, once their bins are chosen
+
+    out.update(nodp_settings())
     return out
 
 
@@ -95,8 +98,11 @@ def threshold_settings(cfg: dict[str, Any], ts: tuple[int, ...] = (3, 2)) -> dic
     return out
 
 
-def run_all(cfg: dict[str, Any], settings: dict[str, dict[str, Any]] | None = None, seeds: list[int] | None = None, out: str | Path | None = None) -> dict[str, Any]:
-    """`settings`: {label: {"eps": e, "bins": b, "split": s, "options": None (tree) | dict (marginal_bn)}}."""
+def run_all(cfg: dict[str, Any], settings: dict[str, dict[str, Any]] | None = None, seeds: list[int] | None = None, out: str | Path | None = None,
+            controls: bool = True, merge: bool = False) -> dict[str, Any]:
+    """`settings`: {label: {"eps": e (None: no DP, round Q1), "bins": b, "split": s, "options": None (tree) | dict (marginal_bn)}}.
+    `merge` (round Q1): add these configurations to the existing file, keeping its other configurations; with `controls` False the
+    positive controls are kept from the file instead of being run again (the attack is deterministic)."""
     from ppfeddata.data.preprocess import processed_dir
     from ppfeddata.interpret import to_jsonable
     from ppfeddata.utils import config_hash, git_commit
@@ -112,20 +118,25 @@ def run_all(cfg: dict[str, Any], settings: dict[str, dict[str, Any]] | None = No
     X, y = tr["X"], tr["y"].astype(np.int64)
     K, delta = int(cfg["fl"]["num_clients"]), float(cfg["dp"]["delta"])
     any_setting = next(iter(settings.values()))
-    controls = {"nonoise_500_bins32": ({"bins": 32, "split": any_setting["split"], "options": None}, 500),
-                "nonoise_half": ({k: any_setting[k] for k in ("bins", "split", "options")}, None)}
+    ctl = {"nonoise_500_bins32": ({"bins": 32, "split": any_setting["split"], "options": None}, 500),
+           "nonoise_half": ({k: any_setting[k] for k in ("bins", "split", "options")}, None)} if controls else {}
+    p = Path(out) if out else Path(cfg["compute"]["runs_csv"]).parent / "mia_marginal.json"
+    old = json.loads(p.read_text(encoding="utf-8")) if merge and p.exists() else {}
     res: dict[str, Any] = {"classes": classes, "rare": rare, "seeds": seeds, "attack": "log-likelihood under the released tables, calibrated by a reference model",
-                           "config_hash": config_hash(cfg), "git_commit": git_commit(), "controls": {}, "configs": {}}
-    for name, (setting, n) in controls.items():
+                           "config_hash": config_hash(cfg), "git_commit": git_commit(), "controls": dict(old.get("controls", {})),
+                           "configs": dict(old.get("configs", {}))}
+    if merge:
+        res["merged"] = {**old.get("merged", {}), **{label: git_commit() for label in settings}}
+    for name, (setting, n) in ctl.items():
         rows = [run_one(X, y, schema, classes, rare, 1e7, delta, setting, K, s, n) for s in seeds]
         res["controls"][name] = _mean_rows(rows)
         logger.info("control %s: calibrated AUC %.3f, plain %.3f", name, res["controls"][name]["calibrated"]["auc_mean"]["mean"],
                     res["controls"][name]["plain"]["auc_mean"]["mean"])
     for label, setting in settings.items():
-        rows = [run_one(X, y, schema, classes, rare, float(setting["eps"]), delta, setting, K, s) for s in seeds]
+        eps = None if setting["eps"] is None else float(setting["eps"])
+        rows = [run_one(X, y, schema, classes, rare, eps, delta, setting, K, s) for s in seeds]
         res["configs"][label] = _mean_rows(rows)
         logger.info("%s: calibrated AUC %.3f (rare %s), plain %.3f", label, res["configs"][label]["calibrated"]["auc_mean"]["mean"],
                     res["configs"][label]["calibrated"].get("auc_rare_mean", {}).get("mean"), res["configs"][label]["plain"]["auc_mean"]["mean"])
-    p = Path(out) if out else Path(cfg["compute"]["runs_csv"]).parent / "mia_marginal.json"
     p.write_text(json.dumps(to_jsonable(res), indent=1), encoding="utf-8")
     return res

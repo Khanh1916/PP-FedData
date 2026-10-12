@@ -29,4 +29,5 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 | `test_marginal.py`, `test_marginal_bn.py` | optimisation O3: FedDP-Marginal (accounting, tree, sampling) and its Bayesian-network option |
 | `test_recommend.py` | optimisation O4: configurations per deployment requirement |
 | `test_group_dp.py`, `test_ids_followup.py` | follow-up round P1-P2: group-level DP, honest-client threshold, IDS-side options, local augmentation, report section 9.11 |
+| `test_mg_nodp.py` | round Q1: FedDP-Marginal without DP (exact sums, no epsilon), the plain Flower releases, the grid tap, the round report |
 | `test_docs.py` | the folder READMEs and the architecture documents name only modules, files and commands that exist |

@@ -1,0 +1,49 @@
+nodp:
+  chosen_bins: 16
+  rows:
+  - bins: 4
+    cells: 13161
+    macro_f1_mean: 0.40587777259950686
+    macro_f1_std: 0.02058942556944221
+    bin_f1_mean: 0.9041058455375688
+    bin_f1_std: 0.0036746113309949592
+    rare_recall_mean: 0.34245833333333336
+    rare_recall_std: 0.02638602323621776
+  - bins: 8
+    cells: 14692
+    macro_f1_mean: 0.3943009355844276
+    macro_f1_std: 0.013619121520515903
+    bin_f1_mean: 0.9013441399901834
+    bin_f1_std: 0.006504367344034901
+    rare_recall_mean: 0.3435416666666667
+    rare_recall_std: 0.01560326265739174
+  - bins: 16
+    cells: 17455
+    macro_f1_mean: 0.4076196603988056
+    macro_f1_std: 0.012151757539709209
+    bin_f1_mean: 0.8937121662156073
+    bin_f1_std: 0.0060157045016017326
+    rare_recall_mean: 0.36033333333333334
+    rare_recall_std: 0.03167647874299725
+  - bins: 32
+    cells: 20709
+    macro_f1_mean: 0.397455803383631
+    macro_f1_std: 0.005190540329476436
+    bin_f1_mean: 0.8935489868841766
+    bin_f1_std: 0.00271024574154798
+    rare_recall_mean: 0.34025
+    rare_recall_std: 0.01275408431313934
+  - bins: 64
+    cells: 23951
+    macro_f1_mean: 0.4021724099405279
+    macro_f1_std: 0.002508882369098743
+    bin_f1_mean: 0.8938194437019683
+    bin_f1_std: 0.0018992783696541251
+    rare_recall_mean: 0.3458333333333334
+    rare_recall_std: 0.01706035039369225
+  rule: mean of 3 seeds on validation (spec v1.5)
+  split: 'not used: without noise the budget split has no effect'
+  seeds:
+  - 0
+  - 1
+  - 2

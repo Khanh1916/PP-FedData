@@ -99,10 +99,14 @@ def optimised_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
     """Entries of the optimisation round (`M1o-t<n>-eps<e>`, `M3o-...`, and `M3f-...` = M3-distributed of O2): the variant with residual noise
     uses the DP statistics of O1(a), so it is valid, and so is the plain decoder."""
     gen = lambda prefix: {(p, c): f"{prefix}-{p}-{c}" for p in ("TSTR", "TAug") for c in ("rf", "mlp")}      # noqa: E731
-    prefixes = sorted({ag.parse_config(n)["prefix"] for n in summ["config"] if str(ag.parse_config(n)["family"]).startswith(("o1 ", "o2 ", "o3 "))})
+    prefixes = sorted({ag.parse_config(n)["prefix"] for n in summ["config"] if str(ag.parse_config(n)["family"]).startswith(("o1 ", "o2 ", "o3 ", "q1 "))})
     out = []
     for p in prefixes:
         base = p[:-len("-plain")] if p.endswith("-plain") else p
+        q = re.match(r"MG(?P<kind>[sp])-nodp$", base)
+        if q:                                                    # round Q1: FedDP-Marginal without DP, through SecAgg+ (s) or plain Flower rounds (p)
+            out.append(dict(label=base, eps=None, cfgs=gen(p), optimised=True, plain=False, method="MG", secagg=q["kind"] == "s"))
+            continue
         g = re.match(r"MG(?P<kind>[dlsbr])(?:-(?P<tag>strm|cap|t)(?P<n>\d+))?-eps(?P<eps>[0-9.]+)$", base)
         if g:                                                    # O3: marginal generator, distributed (SecAgg) or local DP
             # follow-up round P1: protected unit (strm<m> / cap<m>: group DP) or honest-client threshold (t<t>)

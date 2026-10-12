@@ -12,6 +12,10 @@ noise, flattens them and answers through `secaggplus_mod`. Encoding chosen so th
 
 Diagnostics (off-protocol): each client also writes its noisy vector to the run directory, and the server checks that the secure sum equals
 their exact sum (`mg_rounds.jsonl`: bytes up / down per stage, seconds, max |difference|). The model is saved as `mg_model.pkl`.
+
+Round Q1 (`mg_nodp.py`): `eps` None releases the tables without noise, and `secure=False` runs the same three rounds without secure
+aggregation (Flower's default fit round, no `secaggplus_mod`; every client sends its integer vector as int32 and the server adds them), so the
+bytes and seconds of SecAgg+ can be measured against plain federated releases on the same grid tap.
 """
 from __future__ import annotations
 
@@ -87,24 +91,39 @@ from flwr.common import Code, FitRes, Status, ndarrays_to_parameters  # noqa: E4
 from flwr.compat.common import recorddict_compat as compat  # noqa: E402
 
 client_app = ClientApp()
+client_app_plain = ClientApp()                     # round Q1: the same releases without secure aggregation
 
 
-@client_app.train(mods=[secaggplus_mod])
-def train(msg: Message, context: Context) -> Message:
-    from ppfeddata.fl import secagg
-
+def _reply(msg: Message, context: Context, secure: bool) -> Message:
     sp = _spec()
-    secagg.set_compact(True)
     pid = int(context.node_config["partition-id"])
     fitins = compat.recorddict_to_fitins(msg.content, keep_input=True)
     payload = json.loads(str(fitins.config["payload"]))
     t0 = time.perf_counter()
     vec = client_vector(sp, pid, payload)
     np.save(Path(sp["artifacts_dir"]) / sp["run_id"] / f"client{pid}_{payload['stage']}.npy", vec)        # diagnostic, off-protocol
-    fitres = FitRes(status=Status(code=Code.OK, message="OK"), parameters=ndarrays_to_parameters([vec]),
-                    num_examples=int(sp["secagg"]["params"]["max_weight"]),
+    if secure:
+        sent, weight = vec, int(sp["secagg"]["params"]["max_weight"])
+    else:                                          # plain: integers (counts, Skellam noise or none) as int32, the server adds them
+        if not np.array_equal(vec, np.rint(vec)):
+            raise RuntimeError(f"client {pid}, {payload['stage']}: the plain releases send integers (Skellam noise or none)")
+        sent, weight = vec.astype(np.int32), 1
+    fitres = FitRes(status=Status(code=Code.OK, message="OK"), parameters=ndarrays_to_parameters([sent]), num_examples=weight,
                     metrics={"partition-id": pid, "steps": 0, "train_seconds": float(time.perf_counter() - t0)})
     return Message(content=compat.fitres_to_recorddict(fitres, keep_input=True), reply_to=msg)
+
+
+@client_app.train(mods=[secaggplus_mod])
+def train(msg: Message, context: Context) -> Message:
+    from ppfeddata.fl import secagg
+
+    secagg.set_compact(True)
+    return _reply(msg, context, secure=True)
+
+
+@client_app_plain.train()
+def train_plain(msg: Message, context: Context) -> Message:
+    return _reply(msg, context, secure=False)
 
 
 # --------------------------------------------------------------------------------------------------
@@ -120,23 +139,29 @@ def _strategy_class():
     from flwr.server.strategy import Strategy
 
     class ReleaseStrategy(Strategy):
-        """Asks every client for its noisy tables of the current release; receives the secure (average) result back."""
+        """Asks every client for its noisy tables of the current release; receives the secure (average) result back, or (plain, round
+        Q1) every client's vector, which it adds itself."""
 
-        def __init__(self, num_clients: int):
-            self.num_clients, self.payload, self.aggregated, self.pids = num_clients, "{}", None, []
+        def __init__(self, num_clients: int, secure: bool = True):
+            self.num_clients, self.secure, self.payload, self.aggregated, self.total, self.pids = num_clients, secure, "{}", None, None, []
 
         def initialize_parameters(self, client_manager):
             return None
 
         def configure_fit(self, server_round, parameters, client_manager):
-            self.aggregated = None
+            self.aggregated = self.total = None
             clients = sorted(client_manager.all().values(), key=lambda c: c.node_id)
             return [(c, FitIns(parameters, {"payload": self.payload})) for c in clients]
 
         def aggregate_fit(self, server_round, results, failures):
+            from flwr.common import parameters_to_ndarrays
+
             if len(results) != self.num_clients or failures:
                 raise RuntimeError(f"{len(results)} of {self.num_clients} clients delivered ({len(failures)} failures)")
             self.pids = sorted(int(fr.metrics["partition-id"]) for _, fr in results)
+            if not self.secure:
+                self.total = np.sum([parameters_to_ndarrays(fr.parameters)[0].astype(np.int64) for _, fr in results], axis=0).astype(np.float64)
+                return None, {}
             self.aggregated = results[0][1].parameters
             return self.aggregated, {}
 
@@ -160,21 +185,24 @@ def main(grid: Grid, context: Context) -> None:
     from flwr.server.compat.grid_client_proxy import GridClientProxy
     from flwr.server.workflow import SecAggPlusWorkflow
     from flwr.server.workflow.constant import MAIN_CONFIGS_RECORD, MAIN_PARAMS_RECORD, Key
+    from flwr.server.workflow.default_workflows import default_fit_workflow
     from flwr.app import ConfigRecord
 
     from ppfeddata.fl import secagg
     from ppfeddata.models import marginal as mg
 
     sp = _spec()
-    secagg.set_compact(True)
+    secure = bool(sp.get("secagg_on", True))                       # round Q1: False = the same releases without secure aggregation
+    secagg.set_compact(secure)
     rdir = Path(sp["artifacts_dir"]) / sp["run_id"]
     schema = json.loads((Path(sp["data_dir"]) / "feature_schema.json").read_text(encoding="utf-8"))
     attrs, k, clip = mg.attributes(schema), len(schema["label_map"]), float(schema["settings"]["clip_sigma"])
     A, K = len(attrs), int(sp["num_clients"])
     rows, ht = int(sp.get("rows", 1)), sp.get("honest_t")          # follow-up round: group DP (records per unit), honest-client threshold
-    scales = mg.noise_scales(float(sp["eps"]), float(sp["delta"]), A, sp["split"], sp["mechanism"], rows)
+    eps = None if sp["eps"] is None else float(sp["eps"])          # round Q1: None = no DP
+    scales = mg.noise_scales(eps, float(sp["delta"]), A, sp["split"], sp["mechanism"], rows)
     p = sp["secagg"]["params"]
-    strategy = _strategy_class()(K)
+    strategy = _strategy_class()(K, secure)
     tap = secagg.TapGrid(grid)
     lc = LegacyContext(context=context, config=ServerConfig(num_rounds=1), strategy=strategy, client_manager=SimpleClientManager())
     for nid in sorted(grid.get_node_ids()):
@@ -194,11 +222,16 @@ def main(grid: Grid, context: Context) -> None:
         lc.state.array_records[MAIN_PARAMS_RECORD] = rc.parameters_to_arrayrecord(ndarrays_to_parameters([np.zeros(1, np.float32)]), True)
         tap.reset()
         t0 = time.perf_counter()
-        wf(tap, lc)
+        (wf if secure else default_fit_workflow)(tap, lc)
         secs = time.perf_counter() - t0
-        if strategy.aggregated is None:
-            raise RuntimeError(f"{stage}: secure aggregation halted")
-        total = np.rint(parameters_to_ndarrays(strategy.aggregated)[0] * len(strategy.pids))
+        if secure:
+            if strategy.aggregated is None:
+                raise RuntimeError(f"{stage}: secure aggregation halted")
+            total = np.rint(parameters_to_ndarrays(strategy.aggregated)[0] * len(strategy.pids))
+        else:
+            if strategy.total is None:
+                raise RuntimeError(f"{stage}: the plain round returned no sum")
+            total = strategy.total
         exact = sum(np.load(rdir / f"client{pid}_{stage}.npy") for pid in strategy.pids)      # off-protocol check
         shapes = [t.shape for t in mg.client_tables(stage, np.zeros((1, A), np.int64), np.zeros(1, np.int64), attrs, k, maps, edges)]
         tabs, pos = [], 0
@@ -218,10 +251,11 @@ def main(grid: Grid, context: Context) -> None:
         elif stage == "pairs":
             W = mg.mi_matrix(tabs, A)
             edges = mg.max_spanning_tree(W)
-    model = mg.assemble(attrs, k, clip, out["fine"], maps, edges, out["edges"], scales, float(sp["eps"]), float(sp["delta"]), float(sp["noise_share"]),
+    model = mg.assemble(attrs, k, clip, out["fine"], maps, edges, out["edges"], scales, eps, float(sp["delta"]), float(sp["noise_share"]),
                         sp["mechanism"], int(sp["bins"]), sp["split"], K, n_cells, mi=W, rows=rows, honest_t=ht)
     model.info["eps_by_honest_clients"] = mg.eps_honest_curve(scales, A, float(sp["delta"]), K, sp["mechanism"], rows, float(sp["noise_share"]))
     model.info["unit"] = sp.get("unit")
+    model.info["secure_aggregation"] = secure
     with open(rdir / "mg_model.pkl", "wb") as fh:
         pickle.dump(model, fh)
 
@@ -229,10 +263,11 @@ def main(grid: Grid, context: Context) -> None:
 # --------------------------------------------------------------------------------------------------
 # Launcher (one process per run, as fl/run.py)
 # --------------------------------------------------------------------------------------------------
-def run(cfg: dict[str, Any], seed: int, name: str, eps: float, bins: int, split, mechanism: str = "skellam", resume: bool = True,
-        rows: int = 1, honest_t: int | None = None, parts_path: str | Path | None = None, unit: str | None = None) -> dict[str, Any]:
+def run(cfg: dict[str, Any], seed: int, name: str, eps: float | None, bins: int, split, mechanism: str = "skellam", resume: bool = True,
+        rows: int = 1, honest_t: int | None = None, parts_path: str | Path | None = None, unit: str | None = None, secure: bool = True) -> dict[str, Any]:
     """FedDP-Marginal with distributed noise through Flower SecAgg+; returns the model and the per-stage measurements. Follow-up round:
-    `parts_path` = a unit partition capped at `rows` records per unit (`group_dp.capped_parts`), `honest_t` = threshold of honest clients."""
+    `parts_path` = a unit partition capped at `rows` records per unit (`group_dp.capped_parts`), `honest_t` = threshold of honest clients.
+    Round Q1: `eps` None = no noise; `secure` False = the same rounds without secure aggregation."""
     from ppfeddata.data.preprocess import processed_dir
     from ppfeddata.eval.runs import run_id
     from ppfeddata.partition import make_partition, partition_path
@@ -247,12 +282,14 @@ def run(cfg: dict[str, Any], seed: int, name: str, eps: float, bins: int, split,
     rid = run_id(name, seed, cfg["label_mode"])
     rdir = Path(cfg["compute"]["artifacts_dir"]) / rid
     rdir.mkdir(parents=True, exist_ok=True)
-    sp = {"run_id": rid, "seed": int(seed), "eps": float(eps), "delta": float(cfg["dp"]["delta"]), "bins": int(bins), "split": list(split),
-          "mechanism": mechanism, "noise_share": 1.0 / (honest_t or K), "num_clients": K, "data_dir": str(ddir),
+    sp = {"run_id": rid, "seed": int(seed), "eps": None if eps is None else float(eps), "delta": float(cfg["dp"]["delta"]), "bins": int(bins),
+          "split": list(split), "mechanism": mechanism, "noise_share": 1.0 / (honest_t or K), "num_clients": K, "data_dir": str(ddir),
           "partition_path": str(parts_path or partition_path(cfg, alpha, seed)), "artifacts_dir": str(cfg["compute"]["artifacts_dir"]),
           "secagg": secagg_params(cfg), "label_mode": cfg["label_mode"]}
     if rows != 1 or honest_t or unit:                         # only then, so the specs of the earlier runs stay equal (resume)
         sp.update(rows=int(rows), honest_t=honest_t, unit=unit)
+    if not secure:                                            # round Q1, same rule
+        sp["secagg_on"] = False
     model_p, spec_p = rdir / "mg_model.pkl", rdir / "spec.json"
     same = spec_p.exists() and json.loads(spec_p.read_text(encoding="utf-8")) == sp
     if not (resume and same and model_p.exists()):
@@ -279,7 +316,8 @@ def main_cli(argv: list[str] | None = None) -> None:
     os.environ.setdefault("RAY_DEDUP_LOGS", "0")
     sp = json.loads(Path(a.spec).read_text(encoding="utf-8"))
     from ppfeddata.fl import mg_app as m          # by its package name: under `-m` this module is `__main__`, which Ray actors cannot import
-    run_simulation(server_app=m.server_app, client_app=m.client_app, num_supernodes=int(sp["num_clients"]),
+    client = m.client_app if sp.get("secagg_on", True) else m.client_app_plain
+    run_simulation(server_app=m.server_app, client_app=client, num_supernodes=int(sp["num_clients"]),
                    backend_config={"client_resources": {"num_cpus": 1, "num_gpus": 0.0}, "init_args": {"include_dashboard": False, "logging_level": "ERROR"}})
 
 

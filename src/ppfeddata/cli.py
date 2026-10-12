@@ -179,6 +179,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_rb.add_argument("--report-only", action="store_true", help="only rewrite the report from the ledger")
     p_pu = sub.add_parser("privacy-units", help="Follow-up round P1: group-level DP (TCP stream, capture) and honest-client threshold for FedDP-Marginal; m chosen on validation (3 seeds), then 3 seeds through Flower SecAgg+ -> configs/best_group_dp.yaml, results/runs.csv, results/reports/privacy_units.md")
     p_pu.add_argument("--stage", choices=["all", "search", "final", "report"], default="all")
+    p_nd = sub.add_parser("mg-nodp", help="Round Q1: FedDP-Marginal without DP, through Flower SecAgg+ (MGs-nodp) and in plain Flower rounds (MGp-nodp); bins chosen on validation (3 seeds), 3 seeds each, membership attack -> configs/best_marginal_nodp.yaml, results/runs.csv, results/mia_marginal.json, results/reports/mg_nodp.md")
+    p_nd.add_argument("--stage", choices=["all", "search", "final", "mia", "report"], default="all")
     p_if = sub.add_parser("ids-followup", help="Follow-up round P2: IDS-side options on synthetic data (all rows, class-probability weights chosen on validation) and local augmentation at each client -> results/ids_followup.json, results/reports/ids_followup.md")
     p_if.add_argument("--items", nargs="+", choices=["5", "6"], default=["5", "6"])
     p_tr = sub.add_parser("taug-rare", help="Optimisation round: TAugR = real data + synthetic rows for the rare classes only, ratio chosen on validation (seed 0), from the saved synthetic sets of the scorecard generators -> results/runs.csv (`<prefix>-TAugR-<clf>`); run `aggregate` and `scorecard` after it")
@@ -539,6 +541,18 @@ def main(argv: list[str] | None = None) -> None:
         out = pu.report(c)
         logger.info("P1: %d unit rows, %d threshold rows", len(out["units"]), len(out["thresholds"]))
 
+    def cmd_mg_nodp(a):
+        from ppfeddata import mg_nodp as nd
+        c = load_config(a.config)
+        if a.stage in ("all", "search"):
+            nd.search(c)
+        if a.stage in ("all", "final"):
+            logger.info("Q1 runs: %s", nd.final(c))
+        if a.stage in ("all", "mia"):
+            nd.mia(c)
+        out = nd.report(c)
+        logger.info("Q1: bins %s, SecAgg+ cost %s, same release %s", out["bins"], out["secagg_cost"], out["same_release"])
+
     def cmd_ids_followup(a):
         from ppfeddata.ids_followup import run
         out = run(load_config(a.config), tuple(a.items))
@@ -613,6 +627,7 @@ def main(argv: list[str] | None = None) -> None:
         "recommend": cmd_recommend,
         "ids-followup": cmd_ids_followup,
         "privacy-units": cmd_privacy_units,
+        "mg-nodp": cmd_mg_nodp,
         "robustness": cmd_robustness,
         "mia-marginal": cmd_mia_marginal,
         "accept": cmd_accept,

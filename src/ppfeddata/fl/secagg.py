@@ -206,7 +206,9 @@ class TapGrid:
         from flwr.common.secure_aggregation.secaggplus_constants import RECORD_KEY_CONFIGS, Key, Stage
 
         messages = list(messages)
-        stage = str(messages[0].content.config_records[RECORD_KEY_CONFIGS][Key.STAGE]) if messages else "?"
+        cr = messages[0].content.config_records if messages else {}
+        # a SecAgg+ stage, or (round Q1, a plain fit round without secure aggregation) the message type
+        stage = str(cr[RECORD_KEY_CONFIGS][Key.STAGE]) if RECORD_KEY_CONFIGS in cr else (str(messages[0].metadata.message_type) if messages else "?")
         down = sum(content_bytes(m) for m in messages)
         t0 = time.perf_counter()
         replies = list(self._grid.send_and_receive(messages, *args, **kwargs))

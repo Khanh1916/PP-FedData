@@ -24,6 +24,9 @@ single honest client the effective rho is K times larger (reported). Local (`noi
 client's release alone is (epsilon, delta)-DP and the sum carries K times the variance. Limitation (as for the CVAE route): the encoding
 (means, stds, categories, dead slots) comes from the non-private preprocessing of the pooled train split; the SecAgg quantisation of the
 noisy counts is treated as for DP-FedSGD (`fl/dpfedsgd.py`).
+
+No DP (round Q1, `mg_nodp.py`): `eps=None` releases the exact sums (no noise, epsilon not defined), the reference that the DP
+configurations are compared with, as B3 and M2 are for the CVAE route.
 """
 from __future__ import annotations
 
@@ -162,7 +165,10 @@ def coarse_maps(fine_hist: list[np.ndarray], attrs: Sequence[Attr], bins: int) -
 # Releases (federated sums with Gaussian noise)
 # --------------------------------------------------------------------------------------------------
 def client_noise(shape: tuple[int, ...], scale: float, noise_share: float, rng: np.random.Generator, mechanism: str = "gaussian") -> np.ndarray:
-    """One client's noise for one table: Gaussian with std `scale` x sqrt(share), or Skellam with variance `scale` x share (integers)."""
+    """One client's noise for one table: Gaussian with std `scale` x sqrt(share), or Skellam with variance `scale` x share (integers);
+    none without DP (`scale` 0)."""
+    if mechanism == "none" or scale == 0:
+        return np.zeros(shape, dtype=np.float64)
     if mechanism == "gaussian":
         return rng.normal(0.0, scale * math.sqrt(noise_share), size=shape)
     lam = scale * noise_share / 2.0
@@ -232,6 +238,8 @@ def fused_marginals(model: "MarginalModel") -> list[np.ndarray]:
     the fine release summed over the coarse bin, the attribute's own table (root table, or the child side of its edge) and the parent side
     of each of its child edges. Each estimate is a sum of noisy cells of a different table, so the estimates are independent."""
     vf, ve = _noise_var(model, "fine"), _noise_var(model, "edges")
+    if vf == 0 or ve == 0:
+        raise ValueError("a model released without noise has one exact estimate per marginal: nothing to fuse")
     A, k = len(model.attrs), model.n_classes
     nc = [int(m.max()) + 1 for m in model.maps]
     est: list[list[tuple[np.ndarray, np.ndarray]]] = [[] for _ in range(A)]
@@ -335,9 +343,11 @@ def stage_sizes(A: int) -> dict[str, int]:
     return {"fine": A, "pairs": len(pair_list(A)), "edges": A}            # edges: the root table + A - 1 tree edges
 
 
-def noise_scales(eps: float, delta: float, A: int, split: Sequence[float], mechanism: str = "gaussian", rows: int = 1) -> dict[str, float]:
+def noise_scales(eps: float | None, delta: float, A: int, split: Sequence[float], mechanism: str = "gaussian", rows: int = 1) -> dict[str, float]:
     """Per release: the std (Gaussian) or variance (Skellam) of the summed noise per cell, for the target (eps, delta); `rows` = records per
-    protected unit (1 = record-level DP)."""
+    protected unit (1 = record-level DP). `eps` None (or mechanism "none"): no DP, 0 everywhere."""
+    if eps is None or mechanism == "none":
+        return {s: 0.0 for s in STAGES}
     sizes = stage_sizes(A)
     if mechanism == "gaussian":
         rho = rho_from_eps(eps, delta)
@@ -357,7 +367,10 @@ def eps_at(scales: dict[str, float], A: int, delta: float, mechanism: str, facto
 def privacy_info(scales: dict[str, float], A: int, delta: float, share: float, mechanism: str, rows: int = 1, K: int | None = None) -> dict[str, float]:
     """`share`: the fraction of the calibrated variance each client adds (1/K: split over all clients, 1/t: the target holds with t honest
     clients, 1: local DP). eps = the guarantee at the calibrated variance (with every client honest when share = 1/K, with t honest clients
-    when share = 1/t, for each client alone when share = 1); eps_one_honest = a single honest client; eps_all_honest = all K clients honest."""
+    when share = 1/t, for each client alone when share = 1); eps_one_honest = a single honest client; eps_all_honest = all K clients honest.
+    Without noise there is no guarantee: every epsilon is None."""
+    if not any(scales.values()):
+        return {"eps": None, "eps_one_honest": None}
     out = eps_at(scales, A, delta, mechanism, 1.0, rows)
     out["eps_one_honest"] = eps_at(scales, A, delta, mechanism, share, rows)["eps"] if share < 1 else out["eps"]
     if K is not None and share < 1:
@@ -366,7 +379,9 @@ def privacy_info(scales: dict[str, float], A: int, delta: float, share: float, m
 
 
 def eps_honest_curve(scales: dict[str, float], A: int, delta: float, K: int, mechanism: str, rows: int = 1, share: float | None = None) -> dict[int, float]:
-    """eps when only h of the K clients add their share of the noise (the others collude and remove theirs)."""
+    """eps when only h of the K clients add their share of the noise (the others collude and remove theirs); empty without noise."""
+    if not any(scales.values()):
+        return {}
     share = 1.0 / K if share is None else share
     return {h: eps_at(scales, A, delta, mechanism, h * share, rows)["eps"] for h in range(1, K + 1)}
 
@@ -395,13 +410,13 @@ def tree_from_pairs(pt: Sequence[np.ndarray], A: int) -> list[tuple[int, int]]:
     return max_spanning_tree(mi_matrix(pt, A))
 
 
-def fit(X: np.ndarray, y: np.ndarray, parts: Sequence[np.ndarray], schema: dict[str, Any], eps: float, delta: float, bins: int = 8,
+def fit(X: np.ndarray, y: np.ndarray, parts: Sequence[np.ndarray], schema: dict[str, Any], eps: float | None, delta: float, bins: int = 8,
         split: Sequence[float] = SPLIT, noise_share: float | None = None, seed: int = 0, mechanism: str = "gaussian", rows: int = 1,
         honest_t: int | None = None) -> MarginalModel:
     """The three federated releases, simulated in-process (SecAgg returns the exact sum). `noise_share` None -> 1 / number of clients
     (distributed); 1.0 -> local DP. `mechanism`: "gaussian" (O3.1) or "skellam" (O2: integer noise, exact under SecAgg).
     Follow-up round: `rows` = records per protected unit after capping (group DP; the caller caps the data), `honest_t` = each client adds
-    1/t of the variance so that the target epsilon holds with t honest clients."""
+    1/t of the variance so that the target epsilon holds with t honest clients. Round Q1: `eps` None = no DP (exact sums)."""
     K = len(parts)
     share = 1.0 / honest_t if honest_t else (1.0 / K if noise_share is None else float(noise_share))
     attrs, k, clip = attributes(schema), len(schema["label_map"]), float(schema["settings"]["clip_sigma"])
@@ -422,7 +437,8 @@ def fit(X: np.ndarray, y: np.ndarray, parts: Sequence[np.ndarray], schema: dict[
 
 def assemble(attrs, k, clip, fine, maps, edges, tabs, scales, eps, delta, share, mechanism, bins, split, K, n_cells, mi=None, rows: int = 1,
              honest_t: int | None = None) -> MarginalModel:
-    info = {"root": 0, "mi": None if mi is None else np.asarray(mi).tolist(), "eps_target": float(eps), "delta": float(delta), "noise_share": share, "mechanism": mechanism,
+    info = {"root": 0, "mi": None if mi is None else np.asarray(mi).tolist(), "eps_target": None if eps is None else float(eps), "delta": float(delta),
+            "noise_share": share, "mechanism": mechanism if eps is not None else "none",
             **privacy_info(scales, len(attrs), delta, share, mechanism, rows, K), "unit_rows": int(rows), "honest_t": honest_t,
             "scales": dict(scales), "bins": int(bins), "split": list(split), "n_cells": int(n_cells), "tree": [list(e) for e in edges], "num_clients": K}
     if mechanism == "gaussian":

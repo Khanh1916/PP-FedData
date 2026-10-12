@@ -44,7 +44,7 @@ the noise can be calibrated for a minimum number t of honest gateways.
 | Secure aggregation | Flower SecAgg+, integer sums exact (uint32) | Flower SecAgg+ on the quantised weights (M2, M3) |
 | Distributed DP (noise split over clients) | yes (each release is a single sum) | not for DP-SGD (many local steps); only the DP-FedSGD variant M3f, in-process simulation |
 | Code | `models/marginal.py`, `fl/mg_app.py` | `models/cvae.py`, `fl/core.py`, `fl/app.py`, `fl/dp_utils.py`, `fl/secagg.py` |
-| Configurations | MGs, MGr, MGd, MGl, MGb (+ `-strm`, `-cap`, `-t` options) | B2, B3, M1, M2, M3 (+ M1o, M3o, M3f) |
+| Configurations | MGs, MGr, MGd, MGl, MGb (+ `-strm`, `-cap`, `-t` options); without DP: MGs-nodp (SecAgg+), MGp-nodp (plain) | B2, B3, M1, M2, M3 (+ M1o, M3o, M3f) |
 
 The CVAE route was the premise of the spec; under DP it stayed far from its non-DP version, so the framework moved to FedDP-Marginal
 (report section 9.9b). Both routes share the data preparation, the partition, the evaluation and the reporting.
@@ -84,7 +84,7 @@ flowchart TB
   C --> E["6 baselines B0, B1a, B1b"]
   C --> P["partition: Dirichlet over 5 clients<br/>data/partitions/"]
   P --> F["7-10 CVAE routes: B2, B3, M1, M2, M3<br/>tuning: tune, tune-dp, tune-dp-full"]
-  P --> G["O2-O4 FedDP-Marginal: tune-marginal, privacy-units, robustness"]
+  P --> G["O2-O4 FedDP-Marginal: tune-marginal, privacy-units, mg-nodp, robustness"]
   E & F & G --> L[("results/runs.csv<br/>artifacts/run_id/")]
   L --> H["11-12 aggregate + interpret<br/>summary.csv, figures, final_report.md, README blocks"]
   H --> I["scorecard -> recommend"]
@@ -98,7 +98,7 @@ flowchart TB
 | Federation | Phases 8-10, O2-O4, P1 | `partition.py`, `fl/*`, `group_dp.py` | processed train split | `data/partitions/`, `artifacts/<config>_<seed>/` |
 | Generators | Phases 7-10, O1-O3 | `models/cvae.py`, `models/train.py`, `models/generate.py`, `models/marginal.py`, `models/marginal_bn.py` | client data or tables | `synthetic.npz`, model files |
 | Evaluation | Phase 6 onward | `eval/utility.py`, `eval/fidelity.py`, `eval/privacy.py`, `eval/overhead.py`, `eval/stats.py`, `eval/runs.py` | synthetic data, real val / test | `results/runs.csv`, `artifacts/<run_id>/preds/` |
-| Experiment control | Phase 11 | `run_experiment.py`, `tune*.py`, `privacy_units.py`, `robustness.py`, `sensitivity.py` | `configs/exp/*.yaml`, `configs/best_*.yaml` | runs, `configs/best_*.yaml` |
+| Experiment control | Phase 11 | `run_experiment.py`, `tune*.py`, `privacy_units.py`, `mg_nodp.py`, `robustness.py`, `sensitivity.py` | `configs/exp/*.yaml`, `configs/best_*.yaml` | runs, `configs/best_*.yaml` |
 | Analysis | Phases 11-12, O0, O4 | `aggregate.py`, `interpret.py`, `interpret_report.py`, `eval/compare.py`, `eval/dp_check.py`, `scorecard.py`, `recommend.py`, `limitations.py` | ledger, predictions, JSON results | `results/summary.csv`, `results/*.json`, `results/reports/*.md`, `results/figures/` |
 | Delivery | Phase 13 | `readme_gen.py`, `demo_lib.py`, `demo/app.py`, `acceptance.py`, `package.py` | everything in `results/` | README blocks, demo, `dod_checklist.md`, `results/repro/` |
 
@@ -181,6 +181,7 @@ src/ppfeddata/
   tune*.py               hyper-parameter and setting searches (validation only)
   privacy_units.py       group-level DP and honest-client threshold (P1)
   ids_followup.py        IDS-side options, local augmentation (P2)
+  mg_nodp.py             FedDP-Marginal without DP, plain and through SecAgg+ (Q1)
   robustness.py, sensitivity.py   other federations, other splits
   fed_classifier.py, fed_protected.py   the IDS itself trained by FL (alternative route)
   mia_model.py, mia_marginal.py         membership attacks on released models

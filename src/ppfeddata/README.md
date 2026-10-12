@@ -75,6 +75,7 @@ together: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). The modules are li
 | `tune_fedsgd.py` | search and final runs of DP-FedSGD (`tune-fedsgd`) |
 | `tune_marginal.py` | settings of FedDP-Marginal chosen on validation, final runs, options and post-processing (`tune-marginal`) |
 | `privacy_units.py` | group-level DP and honest-client threshold (`privacy-units`) |
+| `mg_nodp.py` | FedDP-Marginal without DP, through SecAgg+ and in plain Flower rounds (`mg-nodp`, round Q1) |
 | `ids_followup.py` | IDS-side options and local augmentation (`ids-followup`) |
 | `robustness.py` | FedDP-Marginal under other federations and 11 classes (`robustness`) |
 | `sensitivity.py` | other test groups (A4) and a per-stream cap (A5) (`sensitivity`) |

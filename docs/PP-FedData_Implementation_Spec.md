@@ -519,6 +519,12 @@ Mục tiêu (người dùng, 2026-10-07): tối ưu M1, M2, M3 để khung sinh 
 - **Phía IDS (ngoài bộ sinh, `ids-followup`):** trọng số xác suất lớp chọn trên val (trung bình 3 seed) và dùng toàn bộ dòng sinh; báo cáo riêng, không đổi bảng điểm. **Tăng cường cục bộ:** mỗi client thêm dòng sinh cho các lớp nó có dưới 5.000 dòng.
 - **Báo cáo:** mục 9.11 sinh từ `results/privacy_units.json`, `results/ids_followup.json`, `results/recommend.json`.
 
+**Bổ sung cho v1.5 — vòng Q1 (người dùng duyệt 2026-10-12):** FedDP-Marginal không DP (`mg-nodp`, `mg_nodp.py`).
+- **Hai cấu hình:** `MGs-nodp` (ba lần công bố qua Flower SecAgg+, không nhiễu; tương ứng M2) và `MGp-nodp` (cùng ba lần công bố qua các vòng Flower thường, không SecAgg; tương ứng B3). Đây là tham chiếu ε = ∞ của khung, không phải cấu hình mặc định. Bin thô chọn trên val bằng 3 seed; không hậu xử lý (không có nhiễu để hợp nhất).
+- **Kiểm tra bắt buộc:** hai cấu hình phải công bố cùng bảng và cùng dữ liệu sinh ở mọi seed (tổng an toàn bằng tổng chính xác); chỉ chi phí (byte, giây, đo trên cùng bộ đếm của lưới Flower) được khác.
+- **Đo:** giá của DP với FedDP-Marginal so với `MGs-nodp` theo luật R1 (bootstrap ghép cặp theo dòng, kiểm tra lại theo stream, std seed; cả RF và MLP); tấn công suy luận thành viên lên bảng công bố cũng chạy cho cấu hình không DP.
+- **Báo cáo:** không đưa vào ma trận R1-R6 (giữ ma trận của spec; hai lượt cùng một dữ liệu sẽ bị đếm hai lần); có trong bảng điểm, `recommend` (thêm kịch bản `hidden-tables`: không tin máy chủ, không cần ε) và mục 9.12 sinh từ `results/mg_nodp.json`.
+
 ---
 
 ## Danh mục nghiệm thu cuối (Definition of Done)
@@ -544,6 +550,7 @@ Mục tiêu (người dùng, 2026-10-07): tối ưu M1, M2, M3 để khung sinh 
 
 ## Lịch sử thay đổi
 
+- **v1.5, bổ sung vòng Q1 (2026-10-12):** FedDP-Marginal không DP, qua SecAgg+ và qua các vòng Flower thường (tham chiếu ε = ∞ của khung), mục 9.12, kịch bản `hidden-tables` của `recommend`; lệnh mới `mg-nodp`.
 - **v1.5, bổ sung (2026-10-08):** vòng tiếp theo P1-P2: ε mức nhóm (stream, capture), ngưỡng client trung thực t (mặc định t = K, chọn theo yêu cầu trong `recommend`), tuỳ chọn phía IDS, tăng cường cục bộ, mục 9.11; lệnh mới `privacy-units`, `ids-followup`.
 - **v1.5 (2026-10-08):** đổi bộ sinh chính sang FedDP-Marginal sau Gate O1 (CVAE tune lại không hơn mốc); thêm luật DP phân tán (Skellam, SecAgg+ thật, ε theo số client trung thực), chọn trên val bằng 3 seed, độ bền, `recommend` mở rộng, mục 9.9b và 9.10b; lệnh mới `tune-marginal`, `mia-marginal`, `robustness` (cùng `taug-rare`, `tune-fedsgd`, `secagg-bits` viết ở O1-O2).
 - **v1.4 (2026-10-07):** thêm Phase 14 (vòng tối ưu M1, M2, M3: O0-O5) theo mục tiêu của người dùng: bảng điểm nhiều chỉ số với bộ phân loại chọn theo val, luật hợp lệ (thành phần ngoài ε làm dòng DP không hợp lệ), mặt Pareto theo luật seed, mốc đóng băng, kế hoạch O1-O5, lệnh `scorecard`.

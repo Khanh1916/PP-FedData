@@ -46,9 +46,9 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-/vietbaocao
 
 BAO_CAO_THAY_DOI_SO_VOI_MUC_TIEU.md
 HUONG_DAN_VIET_CHAPTER_3_METHODOLOGY.md
 HUONG_DAN_CAP_NHAT_CH1_CH2.md
 mg_architecture.md
+/mg_architecture_files

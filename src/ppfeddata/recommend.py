@@ -50,6 +50,8 @@ class Requirement:
 SCENARIOS = [
     Requirement("lab", True, True, None, note="one operator owns the server and every gateway (in-house IDS lab): no DP needed, best detection"),
     Requirement("cloud-aggregator", False, True, 5.0, note="gateways of one company, aggregation in a third-party cloud: server not trusted, epsilon <= 5"),
+    Requirement("hidden-tables", False, True, None,
+                note="as cloud-aggregator, but the synthetic data stay inside the company: the cloud must not see any gateway's tables, no DP required (round Q1)"),
     Requirement("consortium", False, False, 10.0, note="brokers of different companies that may collude with the aggregator: epsilon must hold with one honest client"),
     Requirement("strict-privacy", False, True, 1.0, note="sensitive deployments (e.g. healthcare IoT): epsilon <= 1"),
     Requirement("low-bandwidth", False, True, 10.0, max_mb_round=2.0, max_mb_total=100.0, note="gateways on NB-IoT / LoRa / metered 4G backhaul"),
@@ -132,6 +134,8 @@ def command(label: str, eps: float | None) -> str:
         return f"python -m ppfeddata.cli tune-fedsgd --final{e}"
     if base.startswith("MG") and any(f"-{t}" in base for t in ("strm", "cap", "t2-", "t3-")):
         return "python -m ppfeddata.cli privacy-units --stage final"
+    if base in ("MGs-nodp", "MGp-nodp"):
+        return "python -m ppfeddata.cli mg-nodp --stage final"
     if base.startswith("MG"):
         return f"python -m ppfeddata.cli tune-marginal --final{e}"
     if base.startswith("M2-c"):

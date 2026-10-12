@@ -5,6 +5,7 @@ explains the rules and the threat model.
 """
 from __future__ import annotations
 
+import math
 from typing import Any
 
 from ppfeddata.interpret import CLFS, MIA_CHANCE_BAND, PRIMARY, PROTOS
@@ -177,6 +178,9 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     fu = _followup_facts(cfg)
     if fu and _followup_bullet(fu):
         out.append(_followup_bullet(fu))
+    q1 = _q1_facts(cfg)
+    if q1:
+        out.append(_q1_bullet(q1))
     bits = [f"{f['id']} ({f['title']}): {f['status']}" for f in R["flags"]]
     out.append("**Red flags** (spec Phase 12): " + "; ".join(bits) + ". Details in 9.7.")
     return out
@@ -819,7 +823,7 @@ def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
     by = {r["label"]: r for r in rows}
     cvae = lambda e: [r for r in rows if r.get("dp") and r.get("method") in ("M1", "M3") and abs(float(r.get("eps_target") or 0) - e) < 1e-9]   # noqa: E731
     mg = lambda e: [r for r in rows if r.get("method") == "MG" and r.get("dp_mode") == "distributed" and abs(float(r.get("eps_target") or 0) - e) < 1e-9]  # noqa: E731
-    out = {"eps": {}, "b3": by.get("B3"), "m2": by.get("M2")}
+    out = {"eps": {}, "b3": by.get("B3"), "m2": by.get("M2"), "mg_nodp": by.get("MGs-nodp")}         # round Q1: FedDP-Marginal without DP
     for e in (1.0, 5.0, 10.0):
         c, m = cvae(e), mg(e)
         main = {1.0: ("MGr-eps1", "MGs-eps1"), 5.0: ("MGs-eps5",), 10.0: ("MGs-eps10",)}[e]       # the framework's configuration (as in R6), not the best variant
@@ -835,10 +839,11 @@ def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
 
 def _pivot_bullet(f: dict[str, Any]) -> str:
     parts = [f"ε {e:g}: {v['mg']['label']} {v['mg']['tstr_f1']:.3f} against the best CVAE route {v['cvae']['label']} {v['cvae']['tstr_f1']:.3f}" for e, v in f["eps"].items()]
-    b3 = f.get("b3")
+    b3, mn = f.get("b3"), f.get("mg_nodp")
     return ("**Why FedDP-Marginal and not the CVAE?** Under DP the CVAE route stays far from its non-DP version even after re-tuning per epsilon at full scale "
             "(O1), while the federated DP marginal generator does not (TSTR macro-F1, test, mean over seeds: " + "; ".join(parts)
-            + (f"; B3, the CVAE without DP: {b3['tstr_f1']:.3f}" if b3 else "") + "). It also sends three small rounds instead of tens of model rounds, "
+            + (f"; B3, the CVAE without DP: {b3['tstr_f1']:.3f}" if b3 else "") + (f"; FedDP-Marginal without DP: {mn['tstr_f1']:.3f}" if mn else "")
+            + "). It also sends three small rounds instead of tens of model rounds, "
             "and its noise can be split over the clients through secure aggregation with exact accounting. The framework therefore uses FedDP-Marginal; "
             "the CVAE stays as the baseline. Not an algorithmic novelty (FLAIM, MST, AIM); see 9.9b.")
 
@@ -848,9 +853,13 @@ def _pivot(cfg: dict[str, Any]) -> list[str]:
     if not f:
         return []
     rows = []
-    for e, v in f["eps"].items():
-        for kind, r in (("CVAE route (best valid)", v["cvae"]), ("FedDP-Marginal", v["mg"])):
-            rows.append({"ε": f"{e:g}", "generator": kind, "configuration": r["label"], "TSTR macro-F1": f"{r['tstr_f1']:.3f} ± {r.get('tstr_f1_std') or 0:.3f}",
+    pts = list(f["eps"].items())
+    if f.get("b3") and f.get("mg_nodp"):                         # round Q1: the epsilon = infinity row of both generators
+        pts.append((math.inf, {"cvae": f["b3"], "mg": f["mg_nodp"]}))
+    for e, v in pts:
+        for kind, r in (("CVAE route (best valid)" if math.isfinite(e) else "CVAE route (no DP)", v["cvae"]), ("FedDP-Marginal", v["mg"])):
+            rows.append({"ε": f"{e:g}" if math.isfinite(e) else "∞ (no DP)", "generator": kind, "configuration": r["label"],
+                         "TSTR macro-F1": f"{r['tstr_f1']:.3f} ± {r.get('tstr_f1_std') or 0:.3f}",
                          "binary F1": f"{r.get('bin_f1', float('nan')):.3f}", "rare recall": f"{r.get('rare_recall', float('nan')):.3f}",
                          "MB / round": "n/a" if not r.get("bytes_per_round") else f"{r['bytes_per_round'] / 1e6:.2f}",
                          "rounds": "n/a" if not r.get("rounds") else f"{r['rounds']:.0f}"})
@@ -887,7 +896,13 @@ def _guide_o4(cfg: dict[str, Any]) -> list[str]:
     rob = _json.loads((res / "robustness.json").read_text(encoding="utf-8")) if (res / "robustness.json").exists() else None
     if not rec and not rob:
         return []
-    num = lambda x, d=3: "n/a" if x is None or x != x else f"{x:.{d}f}"      # noqa: E731
+
+    def num(x: Any, d: int = 3) -> str:
+        try:
+            v = float(x)                                # recommend.json writes an infinite epsilon (no DP, round Q1) as the string "inf"
+        except (TypeError, ValueError):
+            return "n/a"
+        return "n/a" if v != v else ("∞" if math.isinf(v) else f"{v:.{d}f}")
     L = ["#### 9.10b After the optimisation round: FedDP-Marginal per deployment requirement", "",
          "The optimisation round replaced the CVAE by FedDP-Marginal (federated DP marginals with a Chow-Liu tree, Skellam noise split over the clients "
          "and summed by Flower SecAgg+; SPEC_DEVIATIONS O2.3-O3.3). `ppfeddata recommend` filters the valid configurations of the scorecard by the requirement "
@@ -1049,6 +1064,129 @@ def _followup(cfg: dict[str, Any]) -> list[str]:
     return L
 
 
+def _q1_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
+    """Numbers of round Q1 (9.12): results/mg_nodp.json (FedDP-Marginal without DP, plain and through SecAgg+) and two scenarios of results/recommend.json."""
+    import json as _json
+    from pathlib import Path as _P
+
+    res = _P(cfg["compute"]["runs_csv"]).parent
+    p = res / "mg_nodp.json"
+    if not p.exists():
+        return None
+    q = _json.loads(p.read_text(encoding="utf-8"))
+    m = q.get("matrix") or {}
+    if not m.get("secagg"):
+        return None
+    rec = _json.loads((res / "recommend.json").read_text(encoding="utf-8")) if (res / "recommend.json").exists() else []
+    q["rec"] = {r["requirement"]["name"]: r for r in rec if r.get("requirement") and r["requirement"]["name"] in ("lab", "hidden-tables")}
+    return q
+
+
+def _q1_bullet(q: dict[str, Any]) -> str:
+    m, dc = q["matrix"], q.get("dp_cost") or []
+    by_eps: dict[float, list[float]] = {}
+    for r in dc:
+        by_eps.setdefault(r["eps"], []).append(r["delta"])
+    cost = "; ".join(f"ε {e:g} {min(v):+.3f} to {max(v):+.3f}" if len(v) > 1 else f"ε {e:g} {v[0]:+.3f}" for e, v in sorted(by_eps.items()))
+    worse = sum(r["effect"] == "worse" for r in dc)
+    sc, mi = q.get("secagg_cost") or {}, q.get("mia") or {}
+    same = all(v and v.get("tables") and v.get("synthetic") for v in (q.get("same_release") or {}).values())
+    vb = q.get("vs_b3") or []
+    out = (f"**Without DP (round Q1, 9.12).** FedDP-Marginal without DP reaches TSTR macro-F1 {m['secagg']['tstr_f1']:.3f}"
+           + (" (against B3, the CVAE without DP: " + ", ".join(f"{r['classifier'].upper()} {r['delta']:+.3f} {WORD[r['effect']]}" for r in vb) + ")" if vb else "")
+           + (f"; DP costs it {cost} (worse in {worse} of {len(dc)} comparisons, rule of R1)" if dc else ""))
+    if sc:
+        out += (f"; SecAgg+ costs its releases {sc['bytes_ratio']:.2f}x bytes and {sc['time_ratio']:.2f}x time"
+                + (" and nothing in utility (the same tables and synthetic data with and without it)" if same else ""))
+    if mi:
+        dp = list((mi.get("dp") or {}).values())
+        out += (f"; the membership attack detects the tables released without DP (AUC {mi['nodp']:.3f} > {mi['threshold']:g})"
+                + (f" and less those with DP ({min(dp):.3f}-{max(dp):.3f})" if dp else ""))
+    return out + "."
+
+
+def _q1(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
+    """Section 9.12 (round Q1): the protection matrix of FedDP-Marginal with its two cells without DP."""
+    q = _q1_facts(cfg)
+    if not q:
+        return []
+    num = lambda x, d=3: "n/a" if x is None or x != x else f"{x:.{d}f}"      # noqa: E731
+    m = q["matrix"]
+    L = ["### 9.12 The protection matrix of FedDP-Marginal: without DP, plain and through SecAgg+ (round Q1)", "",
+         "The rounds before measured FedDP-Marginal only with DP. Round Q1 adds the two missing cells, as B3 and M2 are for the CVAE route: `MGs-nodp`, the same three "
+         "releases through Flower SecAgg+ without noise, and `MGp-nodp`, the same releases in plain Flower rounds without secure aggregation (SPEC_DEVIATIONS Q1.1-Q1.4). "
+         f"Coarse bins chosen on validation (mean of 3 seeds): {q.get('bins')}. TSTR on the real test split, classifier chosen on validation, mean ± std over 3 seeds; "
+         "details in `results/reports/mg_nodp.md`.", ""]
+
+    def row(cell: str, r: dict[str, Any]) -> dict[str, str]:
+        eps = r.get("eps")
+        return {"cell": cell, "configuration": r["config"], "TSTR macro-F1": f"{r['tstr_f1']:.3f} ± {r['tstr_f1_std']:.3f}", "rare recall": num(r["rare_recall"]),
+                "ε": "-" if eps is None or eps != eps else f"{eps:.2f}",
+                "MB / round": num(r.get("mb_per_round")) + (" (est.)" if r.get("bytes_estimated") else ""), "MIA AUC": num(r.get("mia_auc"))}
+    rows = ([row("no DP, no SecAgg", m["plain"])] if m.get("plain") else []) + [row("no DP, SecAgg+", m["secagg"])]
+    rows += [row("DP (local), no SecAgg", r) for r in m.get("dp_local", [])] + [row("DP (distributed), SecAgg+", r) for r in m.get("dp_secagg", [])]
+    L += [_table(rows), "",
+          "MB / round (est.): the local variant runs in-process, its bytes are the cells times the bytes per value measured for M2. MIA AUC: the calibrated attack with access "
+          "to the released tables (`mia_marginal.py`, positive control passed), not run for the local variant.", ""]
+    rule = "difference of test macro-F1, paired bootstrap and seed std as in R1; † the bootstrap over whole streams disagrees"
+    dc = q.get("dp_cost") or []
+    if dc:
+        parts = [f"ε {r['eps']:g} {r['classifier'].upper()} {r['delta']:+.3f} ({WORD[r['effect']]}{mark_q(r)}; rare recall {r['rare_delta']:+.3f})" for r in dc]
+        L += [f"- **What DP costs FedDP-Marginal**, against its own ε = ∞ ({rule}): " + "; ".join(parts) + ". Before this round the DP cost of the framework "
+              "could only be read against B3, the CVAE without DP."]
+    sc, su = q.get("secagg_cost"), q.get("secagg_utility") or []
+    ov = {o["pair"]: o for o in (R.get("R5") or {}).get("overhead", [])}.get("M2 / B3")
+    if sc:
+        same = all(v and v.get("tables") and v.get("synthetic") for v in (q.get("same_release") or {}).values())
+        L += [f"- **What SecAgg+ costs it:** {sc['bytes_ratio']:.2f}x bytes per round ({sc['mb_per_round'][0]:.3f} against {sc['mb_per_round'][1]:.3f} MB) and "
+              f"{sc['time_ratio']:.2f}x time ({sc['seconds'][0]:.1f} against {sc['seconds'][1]:.1f} s for the three rounds), measured on the same Flower grid tap"
+              + ("; nothing in utility: the secure sum equals the exact sum, so both runs release the same tables and the same synthetic data at every seed"
+                 if same else "; the two runs do NOT release the same data at every seed (see the details)")
+              + (f" (TSTR difference {max(abs(r['delta']) for r in su):.3f})" if su else "") + "."
+              + (f" For the CVAE route SecAgg+ costs {ov['time_ratio']:.2f}x time per round and {ov['bytes_per_param_ratio']:.2f}x bytes per parameter (R5)." if ov else "")]
+    mi = q.get("mia") or {}
+    if mi:
+        dp = mi.get("dp") or {}
+        L += [f"- **What DP brings, measured:** the membership attack on the released tables detects the tables released without DP (calibrated AUC {mi['nodp']:.3f}, "
+              f"rare classes {num(mi.get('nodp_rare'))}, above the heuristic {mi['threshold']:g} threshold of the configuration; positive control without noise on half "
+              f"the data: {num(mi.get('control_nonoise_half'))}), and less the tables with DP (" + ", ".join(f"{k} {v:.3f}" for k, v in dp.items()) + ")"
+              + (f"; in absolute terms the leakage stays small (true-positive rate {mi['nodp_tpr_1pct']:.1%} at 1 % false positives without DP)" if mi.get("nodp_tpr_1pct") is not None else "")
+              + ". "
+              "Unlike the CVAE, where the attacks stayed at chance at every epsilon, ε = ∞ included (R4), the attack here separates the release without DP from the "
+              "releases with DP. Secure aggregation alone does not change it: SecAgg+ hides each gateway's tables from the server, not what the released sum reveals."]
+    vb = q.get("vs_b3") or []
+    if vb:
+        L += ["- **Against the CVAE without DP** (MGs-nodp - B3, TSTR): " + "; ".join(
+            f"{r['classifier'].upper()} {r['delta']:+.3f} ({WORD[r['effect']]}{mark_q(r)})" for r in vb) + "."]
+    r6 = q.get("r6_aside")
+    if r6:
+        L += [f"- **Not in the matrix of R1-R6.** The two runs release the same data, and R1-R6 keep the matrix of the spec. Under the rule of R6 MGs-nodp would pass the filters "
+              f"(attack on the synthetic data {r6['synthetic_mia_nodp']:.3f}, no ε, three rounds), but its TAug-RF {r6['taug_nodp']:.4f} is {WORD[r6['effect']]} "
+              f"than MG-eps5 {r6['taug_mg_eps5']:.4f} (Δ {r6['delta']:+.4f}), so the recommendation of R6 would not change."]
+    rec = q.get("rec") or {}
+    if rec:
+        parts = []
+        for k, r in rec.items():
+            b = r.get("best")
+            if not b:
+                parts.append(f"`{k}` → none")
+                continue
+            e = float(b.get("eps_eff", "inf"))
+            s = f"`{k}` → {b['label']} (TSTR macro-F1 {b['tstr_f1']:.3f}, " + (f"ε {e:.2f})" if math.isfinite(e) else "no ε)")
+            if math.isfinite(e) and "MGs-nodp" not in [x["label"] for x in r.get("front") or []]:
+                mb = (m.get("secagg") or {}).get("mb_per_round")
+                s += (": no ε is required, yet MGs-nodp is not on the front: within the seed std (the tie rule of the scorecard, coarser than R1's) its TSTR is not "
+                      "above this configuration's, which adds an ε" + (f" and sends fewer bytes per round ({b['mb_round']:.3f} against {mb:.3f} MB)" if mb and b["mb_round"] < mb else ""))
+            parts.append(s)
+        L += ["- **Per requirement (`recommend`, 9.10b):** " + "; ".join(parts)
+              + ". A configuration without DP can be chosen only where no ε is required; its released data then carry no guarantee, and the attack above detects them."]
+    return L + [""]
+
+
+def mark_q(r: dict[str, Any]) -> str:
+    return " †" if r.get("stream_effect") and r["stream_effect"] != r["effect"] else ""
+
+
 def _protection() -> list[str]:
     return ["### 9.8 What secure aggregation and differential privacy each protect", "",
             "- **SecAgg** (M2, M3) hides each client's model update from the aggregation server: an honest-but-curious server sees only the sum of the updates of the clients that took part. "
@@ -1190,4 +1328,5 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     L += _how_judged(R)
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
     L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg) + _guide(R, cfg) + _followup(cfg)
+    L += _q1(R, cfg)
     return L

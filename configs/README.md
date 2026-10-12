@@ -17,6 +17,7 @@ environment variable `PPFEDDATA_RAW_ROOT` override `paths.raw_root` (`utils.load
 | `best_marginal_bn.yaml` | `tune-marginal --bn` | Bayesian-network options tried and the verdict |
 | `best_marginal_refine.yaml` | `tune-marginal --refine` | post-processing chosen per epsilon (MGr) |
 | `best_group_dp.yaml` | `privacy-units` | rows per unit m chosen per unit (stream, capture) and epsilon |
+| `best_marginal_nodp.yaml` | `mg-nodp` | coarse bins of FedDP-Marginal without DP, chosen on validation (mean of 3 seeds) |
 | `exp/*.yaml` | hand | the experiment matrix run by `run`: one file per configuration (B0 ... M3, extensions A1-A5) |
 
 All `best_*.yaml` files are chosen on the **validation** split with the mean of 3 seeds where the spec requires it; they are committed so
