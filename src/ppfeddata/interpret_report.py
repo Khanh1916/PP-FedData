@@ -113,8 +113,8 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                   + (f"did not detect an over-fitted CVAE (AUC {pc['overfit_cvae_auc']:.3f}), so the positive control of the spec is not met for the CVAE" if pc.get("available") and not pc["overfit_cvae_detected"]
                      else "passed its positive control" if pc.get("available") else "has no positive control on file")
                   + ". What DP brings is the formal guarantee (record level, see 9.8).")
-        mc = _mia_clause(R)
-        out.append(s + (" " + mc if mc else ""))
+        mc, qa = _mia_clause(R), _q1_attack(cfg)
+        out.append(s + (" " + mc if mc else "") + (f" For FedDP-Marginal a benefit is measured: {qa}." if qa else ""))
 
     # R5
     pr = R["R5"]["pairs"]
@@ -146,7 +146,7 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
             s += f"If a formal DP guarantee is required, the DP option the rule would pick without the overhead filter is {alt['recommended']} (tied: {', '.join(alt['tied'])})."
         out.append(s)
 
-    gb = _guide_bullet(R)
+    gb = _guide_bullet(R, cfg)
     if gb:
         out.append(gb)
     sb = _sensitivity_bullet(R)
@@ -664,7 +664,7 @@ def _sensitivity_bullet(R: dict[str, Any]) -> str | None:
     return s + ". Section 8c has the numbers; the choice of other datasets, quotas and client counts is not covered."
 
 
-def _guide_bullet(R: dict[str, Any]) -> str | None:
+def _guide_bullet(R: dict[str, Any], cfg: dict[str, Any] | None = None) -> str | None:
     f = _guide_facts(R)
     if not f:
         return None
@@ -688,7 +688,9 @@ def _guide_bullet(R: dict[str, Any]) -> str | None:
                      + (f", {u['none']} of {u['n']} utility comparisons show no effect" if u else "") + ")")
     if not parts:
         return None
-    return (s + "; ".join(parts) + ". These are costs and guarantees, not a measured privacy benefit: the empirical attack is at chance for every configuration (R4)."
+    qa = _q1_attack(cfg)
+    return (s + "; ".join(parts) + ". These are costs and guarantees, not a measured privacy benefit: the empirical attacks are at chance for every CVAE configuration (R4)"
+            + (f"; FedDP-Marginal differs, {qa}" if qa else "") + "."
             + (" If the goal is only a detector, training it directly by FL is the alternative to all three (9.9)." if _fed_facts(R) else ""))
 
 
@@ -798,10 +800,12 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         L += ["- **MQTT devices are constrained, so compute and bytes matter.** Measured on one CPU by simulation, without network latency: DP-SGD takes "
               f"{_fmt_range(dpt, 1)}x the time per round of plain FL" + (f", SecAgg {m2['ratio']:.2f}x" if m2 else "") + (f"; the plain model sends {b3['bytes'] / 1e6:.1f} MB per round, SecAgg {m2['bytes'] / 1e6:.1f} MB" if b3 and m2 else "")
               + "; the DP-tuned model is smaller, so its messages are smaller in absolute terms even though SecAgg adds bytes per parameter (cost table above).", ""]
+    qa = _q1_attack(cfg)
     L += ["- **The adversary of the threat model is the aggregation server.** SecAgg answers exactly that threat at a small measured cost; DP answers a different one (what the released model or the synthetic data reveal). "
-          "The study could not measure a privacy benefit for either: the membership-inference attack is at chance for every configuration, the non-private ones included, and "
-          + ("the attack on the synthetic data did not pass its positive control, while the attack with access to the released model did and still finds no leakage in the non-private model, so there is nothing for DP to reduce at this scale (R4)."
-             if (_mia_facts(R) or {}).get("passes") else "did not pass its positive control (R4)."), ""]
+          "For the CVAE route the study could not measure a privacy benefit for either: the membership-inference attack on the synthetic data is at chance for every configuration, the non-private ones included, and "
+          + ("did not pass its positive control, while the attack with access to the released model did and still finds no leakage in the non-private CVAE, so there is nothing for DP to reduce at this scale (R4)."
+             if (_mia_facts(R) or {}).get("passes") else "did not pass its positive control (R4).")
+          + (f" FedDP-Marginal differs: {qa}." if qa else ""), ""]
     nc = cfg.get("fl", {}).get("num_clients")
     L += ["**Not tested here:** real devices or a real network; clients that drop out during SecAgg; "
           + (f"a number of clients other than {nc}" if nc else "a different number of clients") + "; M3 with an epsilon other than 5; a deployment whose rare classes are rarer or less rare than the quotas of this study (extension A2 was not run); "
@@ -1080,6 +1084,16 @@ def _q1_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
     rec = _json.loads((res / "recommend.json").read_text(encoding="utf-8")) if (res / "recommend.json").exists() else []
     q["rec"] = {r["requirement"]["name"]: r for r in rec if r.get("requirement") and r["requirement"]["name"] in ("lab", "hidden-tables")}
     return q
+
+
+def _q1_attack(cfg: dict[str, Any] | None) -> str | None:
+    """Round Q1 in one clause: the attack on FedDP-Marginal's released tables without and with DP (None before the round ran)."""
+    mi = ((_q1_facts(cfg) if cfg else None) or {}).get("mia") or {}
+    dp = list((mi.get("dp") or {}).values())
+    if mi.get("nodp") is None or not dp:
+        return None
+    return (f"the attack on its released tables detects the release without DP (calibrated AUC {mi['nodp']:.3f}) and less those with DP "
+            f"({min(dp):.3f}-{max(dp):.3f}; 9.12)")
 
 
 def _q1_bullet(q: dict[str, Any]) -> str:

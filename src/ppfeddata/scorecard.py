@@ -348,7 +348,8 @@ def render(sc: dict[str, Any]) -> str:
         e1 = f" ({_fmt(r['eps_one_honest'], d=1)})" if r.get("dp_mode") == "distributed" else ""
         L.append(f"| {r['label']} ({r['tstr_classifier']}) | {'yes' if r['valid'] else 'no'} | {'**yes**' if r['pareto'] else 'no'} | {_fmt(r['tstr_f1'], r['tstr_f1_std'])} | "
                  f"{_fmt(r['bin_f1'], r['bin_f1_std'])} | {_fmt(r['rare_recall'], r['rare_recall_std'])} | {_fmt(r['taug_gain'], r['taug_gain_std'])} | {_fmt(r.get('taugr_gain'), r.get('taugr_gain_std'))}{_ratio(r)} | {_fmt(r['eps'], d=2)}{e1} | "
-                 f"{'yes' if r['secagg'] else 'no'} | {_fmt(r['mia_auc'])} | {_fmt(r.get('c2st'))} | {_fmt(mb, d=2)} | {_fmt(r.get('rounds'), d=0)} | {_fmt(mbt, d=0)} | {_fmt(r['fl_total_s'], d=0)} |")
+                 f"{'yes' if r['secagg'] else 'no'} | {_fmt(r['mia_auc'])} | {_fmt(r.get('c2st'))} | {_fmt(mb, d=2)} | {_fmt(r.get('rounds'), d=0)} | "
+                 f"{_fmt(mbt, d=2 if mbt is not None and mbt < 10 else 0)} | {_fmt(r['fl_total_s'], d=0)} |")      # below 10 MB (FedDP-Marginal) whole MB would show 0
     bad = [r for r in sc["rows"] if not r["valid"]]
     if bad:
         L += ["", "Not valid (kept out of the front): " + "; ".join(f"{r['label']}: {r['invalid_reason']}" for r in bad) + "."]

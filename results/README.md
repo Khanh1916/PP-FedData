@@ -44,7 +44,7 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `robustness.json` | `robustness` | federations and 11-class results |
 | `sensitivity.json` | `sensitivity` | A4 / A5 verdicts |
 | `mia_model.json` | `mia` | membership attack on the released CVAE models, positive controls |
-| `mia_marginal.json` | `mia-marginal` | membership attack on the released FedDP-Marginal tables, positive controls |
+| `mia_marginal.json` | `mia-marginal`, `mg-nodp` | membership attack on the released FedDP-Marginal tables, positive controls; `mg-nodp` adds the tables released without DP (round Q1) |
 | `fed_classifier.json` | `fed-baseline` | the IDS trained directly by FL (plain and protected) |
 
 ## Figures — `figures/`
