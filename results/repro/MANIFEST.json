@@ -1,22 +1,22 @@
 {
   "label_mode": "6class",
-  "git_commit": "9ee2a85e5090c815002a64ef909e63b7a4ec37f4",
+  "git_commit": "f7bd20e7de50c82081ce687e15f40624012e8574",
   "files": {
     "results/runs.csv": {
-      "sha256": "91e999b888c5f7c8c83d685d0bde4f2277489bb4b4254e520b0a6db243ca12ef",
-      "bytes": 1268275
+      "sha256": "10d01792680684c06b5174d9e84235cded6ab0d3c8046e33bd9dd1a4daa3833f",
+      "bytes": 1300898
     },
     "results/summary.csv": {
-      "sha256": "61f1d3e3b50bf12e9d95da4b8f43ef6d9f7b72cf75abd57b4ed5cde5650f59be",
-      "bytes": 409543
+      "sha256": "608ef6a4540bc7d18712f24ff89b932ca4f6be4670b6b93c7614433407bc1bb7",
+      "bytes": 420425
     },
     "results/interpretation.json": {
-      "sha256": "6f83770d9eee24fc79792471b1fe05600fb033bba6264588e3b95b792825366f",
+      "sha256": "58a51e97f75372b106b0776107b7a656b24c3badb5925854c339563b7f7c2e72",
       "bytes": 392780
     },
     "results/reports/final_report.md": {
-      "sha256": "989cfe48930c85b8ba7d92aaac1ceca57686cd626cf86c4529bf3845f14625c3",
-      "bytes": 101011
+      "sha256": "03f6c9f574c7a338330797ed4de6af8cef661a926d4484da223ac28f2ad44973",
+      "bytes": 106355
     },
     "results/manifests/split_manifest_6class.json": {
       "sha256": "839a130273df0a2cb94a0ae760786be10ac77efa22153b2fdfea1b7604857a4d",
@@ -35,7 +35,7 @@
       "bytes": 3485
     },
     "results/repro/environment.json": {
-      "sha256": "8278983001e77a4ffb0d8cc40e8ea6b72cfe72eec79fa6034193150e45f7e994",
+      "sha256": "7434276da644957610772a8b372df34d63c4e9255cd4f603d647fae24494e169",
       "bytes": 807
     },
     "results/repro/configs/best_cvae.yaml": {
@@ -61,6 +61,10 @@
     "results/repro/configs/best_marginal_bn.yaml": {
       "sha256": "3c8c507a9fe8e6b726c4f8ce75701c8492c07a80dbcb06acf15f4762959ee70e",
       "bytes": 13955
+    },
+    "results/repro/configs/best_marginal_nodp.yaml": {
+      "sha256": "814cb1e88a06a95656f8fc79b0cc18dac6a08cbd8e12b92a0db024abbbaae97a",
+      "bytes": 1524
     },
     "results/repro/configs/best_marginal_refine.yaml": {
       "sha256": "70e950f3c747557734ec8d1ab27088b0b222010d7eb8b251c6a0ea031baf5a7d",
