@@ -1,0 +1,2 @@
+# The extraction script is kept byte for byte as it was run (tools/README.md gives its SHA-256): no line-ending conversion.
+tools/extract_normal_pcap.py -text
