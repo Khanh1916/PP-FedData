@@ -93,6 +93,7 @@ flowchart TB
 
 | Layer | Stages | Code | Reads | Writes |
 |---|---|---|---|---|
+| Data provenance | before Phase 1 | `data/extraction_check.py`, `tools/extract_normal_pcap.py` | raw CSV and PCAP, the Kaggle listing, saved predictions | `results/data_provenance.json`, `results/reports/data_provenance.md` |
 | Data preparation | Phases 1-4 | `data/inventory.py`, `data/harmonize.py`, `data/split_sample.py`, `data/parse_multi.py`, `data/preprocess.py` | raw CSV (`paths.raw_root`) | `data/inventory/`, `data/interim/<mode>/`, `data/processed/<mode>/`, `results/manifests/` |
 | Checks | Phase 5 | `checks/leakage.py`, `checks/leakage_report.py` | processed data | `results/reports/leakage_report.md` |
 | Federation | Phases 8-10, O2-O4, P1 | `partition.py`, `fl/*`, `group_dp.py` | processed train split | `data/partitions/`, `artifacts/<config>_<seed>/` |
@@ -106,6 +107,12 @@ flowchart TB
 
 - **Source:** the DoS-DDoS-MQTT-IoT dataset (59.6 million packet rows, about 13 GB of CSV exports), not in the repository. Its path is
   set in `configs/local.yaml` or `PPFEDDATA_RAW_ROOT`.
+- **Provenance:** the attack rows are the authors' CSV from the Kaggle release, used as published; the release has the Normal traffic only
+  as PCAP, so `tools/extract_normal_pcap.py` exported every Normal packet with TShark into the same 33 columns. `check-extraction`
+  (`data/extraction_check.py`) checks the files against the release, one row per packet in every Normal capture, a byte-identical
+  re-extraction, and the procedure against the authors' CSV on the attack PCAP; it also reproduces the two settings of the authors'
+  export (a display filter on the packets sent to the broker, two-pass dissection) and measures what they change in the results.
+  Details and numbers: `results/reports/data_provenance.md`, README section "Where the data come from".
 - **Unit:** one row = one packet; 6 classes (NORMAL, BCF, DELAYED, SYN, INVALID, WILL); an 11-class mode separates DoS and DDoS.
 - **Split:** train / val / test by **capture group**, so test groups are never seen in training; quotas per class; the test split is used
   only for final numbers, every choice is made on validation.
@@ -170,7 +177,7 @@ flowchart LR
 src/ppfeddata/
   cli.py                 one entry point, one sub-command per stage (lazy imports)
   utils.py               config loading, seeding, hashing, logging
-  data/                  Phases 1-4: inventory, harmonize, split_sample, parse_multi, preprocess
+  data/                  Phases 1-4: inventory, harmonize, split_sample, parse_multi, preprocess; extraction_check (provenance)
   checks/                Phase 5: leakage checks and report
   eval/                  Phase 6: baselines, utility, fidelity, privacy, overhead, stats, compare, dp_check, runs, taug_rare
   models/                cvae, train, generate, b2, benchmark (CVAE); marginal, marginal_bn (FedDP-Marginal)
@@ -190,8 +197,10 @@ src/ppfeddata/
   readme_gen.py, demo_lib.py, acceptance.py, package.py             delivery
 ```
 
+Outside the package, `tools/extract_normal_pcap.py` is the script that made the Normal CSV from the PCAP, kept as it was run.
+
 Each folder with code or results has its own README: [`src/ppfeddata/`](../src/ppfeddata/README.md), [`configs/`](../configs/README.md),
-[`results/`](../results/README.md), [`tests/`](../tests/README.md), [`demo/`](../demo/README.md).
+[`results/`](../results/README.md), [`tests/`](../tests/README.md), [`tools/`](../tools/README.md), [`demo/`](../demo/README.md).
 
 ## 9. Design rules worth knowing before changing code
 

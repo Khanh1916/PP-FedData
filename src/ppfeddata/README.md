@@ -12,6 +12,7 @@ together: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). The modules are li
 | `data/split_sample.py` | group-aware train / val / test split and streaming sampling to the class quotas (`sample`) |
 | `data/parse_multi.py` | parse multi-value cells such as "Publish Message,Publish Message" |
 | `data/preprocess.py` | fit-on-train encoding, `feature_schema.json`, processed arrays (`preprocess`) |
+| `data/extraction_check.py` | provenance of the raw data (`check-extraction`): the local files against the Kaggle release, the Normal PCAP-to-CSV extraction (`tools/extract_normal_pcap.py`) against the authors' attack CSV, completeness of the Normal CSV, the authors' export settings reproduced, their weight on the results |
 
 ## Checks (Phase 5) — `checks/`
 

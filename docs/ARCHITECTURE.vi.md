@@ -93,6 +93,7 @@ flowchart TB
 
 | Tầng | Bước | Mã | Đọc | Ghi |
 |---|---|---|---|---|
+| Nguồn gốc dữ liệu | trước Phase 1 | `data/extraction_check.py`, `tools/extract_normal_pcap.py` | CSV và PCAP thô, danh sách tệp trên Kaggle, dự đoán đã lưu | `results/data_provenance.json`, `results/reports/data_provenance.md` |
 | Chuẩn bị dữ liệu | Phase 1-4 | `data/inventory.py`, `data/harmonize.py`, `data/split_sample.py`, `data/parse_multi.py`, `data/preprocess.py` | CSV thô (`paths.raw_root`) | `data/inventory/`, `data/interim/<mode>/`, `data/processed/<mode>/`, `results/manifests/` |
 | Kiểm tra | Phase 5 | `checks/leakage.py`, `checks/leakage_report.py` | dữ liệu đã xử lý | `results/reports/leakage_report.md` |
 | Liên kết | Phase 8-10, O2-O4, P1 | `partition.py`, `fl/*`, `group_dp.py` | tập train đã xử lý | `data/partitions/`, `artifacts/<config>_<seed>/` |
@@ -106,6 +107,12 @@ flowchart TB
 
 - **Nguồn:** bộ dữ liệu DoS-DDoS-MQTT-IoT (59,6 triệu dòng gói tin, khoảng 13 GB CSV), không có trong repo. Đường dẫn đặt trong
   `configs/local.yaml` hoặc biến `PPFEDDATA_RAW_ROOT`.
+- **Nguồn gốc:** dòng tấn công là CSV của tác giả trong bản phát hành trên Kaggle, dùng nguyên như bản phát hành; bản phát hành chỉ có
+  lưu lượng Normal dạng PCAP, nên `tools/extract_normal_pcap.py` dùng TShark xuất mọi gói Normal vào cùng 33 cột. `check-extraction`
+  (`data/extraction_check.py`) kiểm các tệp so với bản phát hành, một dòng cho mỗi gói ở mọi capture Normal, trích lại giống từng byte,
+  và quy trình so với CSV của tác giả trên PCAP tấn công; nó cũng tái tạo hai thiết lập khi tác giả xuất (bộ lọc hiển thị giữ gói gửi
+  tới broker, phân tích hai lượt) và đo chúng làm đổi kết quả bao nhiêu. Chi tiết và số liệu: `results/reports/data_provenance.md`,
+  mục "Nguồn gốc dữ liệu" của README.
 - **Đơn vị:** một dòng = một gói tin; 6 lớp (NORMAL, BCF, DELAYED, SYN, INVALID, WILL); chế độ 11 lớp tách DoS và DDoS.
 - **Chia tập:** train / val / test theo **nhóm capture**, nên nhóm của test không bao giờ xuất hiện khi huấn luyện; có hạn mức theo lớp;
   tập test chỉ dùng cho số cuối, mọi lựa chọn đều làm trên val.
@@ -170,7 +177,7 @@ flowchart LR
 src/ppfeddata/
   cli.py                 một điểm vào, mỗi bước một lệnh con (import khi cần)
   utils.py               đọc cấu hình, seed, hash, log
-  data/                  Phase 1-4: inventory, harmonize, split_sample, parse_multi, preprocess
+  data/                  Phase 1-4: inventory, harmonize, split_sample, parse_multi, preprocess; extraction_check (nguồn gốc dữ liệu)
   checks/                Phase 5: kiểm tra rò rỉ và báo cáo
   eval/                  Phase 6: baselines, utility, fidelity, privacy, overhead, stats, compare, dp_check, runs, taug_rare
   models/                cvae, train, generate, b2, benchmark (CVAE); marginal, marginal_bn (FedDP-Marginal)
@@ -190,8 +197,10 @@ src/ppfeddata/
   readme_gen.py, demo_lib.py, acceptance.py, package.py             bàn giao
 ```
 
+Ngoài package, `tools/extract_normal_pcap.py` là script đã tạo CSV Normal từ PCAP, giữ nguyên như lúc chạy.
+
 Mỗi thư mục có mã hoặc kết quả có README riêng (tiếng Anh): [`src/ppfeddata/`](../src/ppfeddata/README.md), [`configs/`](../configs/README.md),
-[`results/`](../results/README.md), [`tests/`](../tests/README.md), [`demo/`](../demo/README.md).
+[`results/`](../results/README.md), [`tests/`](../tests/README.md), [`tools/`](../tools/README.md), [`demo/`](../demo/README.md).
 
 ## 9. Quy tắc thiết kế cần biết trước khi sửa mã
 

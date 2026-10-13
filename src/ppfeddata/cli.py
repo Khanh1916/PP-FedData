@@ -179,6 +179,13 @@ def build_parser() -> argparse.ArgumentParser:
     p_rb.add_argument("--report-only", action="store_true", help="only rewrite the report from the ledger")
     p_pu = sub.add_parser("privacy-units", help="Follow-up round P1: group-level DP (TCP stream, capture) and honest-client threshold for FedDP-Marginal; m chosen on validation (3 seeds), then 3 seeds through Flower SecAgg+ -> configs/best_group_dp.yaml, results/runs.csv, results/reports/privacy_units.md")
     p_pu.add_argument("--stage", choices=["all", "search", "final", "report"], default="all")
+    p_ce = sub.add_parser("check-extraction", help="Provenance of the raw data: the local files against the Kaggle release (network), the group's PCAP-to-CSV extraction (tools/extract_normal_pcap.py) against the authors' attack CSV, the Normal CSV (frames 1..N, rows recorded), the Normal PCAP (packets = rows, byte-identical re-extraction), the authors' export settings reproduced, the weight of the broker-sent Normal rows on the results; needs TShark -> results/data_provenance.json, results/reports/data_provenance.md")
+    p_ce.add_argument("--extractor", default="tools/extract_normal_pcap.py")
+    p_ce.add_argument("--stages", nargs="+", choices=["kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact"],
+                      default=["kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact"])
+    p_ce.add_argument("--only", nargs="+", default=None, help="attack captures (CSV names without .csv) for the method and recipe checks; default all")
+    p_ce.add_argument("--reextract", nargs="+", default=["NormalData31.pcap", "NormalData50.pcap", "NormalData1.pcap"],
+                      help="Normal PCAP files to extract again and compare byte by byte")
     p_nd = sub.add_parser("mg-nodp", help="Round Q1: FedDP-Marginal without DP, through Flower SecAgg+ (MGs-nodp) and in plain Flower rounds (MGp-nodp); bins chosen on validation (3 seeds), 3 seeds each, membership attack -> configs/best_marginal_nodp.yaml, results/runs.csv, results/mia_marginal.json, results/reports/mg_nodp.md")
     p_nd.add_argument("--stage", choices=["all", "search", "final", "mia", "report"], default="all")
     p_if = sub.add_parser("ids-followup", help="Follow-up round P2: IDS-side options on synthetic data (all rows, class-probability weights chosen on validation) and local augmentation at each client -> results/ids_followup.json, results/reports/ids_followup.md")
@@ -541,6 +548,11 @@ def main(argv: list[str] | None = None) -> None:
         out = pu.report(c)
         logger.info("P1: %d unit rows, %d threshold rows", len(out["units"]), len(out["thresholds"]))
 
+    def cmd_check_extraction(a):
+        from ppfeddata.data.extraction_check import run
+        out = run(load_config(a.config), a.extractor, tuple(a.stages), a.only, a.reextract)
+        logger.info("check-extraction: %d method rows, %d Normal captures", len(out.get("method") or []), len(out.get("normal_csv") or []))
+
     def cmd_mg_nodp(a):
         from ppfeddata import mg_nodp as nd
         c = load_config(a.config)
@@ -628,6 +640,7 @@ def main(argv: list[str] | None = None) -> None:
         "ids-followup": cmd_ids_followup,
         "privacy-units": cmd_privacy_units,
         "mg-nodp": cmd_mg_nodp,
+        "check-extraction": cmd_check_extraction,
         "robustness": cmd_robustness,
         "mia-marginal": cmd_mia_marginal,
         "accept": cmd_accept,

@@ -68,11 +68,12 @@ Các hướng CVAE (B2, B3, M1-M3) đi qua cùng các bước 1, 2, 4 và 5. Sơ
 
 | Muốn... | Đọc |
 |---|---|
-| hiểu thiết kế và mã | [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md), rồi README của từng thư mục ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md); tiếng Anh) |
+| hiểu thiết kế và mã | [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md), rồi README của từng thư mục ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md); tiếng Anh) |
 | xem mọi kết quả và cách diễn giải | [results/reports/final_report.md](results/reports/final_report.md): 9.0 tóm tắt, 9.9b vì sao chọn FedDP-Marginal, 9.10b theo yêu cầu, 9.11 vòng tiếp theo, 9.12 FedDP-Marginal không DP |
 | chọn cấu hình cho một triển khai | [results/reports/recommend.md](results/reports/recommend.md), trang tương tác `results/reports/recommend.html` (tải về rồi mở), trang 3 của demo |
 | biết các luật công việc tuân theo | [docs/PP-FedData_Implementation_Spec.md](docs/PP-FedData_Implementation_Spec.md) |
 | biết vì sao có chỗ khác spec, kèm bằng chứng | [docs/SPEC_DEVIATIONS.md](docs/SPEC_DEVIATIONS.md) |
+| kiểm tra nguồn gốc dữ liệu thô | [results/reports/data_provenance.md](results/reports/data_provenance.md), mục "Nguồn gốc dữ liệu" bên dưới |
 | chạy lại toàn bộ | Cài đặt, Dữ liệu, Chạy từng Phase, Tái lập (bên dưới) |
 
 ## Kết quả và cách đọc
@@ -185,6 +186,30 @@ paths:
   raw_root: "D:/path/to/DoS-DDoS-MQTT-IoT_Dataset"
 ```
 
+### Nguồn gốc dữ liệu
+
+Bộ dữ liệu là DoS/DDoS-MQTT-IoT ([Alatram và cộng sự, Computer Networks, 2023](https://www.sciencedirect.com/science/article/pii/S1389128623002542)),
+lấy từ bản chính các tác giả phát hành trên Kaggle (`alaaalatram/dosddos-mqtt-iot`: 362 tệp PCAP và 49 tệp CSV). Các dòng có hai
+nguồn, và lệnh `python -m ppfeddata.cli check-extraction` kiểm chứng cả hai ([results/reports/data_provenance.md](results/reports/data_provenance.md)):
+
+- **Dòng tấn công: CSV của chính tác giả, dùng nguyên như bản phát hành** (48 capture; tệp thứ 49 rỗng ngay trên Kaggle). Vì vậy dữ liệu
+  tấn công đúng là dữ liệu đã công bố, không đổi.
+- **Dòng Normal: trích từ PCAP của tác giả**, vì bản phát hành chỉ có lưu lượng Normal dạng PCAP (49 capture). Script, giữ nguyên như lúc
+  chạy, là `tools/extract_normal_pcap.py` ([tools/README.md](tools/README.md)): TShark ghi mọi gói tin vào 33 cột của CSV tác giả. Bước
+  này không bỏ và không sửa dòng nào; bộ lọc dòng của nghiên cứu đến sau (Phase 3) và áp như nhau cho cả hai nguồn.
+
+| Câu hỏi | Kết quả kiểm tra |
+|---|---|
+| Các tệp trên máy có đúng là của bản phát hành? | có: 411/411 tệp trùng đường dẫn và kích thước Kaggle liệt kê (49 CSV tấn công, 313 PCAP tấn công, 49 PCAP Normal) |
+| Mỗi gói Normal có trong CSV đúng một lần? | có: số dòng = số gói của PCAP ở 49/49 capture (45.580.102), số khung 1..N liền mạch |
+| Trích xuất có tái lập được? | có: trích lại ba capture cho tệp giống từng byte |
+| Cùng quy trình có cho đúng giá trị của tác giả? | trên 48 PCAP tấn công: trùng giá trị của tác giả ở ít nhất 99,98 % số dòng với 23 trong 25 cột mô hình dùng |
+| Các khác biệt còn lại từ đâu? | từ hai thiết lập khi tác giả xuất CSV: bộ lọc hiển thị chỉ giữ gói gửi tới broker (ở 47/48 capture; capture còn lại giữ cả hai chiều), và phân tích hai lượt (như giao diện Wireshark). Thêm hai thiết lập này, phép kiểm tra tái tạo đúng các dòng của tác giả: trùng khung ở 48/48 capture, khoảng cách thời gian 100 % số dòng, iRTT 99,99 %, chỉ 0,04 % số dòng còn khác ở một cột mô hình dùng (một nửa là gói TCP truyền lại, Wireshark của tác giả và TShark 4.4.7 giải mã khác nhau) |
+| Có làm đổi kết quả? | ít: dòng Normal có thêm các gói do broker gửi (44 %). Chấm lại dự đoán đã lưu của mọi run khi bỏ các dòng này, macro-F1 giảm trung bình 0,019 và thứ tự các cấu hình giữ nguyên (Spearman 0,993) |
+
+Như vậy CSV Normal là bản xuất đầy đủ, tái lập được của PCAP đã công bố, còn phần tác giả chọn là một tập con mà chính PCAP đó cho lại
+chính xác. Trích lại lưu lượng Normal với hai thiết lập của tác giả rồi chạy lại nghiên cứu để dành cho sau (mục Hạn chế).
+
 Được commit: `results/manifests/split_manifest_<mode>.json` (mã nhóm, số lượng, hash, phiên bản thư viện; không có dòng dữ liệu) và `results/manifests/feature_schema_<mode>.json` (tham số mã hoá, đếm).
 Không commit: `data/`, `artifacts/`, `results/*.csv`, `configs/local.yaml`.
 
@@ -196,6 +221,7 @@ Mọi lệnh chạy từ thư mục gốc của repo. Mọi tiến trình dài g
 | Phase | Việc | Lệnh | Đầu ra chính |
 |---|---|---|---|
 | 0 | kiểm tra môi trường | `python -m pytest -q` |  |
+| 1 | nguồn gốc dữ liệu thô: các tệp so với bản phát hành trên Kaggle, CSV Normal so với PCAP của nó, cách trích so với CSV của tác giả (cần TShark; khoảng 1,5 giờ) | `python -m ppfeddata.cli check-extraction` | `results/data_provenance.json`, `results/reports/data_provenance.md` |
 | 1 | kiểm kê dữ liệu thô | `python -m ppfeddata.cli inventory` | `data/inventory/*.csv` |
 | 2 | hài hoà schema, kiểm toán định dạng (Gate G1) | `python -m ppfeddata.cli harmonize` | `configs/feature_decisions.yaml`, `results/reports/g1_feature_review.md` |
 | 3 | chia theo nhóm, lấy mẫu streaming | `python -m ppfeddata.cli sample` | `data/interim/<mode>/`, `results/manifests/split_manifest_<mode>.json` |
@@ -270,6 +296,7 @@ PP-FedData/
 │   ├── PP-FedData_Implementation_Spec.md     các luật (spec v1.5)
 │   └── SPEC_DEVIATIONS.md                    mọi chỗ lệch spec, kèm bằng chứng
 ├── tests/                pytest cho mọi bước
+├── tools/                extract_normal_pcap.py: script đã tạo CSV Normal từ PCAP (giữ nguyên như lúc chạy)
 ├── demo/                 app.py (Streamlit)
 ├── notebooks/            trống; dành cho notebook chỉ để xem (không chứa logic)
 ├── data/, artifacts/     do các lần chạy ghi: dữ liệu đã xử lý, phân hoạch, mô hình, dữ liệu sinh, dự đoán (không commit)
@@ -277,7 +304,7 @@ PP-FedData/
 ```
 
 Mỗi thư mục có mã, thiết lập hoặc kết quả đều có README (tiếng Anh) liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),
-[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [demo](demo/README.md). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
+[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
 
 ## Thời gian chạy tham khảo
 
@@ -305,7 +332,7 @@ Chi phí của một epoch (thường và DP-SGD) và phép ngoại suy: `result
 Danh sách đầy đủ, dùng chung với báo cáo cuối (mục 10) và trang 5 của demo:
 
 <!-- BEGIN GENERATED: limitations -->
-<details><summary>26 limitations (the list of section 10 of the final report and of page 5 of the demo)</summary>
+<details><summary>27 limitations (the list of section 10 of the final report and of page 5 of the demo)</summary>
 
 - **Packet-level data, record-level epsilon.** The data are packet-level and epsilon is per record (one packet). Packets of one TCP stream and of one capture are correlated, so what DP protects about a whole attack session or capture is much weaker than epsilon suggests (group privacy). In the train split a stream gives 1.0-1.2 rows on average, but one capture group gives up to 63-188 rows of a rare class, so the correlated unit of this data is the capture, not the stream (section 9.10). FedDP-Marginal now offers epsilon for a whole unit (follow-up round P1: each unit held by one client, at most m of its rows used): a TCP stream costs 0.02-0.04 TSTR macro-F1 (0.353 vs 0.389 at epsilon 1; 0.371 vs 0.408 at epsilon 5; 0.409 vs 0.429 at epsilon 10), a whole capture does not fit the data (TSTR macro-F1 0.15-0.20, 3,675 rows kept), so captures stay protected only through the group bound. *(spec Definition of Done; sections 9.8, 9.10; results/reports/privacy_units.md)*
 - **Labels are not protected.** As in the spec, the claim of epsilon is scoped to the features of a record: the class label is treated as known side information. Epsilon is not claimed to hide labels, class counts or which classes a client holds. *(spec Definition of Done)*
@@ -318,6 +345,7 @@ Danh sách đầy đủ, dùng chung với báo cáo cuối (mục 10) và trang
 - **One dataset.** All results come from one dataset (the MQTT-IoT-IDS DoS/DDoS capture); nothing here shows that they carry over to other traffic or other networks. *(spec Definition of Done)*
 - **Attack classes are hard to tell apart packet by packet.** The real-data-only classifiers reach macro-F1 0.447 (RF) and 0.328 (MLP). A generator of independent packets cannot create separability that the features do not contain. *(g3_baseline.md; section 9.1)*
 - **Block splits inside one capture.** 8 of the 11 sub-classes come from a single capture file, so their validation and test rows are consecutive blocks of the same capture, not other captures. Dropping the TCP streams that straddle two blocks removes 1.2 % to 9.9 % of the eligible rows of each such sub-class (a bias toward short connections). *(results/manifests/split_manifest_6class.json; SPEC_DEVIATIONS 3.3, 3.5)*
+- **Normal and attack rows exported differently.** The attack rows are the CSV exports of the dataset's authors; the release has no CSV of the Normal traffic, so the group extracted it from the Normal PCAP with TShark, keeping every packet (one row per packet in 49 of 49 captures). The authors exported with a display filter (`ip.dst==192.168.80.49`, only the packets sent to the broker, in 47 of 48 attack captures; `ip` in 1) and with two-pass dissection, which the provenance check reproduces exactly (identical frame numbers in 48 of 48 captures). Hence 44.2 % of the Normal train rows are packets sent by the broker, which the attack classes contain only in SYN, the time gap of a Normal row is measured to the previous packet of either direction (with the authors' filter its median would be 1.01-1.04 times as long) and iRTT is empty on every Normal SYN packet (100.0 %, against 53.5 %-84.8 % in the attack classes). Scoring the saved predictions of 795 runs again on the client-sent test rows only changes macro-F1 by -0.019 on average (-0.029 to -0.009) and keeps the order of the configurations (Spearman 0.993; the pairs that swap are less than 0.014 apart); an RF trained without the broker-sent rows changes its score on those rows by +0.000 to +0.001. Re-extracting the Normal PCAP with the authors' settings and re-running the study is left for later. *(results/reports/data_provenance.md; SPEC_DEVIATIONS 17.1-17.4)*
 - **Protocol filter.** Only rows with protocol TCP or MQTT are kept. The filter removes about 0.5 % of the Normal rows and the 128 RIPv2 rows of the attack data. *(SPEC_DEVIATIONS 2.9, 3.5)*
 - **Multi-valued cells.** Only the first element of a multi-valued cell is kept (policy `first_only`). The information of several MQTT messages in one packet is lost; part of it remains in `tcp_segment_len`. *(SPEC_DEVIATIONS 2.4, 4.3)*
 - **Tail of the time-gap feature.** The tail of `time_delta_from_previous_displayed_frame` is still clipped at 5 sigma: 72 of 88,500 train rows (0.08 %) after the x1000 scaling; without the scaling it was 1.04 %. Extreme gaps are therefore merged in the features and in the generated rows. *(feature_schema.json audit; SPEC_DEVIATIONS 4.10)*

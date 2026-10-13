@@ -13,6 +13,7 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 |---|---|
 | `test_config.py`, `test_seed.py` | config loading and hashing, deterministic seeding |
 | `test_inventory.py`, `test_harmonize.py` | Phases 1-2: inventory, schema harmonisation, format audit |
+| `test_extraction_check.py` | provenance of the raw data: CSV / PCAP name pairing, the Kaggle listing match, the column comparison, the sender of a packet and the display filter, the extra TShark options, the report |
 | `test_split_sample.py`, `test_preprocess.py` | Phases 3-4: group split, streaming sampling, multi-value parsing, preprocessing |
 | `test_leakage.py` | Phase 5: leakage checks on data with leakage planted on purpose |
 | `test_eval.py` | Phase 6: metrics, protocols, bootstrap, fidelity, privacy, overhead, run ledger, Markdown tables |

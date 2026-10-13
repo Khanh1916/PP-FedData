@@ -19,7 +19,7 @@ SPEC_LIST = {"packet-level data": "packet-level", "epsilon per record, correlate
              "normalisation with central statistics": "centrally", "test split from few groups": "capture groups", "thresholds are heuristics": "heuristics", "one dataset": "one dataset",
              "classes hard to tell apart per packet": "separability", "8 of 11 sub-classes have one capture file": "single capture file", "protocol filter": "RIPv2",
              "first element of multi-valued cells": "first element", "time_delta tail clipped at 5 sigma": "clipped at 5 sigma", "very sparse columns": "very sparse",
-             "DoS / DDoS merged in 6-class mode": "merged"}
+             "DoS / DDoS merged in 6-class mode": "merged", "Normal extracted without the authors' display filter": "display filter"}
 
 
 def manifest_dir(cfg: dict[str, Any]) -> Path:
@@ -70,6 +70,52 @@ def _group_dp_text(pu: dict[str, Any]) -> tuple[str, str]:
         thr = (" With a threshold t (every client adds 1/t of the noise, follow-up round P1) the epsilon holds with any t honest clients and is smaller when all are "
                f"honest; on this data {', '.join(parts)} across epsilon {', '.join(f'{e:g}' for e in sorted({e for _, e in tb}))}.")
     return unit, thr
+
+
+def load_provenance(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Results of `check-extraction` (provenance of the raw data), or {} before it ran."""
+    runs = (cfg.get("compute") or {}).get("runs_csv")
+    return (_read(Path(runs).parent / "data_provenance.json") or {}) if runs else {}
+
+
+def provenance_text(pv: dict[str, Any]) -> str:
+    """The Normal / attack export item, with the numbers of results/data_provenance.json when it is there."""
+    base = ("The attack rows are the CSV exports of the dataset's authors; the release has no CSV of the Normal traffic, so the group extracted it from the Normal PCAP "
+            "with TShark, keeping every packet. The authors exported with a display filter (only the packets sent to the broker) and with two-pass dissection, so "
+            "the Normal rows also hold the packets sent by the broker, their time gap is measured to the previous packet of either direction and iRTT is empty on "
+            "their SYN packets.")
+    npk, rc, im = pv.get("normal_pcap") or {}, pv.get("recipe") or [], pv.get("impact") or {}
+    if not (npk.get("packets") and rc and im.get("shift")):
+        return base + " Re-extracting the Normal PCAP with the authors' settings and re-running the study is left for later."
+    pk = [r for r in npk["packets"] if r.get("present")]
+    flt: dict[str, int] = {}
+    for r in rc:
+        if r.get("filter"):
+            flt[r["filter"]] = flt.get(r["filter"], 0) + 1
+    main = max(flt, key=flt.get) if flt else None
+    other = ", ".join(f"`{f}` in {n}" for f, n in flt.items() if f != main)
+    share = (im.get("broker_share") or {}).get("train", {}).get("NORMAL")
+    att = [v["irtt_missing"] for c, v in (im.get("irtt_on_syn_rows") or {}).items() if c != "NORMAL" and v.get("syn_rows")]
+    nrm = ((im.get("irtt_on_syn_rows") or {}).get("NORMAL") or {}).get("irtt_missing")
+    ratio = [r["median_ratio"] for r in im.get("normal_time_delta") or []]
+    s = im["shift"]
+    text = ("The attack rows are the CSV exports of the dataset's authors; the release has no CSV of the Normal traffic, so the group extracted it from the Normal PCAP "
+            f"with TShark, keeping every packet (one row per packet in {sum(r['equal'] for r in pk)} of {len(pk)} captures). The authors exported with a display filter "
+            f"(`{main}`, only the packets sent to the broker, in {flt.get(main, 0)} of {len(rc)} attack captures" + (f"; {other}" if other else "") + ") and with "
+            f"two-pass dissection, which the provenance check reproduces exactly (identical frame numbers in {sum(flt.values())} of {len(rc)} captures).")
+    if share is not None:
+        text += f" Hence {pct(share)} of the Normal train rows are packets sent by the broker, which the attack classes contain only in SYN"
+        text += (f", the time gap of a Normal row is measured to the previous packet of either direction (with the authors' filter its median would be "
+                 f"{min(ratio):.2f}-{max(ratio):.2f} times as long)" if ratio else "")
+        text += (f" and iRTT is empty on every Normal SYN packet ({pct(nrm)}, against {pct(min(att))}-{pct(max(att))} in the attack classes)." if att and nrm is not None else ".")
+    text += (f" Scoring the saved predictions of {im['runs_scored']} runs again on the client-sent test rows only changes macro-F1 by {s['mean']:+.3f} on average "
+             f"({s['min']:+.3f} to {s['max']:+.3f}) and keeps the order of the configurations (Spearman {im['spearman']:.3f}; the pairs that swap are less than "
+             f"{im['largest_gap_flipped']:.3f} apart)")
+    rf = im.get("rf_retrain") or []
+    if rf:
+        d = [r["train_client_test_client"] - r["train_all_test_client"] for r in rf]
+        text += f"; an RF trained without the broker-sent rows changes its score on those rows by {min(d):+.3f} to {max(d):+.3f}"
+    return text + ". Re-extracting the Normal PCAP with the authors' settings and re-running the study is left for later."
 
 
 def load_manifest(cfg: dict[str, Any]) -> dict[str, Any] | None:
@@ -193,6 +239,7 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         text = ("Most sub-classes come from a single capture file, so their validation and test rows are consecutive blocks of the same capture. Dropping the TCP streams that straddle "
                 "two blocks removes a share of the eligible rows (a bias toward short connections); the split manifest was not found, so the shares are not shown.")
     add("Block splits inside one capture", text, f"results/manifests/split_manifest_{cfg.get('label_mode', '6class')}.json; SPEC_DEVIATIONS 3.3, 3.5")   # no <mode>: Markdown would hide it as an HTML tag
+    add("Normal and attack rows exported differently", provenance_text(load_provenance(cfg)), "results/reports/data_provenance.md; SPEC_DEVIATIONS 17.1-17.4")
     add("Protocol filter",
         "Only rows with protocol TCP or MQTT are kept. The filter removes about 0.5 % of the Normal rows and the 128 RIPv2 rows of the attack data.", "SPEC_DEVIATIONS 2.9, 3.5")
     pol = (sch or {}).get("settings", {}).get("multi_policy", "first_only")

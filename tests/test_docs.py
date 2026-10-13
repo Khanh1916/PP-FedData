@@ -42,7 +42,7 @@ def test_named_paths_exist(md):
         c = c.strip()
         if " " in c or "<" in c or c.startswith(NOT_COMMITTED) or c.endswith(("/*", "/")) and not c.rstrip("/*"):
             continue
-        if re.fullmatch(r"(configs|results|src|demo|docs|tests)/[\w./*-]+", c):
+        if re.fullmatch(r"(configs|results|src|demo|docs|tests|tools)/[\w./*-]+", c):
             assert list(ROOT.glob(c.rstrip("/"))), f"{md.name}: {c}"
         elif re.fullmatch(r"(data|checks|eval|models|fl)/[\w*]+\.py|[\w*]+\.py", c) and md.parent != ROOT / "tests":
             hits = list(PKG.glob(c)) + list((ROOT / "demo").glob(c)) + list((ROOT / "tests").glob(c))

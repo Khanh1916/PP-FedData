@@ -19,6 +19,7 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `ids_followup.md` | `ids-followup` | IDS-side options and local augmentation at each client |
 | `robustness.md` | `robustness` | FedDP-Marginal under other federations and 11 classes |
 | `sensitivity.md` | `sensitivity` | other test groups (A4) and a per-stream cap (A5) |
+| `data_provenance.md` | `check-extraction` | where the raw data come from: the files against the Kaggle release, the Normal CSV extracted from PCAP (complete, reproducible), the method checked on the attack captures, the authors' export settings reproduced, their weight on the results |
 | `g1_feature_review.md` | `harmonize` | column formats and feature decisions (Gate G1) |
 | `leakage_report.md` | `check` | leakage and label-reliability checks C1-C5 (Gate G2) |
 | `g3_baseline.md` | `baseline` | baselines B0, B1a, B1b (Gate G3) |
@@ -46,6 +47,7 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `mia_model.json` | `mia` | membership attack on the released CVAE models, positive controls |
 | `mia_marginal.json` | `mia-marginal`, `mg-nodp` | membership attack on the released FedDP-Marginal tables, positive controls; `mg-nodp` adds the tables released without DP (round Q1) |
 | `fed_classifier.json` | `fed-baseline` | the IDS trained directly by FL (plain and protected) |
+| `data_provenance.json` | `check-extraction` | every number of `data_provenance.md` (counts, shares, scores, hashes; no data row) |
 
 ## Figures — `figures/`
 
