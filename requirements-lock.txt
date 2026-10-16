@@ -1,3 +1,6 @@
+# Exact versions of every library installed on the machine that produced the results (`pip freeze`), written by
+# `python -m ppfeddata.cli package`: do not edit by hand. `pip install -r requirements-lock.txt` reproduces that environment;
+# requirements.txt gives the version ranges the code was written for.
 alembic==1.20.0
 altair==6.3.0
 altgraph==0.17.5
