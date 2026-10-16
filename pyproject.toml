@@ -1,3 +1,8 @@
+# Packaging of the study's code. `python -m pip install -e .` makes the package `ppfeddata` (src/ppfeddata) importable, so that
+# `python -m ppfeddata.cli <command>` runs from anywhere; edits to the code take effect without reinstalling.
+# The libraries are not declared here: requirements.txt gives the version ranges, requirements-lock.txt the exact versions of the run.
+# pytest reads its settings from [tool.pytest.ini_options] below (`python -m pytest -q` runs tests/).
+
 [build-system]
 requires = ["setuptools>=68.0", "wheel"]
 build-backend = "setuptools.build_meta"

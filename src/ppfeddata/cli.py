@@ -415,7 +415,8 @@ def main(argv: list[str] | None = None) -> None:
             logger.error("streamlit is not installed: pip install -r requirements.txt")
             raise SystemExit(2)
         root = Path(__file__).resolve().parents[2]
-        cmd = [sys.executable, "-m", "streamlit", "run", str(root / "demo" / "app.py")]
+        # no usage statistics even if the environment or a user config of Streamlit turns them on (.streamlit/config.toml says the same)
+        cmd = [sys.executable, "-m", "streamlit", "run", str(root / "demo" / "app.py"), "--browser.gatherUsageStats", "false"]
         if a.port:
             cmd += ["--server.port", str(a.port)]
         if a.headless:

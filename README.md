@@ -301,13 +301,16 @@ PP-FedData/
 ├── tests/                pytest for every stage
 ├── tools/                extract_normal_pcap.py: the script that made the Normal CSV from the PCAP (kept as it was run)
 ├── demo/                 app.py (Streamlit)
-├── notebooks/            empty; reserved for view-only notebooks (no logic)
-├── data/, artifacts/     written by the runs: processed data, partitions, models, synthetic data, predictions (not committed)
+├── .streamlit/           config.toml: no usage statistics sent by the demo
+├── notebooks/            empty on purpose; reserved for view-only notebooks (no logic)
+├── data/                 written by the runs: processed data, partitions (not committed)
+├── artifacts/            written by the runs: models, synthetic data, predictions, Optuna studies, logs (not committed)
 └── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
-Each folder with code, settings or results has a README that lists its files and how they are produced: [src/ppfeddata](src/ppfeddata/README.md),
-[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md). How the pieces work together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+The README of each folder lists its files and how they are produced: [src/ppfeddata](src/ppfeddata/README.md),
+[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md),
+[.streamlit](.streamlit/README.md), [notebooks](notebooks/README.md), [artifacts](artifacts/README.md) (what the runs leave on disk). How the pieces work together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Reference run times
 

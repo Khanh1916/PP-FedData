@@ -1,3 +1,10 @@
+# Libraries the code imports, with the version ranges it was written for. Install with
+#   python -m pip install -r requirements.txt
+#   python -m pip install -e .
+# The exact versions that produced the results are in requirements-lock.txt (written by `python -m ppfeddata.cli package`).
+# A test checks that every third-party import of src/ and demo/ is listed here (tests/test_demo.py).
+# ray is listed on its own: Flower's simulation runs on it, and the flwr[simulation] extra does not install it on Windows with
+# Python 3.13 (SPEC_DEVIATIONS 8.1). pytest runs the tests; streamlit runs the demo.
 numpy>=1.26,<3
 pandas>=2.0,<3.0
 pyarrow>=14.0

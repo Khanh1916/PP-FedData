@@ -11,7 +11,8 @@ from ppfeddata.cli import build_parser
 ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "src" / "ppfeddata"
 DOCS = [ROOT / "docs" / "ARCHITECTURE.md", ROOT / "docs" / "ARCHITECTURE.vi.md", PKG / "README.md", ROOT / "configs" / "README.md",
-        ROOT / "results" / "README.md", ROOT / "tests" / "README.md", ROOT / "demo" / "README.md"]
+        ROOT / "results" / "README.md", ROOT / "tests" / "README.md", ROOT / "demo" / "README.md", ROOT / "artifacts" / "README.md",
+        ROOT / "notebooks" / "README.md", ROOT / ".streamlit" / "README.md"]
 HISTORY = [ROOT / "docs" / "PP-FedData_Implementation_Spec.md", ROOT / "docs" / "SPEC_DEVIATIONS.md"]   # links only: they name past files too
 NOT_COMMITTED = ("data/", "artifacts/", "configs/local.yaml", "results/runs.csv", "results/summary.csv")
 COMMANDS = set(build_parser()._subparsers._group_actions[0].choices)
@@ -78,12 +79,19 @@ def test_configs_readme_lists_every_configuration_file():
         assert (f"`{rel}`" in text) or (rel.startswith("exp/") and "`exp/*.yaml`" in text), f"configs/README.md does not list {rel}"
 
 
-@pytest.mark.parametrize("name", ["results/README.md", "configs/README.md"])
+@pytest.mark.parametrize("name", ["results/README.md", "configs/README.md", "artifacts/README.md"])
 def test_the_commands_named_as_producers_exist(name):
     text = (ROOT / name).read_text(encoding="utf-8")
-    for row in re.findall(r"^\|[^\n]+\|$", text, flags=re.M):
+    producers, in_table = False, False
+    for row in text.splitlines():
+        if not re.fullmatch(r"\|.+\|", row):
+            in_table = False
+            continue
         cells = [c.strip() for c in row.strip("|").split("|")]
-        if len(cells) < 3 or set(cells[1]) <= set("-") or cells[1] in ("Command", "Written by"):
+        if not in_table:                                     # the header row: only the tables whose second column names the producer
+            in_table, producers = True, len(cells) >= 3 and cells[1] in ("Command", "Written by")
+            continue
+        if not producers or set(cells[1]) <= set("-"):
             continue
         for cmd in re.findall(r"`([a-z][\w-]*)(?:\s[^`]*)?`", cells[1]):
             assert cmd in COMMANDS, f"{name}: {cmd} is not a CLI command ({row[:80]})"

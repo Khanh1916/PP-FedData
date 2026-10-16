@@ -1,7 +1,7 @@
 """Phase 13: the reproducibility bundle (`ppfeddata package`).
 
 Spec: "save `pip freeze`, `configs/`, `split_manifest.json`, `feature_schema.json` together with the results". Written to `results/repro/`:
-- `pip_freeze.txt`    the installed libraries (the same text is written to `requirements-lock.txt`, which is what the README tells a reader to install);
+- `pip_freeze.txt`    the installed libraries after a comment header (the same text is written to `requirements-lock.txt`, which is what the README tells a reader to install);
 - `environment.json`  Python, platform, versions of the libraries the study depends on, git commit and whether the tree was clean, label mode and seeds;
 - `configs/`          a copy of `configs/*.yaml` (not `local.yaml`, which holds the machine's raw-data path) and `configs/exp/*.yaml`;
 - `MANIFEST.json`     SHA-256 and size of the ledger, summary, interpretation, final report, the split manifest, the feature schema, the configs and the lock file.
@@ -26,6 +26,10 @@ KEY_LIBS = ("numpy", "pandas", "pyarrow", "scikit-learn", "scipy", "imbalanced-l
             "pytest", "psutil")
 ROOT = Path(__file__).resolve().parents[2]
 EDITABLE_NOTE = "# ppfeddata (this repository) is installed with `pip install -e .`"
+# first lines of the lock file (and of its copy pip_freeze.txt): the file is rewritten by every `package`, so the comment is written here, not by hand
+LOCK_HEADER = ("# Exact versions of every library installed on the machine that produced the results (`pip freeze`), written by\n"
+               "# `python -m ppfeddata.cli package`: do not edit by hand. `pip install -r requirements-lock.txt` reproduces that environment;\n"
+               "# requirements.txt gives the version ranges the code was written for.\n")
 
 
 def sha256(path: Path) -> str:
@@ -109,7 +113,7 @@ def package(cfg: dict[str, Any], out_dir: str | Path | None = None, update_lock:
     missing: list[str] = []
 
     lines = sanitize_freeze(pip_freeze() if freeze is None else freeze)
-    text = "\n".join(lines) + "\n"
+    text = LOCK_HEADER + "\n".join(lines) + "\n"
     (out / "pip_freeze.txt").write_text(text, encoding="utf-8")
     lock = root / "requirements-lock.txt"
     if update_lock:

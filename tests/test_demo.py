@@ -564,6 +564,7 @@ def test_package_writes_the_bundle(tmp_path):
     r = pk.package(cfg, root=root, freeze=FREEZE)
     out = res / "repro"
     assert (out / "pip_freeze.txt").read_text(encoding="utf-8") == (root / "requirements-lock.txt").read_text(encoding="utf-8") and r["lock_updated"]
+    assert (root / "requirements-lock.txt").read_text(encoding="utf-8").startswith(pk.LOCK_HEADER) and pk.LOCK_HEADER.count("\n") == sum(ln.startswith("#") for ln in pk.LOCK_HEADER.splitlines())
     assert (out / "configs" / "default.yaml").exists() and (out / "configs" / "exp" / "B0.yaml").exists() and not (out / "configs" / "local.yaml").exists()
     env = json.loads((out / "environment.json").read_text(encoding="utf-8"))
     assert env["label_mode"] == "6class" and env["seeds"] == [0, 1, 2] and env["libraries"]["numpy"] and env["python"]
@@ -591,6 +592,23 @@ def test_package_can_leave_the_lock_file_alone_and_reports_a_missing_schema(tmp_
     r = pk.package(cfg, root=root, freeze=FREEZE, update_lock=False)
     assert (root / "requirements-lock.txt").read_text(encoding="utf-8") == "old\n" and not r["lock_updated"]
     assert any("feature_schema.json" in m for m in r["missing"])
+
+
+def test_demo_command_turns_off_usage_statistics(monkeypatch):
+    import subprocess
+
+    from ppfeddata import cli
+    seen = {}
+
+    def fake_run(cmd, cwd=None):
+        seen.update(cmd=cmd, cwd=cwd)
+        return subprocess.CompletedProcess(cmd, 0)
+    monkeypatch.setattr(subprocess, "run", fake_run)
+    with pytest.raises(SystemExit) as e:
+        cli.main(["demo", "--headless"])
+    i = seen["cmd"].index("--browser.gatherUsageStats")
+    assert e.value.code == 0 and seen["cmd"][i + 1] == "false" and Path(seen["cwd"]) == ROOT     # the root: .streamlit/config.toml is read too
+    assert "gatherUsageStats = false" in (ROOT / ".streamlit" / "config.toml").read_text(encoding="utf-8")
 
 
 def test_cli_knows_the_new_commands():

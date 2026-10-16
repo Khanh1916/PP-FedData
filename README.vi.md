@@ -299,13 +299,16 @@ PP-FedData/
 ├── tests/                pytest cho mọi bước
 ├── tools/                extract_normal_pcap.py: script đã tạo CSV Normal từ PCAP (giữ nguyên như lúc chạy)
 ├── demo/                 app.py (Streamlit)
-├── notebooks/            trống; dành cho notebook chỉ để xem (không chứa logic)
-├── data/, artifacts/     do các lần chạy ghi: dữ liệu đã xử lý, phân hoạch, mô hình, dữ liệu sinh, dự đoán (không commit)
+├── .streamlit/           config.toml: demo không gửi thống kê sử dụng
+├── notebooks/            cố ý để trống; dành cho notebook chỉ để xem (không chứa logic)
+├── data/                 do các lần chạy ghi: dữ liệu đã xử lý, phân hoạch (không commit)
+├── artifacts/            do các lần chạy ghi: mô hình, dữ liệu sinh, dự đoán, nghiên cứu Optuna, log (không commit)
 └── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
-Mỗi thư mục có mã, thiết lập hoặc kết quả đều có README (tiếng Anh) liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),
-[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
+README (tiếng Anh) của từng thư mục liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),
+[configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md),
+[.streamlit](.streamlit/README.md), [notebooks](notebooks/README.md), [artifacts](artifacts/README.md) (những gì các lần chạy để lại trên đĩa). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
 
 ## Thời gian chạy tham khảo
 
