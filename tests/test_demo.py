@@ -352,6 +352,17 @@ def test_limitations_use_the_interpretation_and_the_ledger_when_given(tmp_path):
     assert "not met" not in {i["topic"]: i["text"] for i in lim.limitations(cfg, R)}["Weak fidelity and privacy diagnostics"]
 
 
+def test_dos_ddos_limitation_reads_the_eleven_class_results():
+    row = lambda c, f: {"config": c, "tstr_f1": f}                                                 # noqa: E731
+    rb = {"eleven_classes": [row("B0-rf", 0.336), row("B0-mlp", 0.246), row("MGs-eps1", 0.238), row("MGr-eps5", 0.274), row("MGs-eps10", 0.308), row("B3", 0.249)],
+          "six_classes_reference": [row("B0-rf", 0.448)]}
+    t = lim._a3_text(rb)
+    assert "RF reaches test macro-F1 0.336 (0.448 in 6 classes)" in t and "FedDP-Marginal 0.238-0.308" in t and "(B3) 0.249" in t and "C5" in t
+    assert "(B3)" not in lim._a3_text({"eleven_classes": rb["eleven_classes"][:-1]}) and lim._a3_text({}) == ""
+    bare = {i["topic"]: i["text"] for i in lim.limitations({"label_mode": "6class"})}
+    assert bare["DoS and DDoS are merged"].endswith("no experiment uses them.")
+
+
 def test_packet_level_limitation_gives_the_size_of_the_correlated_units_when_measured(tmp_path):
     cfg = fake_sources(tmp_path)
     topic = "Packet-level data, record-level epsilon"

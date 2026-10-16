@@ -72,6 +72,27 @@ def _group_dp_text(pu: dict[str, Any]) -> tuple[str, str]:
     return unit, thr
 
 
+def load_robustness(cfg: dict[str, Any]) -> dict[str, Any]:
+    """Results of `robustness` (other federations, 11 classes), or {} before it ran."""
+    runs = (cfg.get("compute") or {}).get("runs_csv")
+    return (_read(Path(runs).parent / "robustness.json") or {}) if runs else {}
+
+
+def _a3_text(rb: dict[str, Any]) -> str:
+    """What extension A3 (the 11-class mode) showed, from results/robustness.json; '' before it ran."""
+    e11 = {r["config"]: r["tstr_f1"] for r in rb.get("eleven_classes") or [] if r.get("tstr_f1") is not None}
+    b6 = {r["config"]: r["tstr_f1"] for r in rb.get("six_classes_reference") or [] if r.get("tstr_f1") is not None}
+    mg = [v for k, v in e11.items() if k.startswith("MG")]
+    if "B0-rf" not in e11 or not mg:
+        return ""
+    parts = [f"the real-data-only RF reaches test macro-F1 {e11['B0-rf']:.3f}" + (f" ({b6['B0-rf']:.3f} in 6 classes)" if "B0-rf" in b6 else ""),
+             f"TSTR with FedDP-Marginal {min(mg):.3f}-{max(mg):.3f} (epsilon 1-10)"]
+    if "B3" in e11:
+        parts.append(f"with the CVAE without DP (B3) {e11['B3']:.3f}")
+    return (" Besides the leakage check C5, the 11-class data are used only by extension A3 (section 9.10b): " + ", ".join(parts) + ", so telling DoS from DDoS packet by packet is harder "
+            "still; the CVAE with DP, SecAgg+ and the follow-up rounds were not run in 11 classes.")
+
+
 def load_provenance(cfg: dict[str, Any]) -> dict[str, Any]:
     """Results of `check-extraction` (provenance of the raw data), or {} before it ran."""
     runs = (cfg.get("compute") or {}).get("runs_csv")
@@ -291,9 +312,11 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     add("Very sparse columns",
         "Columns that are empty in almost every row (but not all) use the statistics of the rows where they apply, with an `_is_na` flag (`ultra_sparse_fix`); this departs from the rule of spec v1.1.",
         "SPEC_DEVIATIONS 4.5")
+    a3 = _a3_text(load_robustness(cfg))
     add("DoS and DDoS are merged",
-        "In the 6-class mode used for every experiment the DoS / DDoS sub-classes of an attack family are one class, so neither the classifiers nor the generator separate them (the 11-class "
-        "data were prepared, but no run of the experiment matrix uses them).", "spec Definition of Done; leakage_report.md C5; configs/default.yaml g2_log")
+        "In the 6-class mode used for the experiment matrix the DoS / DDoS sub-classes of an attack family are one class, so neither the classifiers nor the generator separate them."
+        + (a3 or " The 11-class data were prepared, but no experiment uses them."),
+        "spec Definition of Done; leakage_report.md C5; configs/default.yaml g2_log" + ("; results/reports/robustness.md" if a3 else ""))
     pc = ((interp or {}).get("R4") or {}).get("positive_control") or {}
     c2st = [v for v in (why.get("c2st") or {}).values() if isinstance(v, (int, float))]
     c2st_txt = f"C2ST AUC is {min(c2st):.4f}-{max(c2st):.4f}" if c2st else "C2ST is close to 1"
