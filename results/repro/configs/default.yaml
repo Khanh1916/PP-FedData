@@ -1,7 +1,7 @@
 seeds: [0, 1, 2]
 paths:
   raw_root: "./raw/DoS-DDoS-MQTT-IoT_Dataset"   # set the real location in configs/local.yaml (git-ignored) or env PPFEDDATA_RAW_ROOT
-  normal_csv_dir: "NormalData/CSV_Extracted_Split"
+  normal_csv_dir: "NormalData/CSV_Authors_Settings"   # round R: the authors' export settings (extract-normal); first extraction: NormalData/CSV_Extracted_Split
   work_dir: "./data"
   shared_manifest_dir: "./results/manifests"   # git-tracked copies of split manifests (no data rows)
 label_mode: "6class"

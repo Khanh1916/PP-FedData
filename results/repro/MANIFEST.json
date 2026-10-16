@@ -1,30 +1,30 @@
 {
   "label_mode": "6class",
-  "git_commit": "71b33a7ef454bed30b6b1759b372c37d1eb62dcd",
+  "git_commit": "4c36317c6516146d5276a0a3029391eed00be867",
   "files": {
     "results/runs.csv": {
-      "sha256": "10d01792680684c06b5174d9e84235cded6ab0d3c8046e33bd9dd1a4daa3833f",
-      "bytes": 1300898
+      "sha256": "6c38d20f5e289cc9163c7d7fafa90193462fd1984d19f3da0961119f787d5193",
+      "bytes": 1868924
     },
     "results/summary.csv": {
-      "sha256": "608ef6a4540bc7d18712f24ff89b932ca4f6be4670b6b93c7614433407bc1bb7",
-      "bytes": 420425
+      "sha256": "8ac9d44075655c06f18ec7be101d746d01506f62c991439e43d18e0375e11db3",
+      "bytes": 595696
     },
     "results/interpretation.json": {
-      "sha256": "58a51e97f75372b106b0776107b7a656b24c3badb5925854c339563b7f7c2e72",
-      "bytes": 392780
+      "sha256": "44c733fb3a26d08e0024513f1acac8ef3dda13f7d9e46ac117ae4b449444074d",
+      "bytes": 441442
     },
     "results/reports/final_report.md": {
-      "sha256": "9f91e9187f91c50c8c521bba991d8df8b09a72f07f1c79e3de70352672aae940",
-      "bytes": 108290
+      "sha256": "000e30a271d5d51f7f157323b087374abb36858b1de3c848d14d806bdd3e93dc",
+      "bytes": 109864
     },
     "results/manifests/split_manifest_6class.json": {
-      "sha256": "839a130273df0a2cb94a0ae760786be10ac77efa22153b2fdfea1b7604857a4d",
-      "bytes": 43344
+      "sha256": "482b5eae0af79b449b9e96d49d8cc8e9c2e45947c2403ac327cf817628f2609c",
+      "bytes": 43329
     },
     "results/manifests/feature_schema_6class.json": {
-      "sha256": "501cde7ab89dc6a50f30b4e0ff70d4b36ca0a9f5875545ba5dba842782ce97ce",
-      "bytes": 16920
+      "sha256": "280416ea0297c42dae6793cef52f05cc8282163b417314b9c53ce5a919c4d488",
+      "bytes": 16669
     },
     "requirements-lock.txt": {
       "sha256": "9dfa758e62f6568f06936b0831cef2c1755167da53fb3f2a3cf06bdd95ffb173",
@@ -35,52 +35,52 @@
       "bytes": 3485
     },
     "results/repro/environment.json": {
-      "sha256": "400b95f406f1deb468feb2d603a429e0b622958c3d96fedc30e44dd3f5aafa1e",
+      "sha256": "efb0dd2a30c7b92988af6a4358fcc3192737e93ac8f4c3cb2eb463c3e2421f0a",
       "bytes": 807
     },
     "results/repro/configs/best_cvae.yaml": {
-      "sha256": "fd52d984a0d98afd6c62fdda1d151ee8a3b2cbb5d89f43216abf313e1b05a01b",
-      "bytes": 566
+      "sha256": "4602f7179181b5fe4b4b5b73e6f6d08f58edb636f11b09b03611b0debb7acb66",
+      "bytes": 571
     },
     "results/repro/configs/best_cvae_dp.yaml": {
-      "sha256": "a64fda00642d6246f0f01f92fa407711c6c6a5923aeb4c8d2f1ad8e8a3e3c95b",
-      "bytes": 1613
+      "sha256": "de2025d9d2bba01fa63ff6c0ca59e82a5f0ebfb6628163b99873a92ea729c248",
+      "bytes": 1695
     },
     "results/repro/configs/best_cvae_dp_full.yaml": {
-      "sha256": "29598124fee345c76b5fea0b832571e4fb9ab20c3c211ed37f8678ac41d4cb30",
-      "bytes": 2971
+      "sha256": "68a575edf0c92ac0ec1a94d2dc2382489dd451bc43cd076d48aaa48c61d2da0d",
+      "bytes": 2979
     },
     "results/repro/configs/best_group_dp.yaml": {
-      "sha256": "721743501ae3ffdf08b19dc3ff29c0ad0429a1d6335ed1c556b39db4eb6a88ee",
-      "bytes": 6010
+      "sha256": "57fd180e64ff42e4ee08639703f693fa32c19fbaa53b827dd574edc1391a95dd",
+      "bytes": 6053
     },
     "results/repro/configs/best_marginal.yaml": {
-      "sha256": "955889b6488c8384f7a3af072211defd00638597ffae699b0599d9b5a8f2debf",
-      "bytes": 9938
+      "sha256": "551a86cc42fee81b8ddab2793b57e346ec9a32018680e90d115bd017dbc28223",
+      "bytes": 23885
     },
     "results/repro/configs/best_marginal_bn.yaml": {
-      "sha256": "3c8c507a9fe8e6b726c4f8ce75701c8492c07a80dbcb06acf15f4762959ee70e",
-      "bytes": 13955
+      "sha256": "2439e4465dceae316d8260d7d94d2c703a8395335b28ffee8fe03bc8c9fec5a0",
+      "bytes": 22842
     },
     "results/repro/configs/best_marginal_nodp.yaml": {
-      "sha256": "814cb1e88a06a95656f8fc79b0cc18dac6a08cbd8e12b92a0db024abbbaae97a",
-      "bytes": 1524
+      "sha256": "d85f16c9d51fb9ac98438856bcfb3552e22c1f658864282b5a6caa3c25a68b02",
+      "bytes": 1517
     },
     "results/repro/configs/best_marginal_refine.yaml": {
-      "sha256": "70e950f3c747557734ec8d1ab27088b0b222010d7eb8b251c6a0ea031baf5a7d",
-      "bytes": 11659
+      "sha256": "27aec4036f42b3ffa52f4cc4c975905f299ec97ea3b54068908633bb3d820ceb",
+      "bytes": 23191
     },
     "results/repro/configs/default.yaml": {
-      "sha256": "18215730d5d7120eb2fa8c6eeea36cbe885e8607efb091c24c44383b31b50647",
-      "bytes": 8138
+      "sha256": "1de360c4c93a56a6bca41db504d430afeeacb59f08352270fb504018d21c82e9",
+      "bytes": 8248
     },
     "results/repro/configs/feature_decisions.yaml": {
-      "sha256": "590e2281f12fe511e9790d6905a6c40352f2306581120db18e840b1e1f7b9975",
-      "bytes": 10898
+      "sha256": "cdc68dcbbedb9c504e641a2aefa3835714c9f415f4c5848426cf37583a7c1e75",
+      "bytes": 10192
     },
     "results/repro/configs/label_map.yaml": {
-      "sha256": "d0ca29cfa4ad6c706ada2df5c232f477c9b536262b76c0e1628a00a085c278b2",
-      "bytes": 1227
+      "sha256": "4ea6c88a7701353a0011aef950a76bf485fc43b261164f2bd29a6ac88c75aef9",
+      "bytes": 1366
     },
     "results/repro/configs/exp/A1-a0.1.yaml": {
       "sha256": "ca37ccbc7945f29d3d557840aac4ce1776803cb524c9f3969129abbbb23ea734",

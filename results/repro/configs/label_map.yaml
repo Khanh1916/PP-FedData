@@ -40,8 +40,8 @@ class6:
 
 # Expected row counts for verification (from spec)
 expected_counts:
-  total: 59624826
-  NORMAL: 45580102
+  total: 39000601     # round R: Normal extracted with the authors' settings (first extraction: 59,624,826)
+  NORMAL: 24955877    # first extraction (every packet): 45,580,102
   BCF_DoS: 5825026
   BCF_DDoS: 6455848
   WILL_DoS: 114474

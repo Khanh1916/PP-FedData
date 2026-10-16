@@ -31,10 +31,10 @@ time_delta_from_previous_displayed_frame:
   reason: time delta from previous displayed frame
   multi: false
   time_ratios:
-    p25: 3.43
-    p50: 2.19
-    p75: 1.52
-    p99: 2.54
+    p25: 2.84
+    p50: 3.41
+    p75: 1.84
+    p99: 3.42
 irtt:
   action: numeric
   reason: irtt
@@ -43,20 +43,16 @@ irtt:
     p25: 1.21
     p50: 1.39
     p75: 1.29
-    p99: 4.01
+    p99: 4.06
 time_since_first_frame_in_this_tcp_stream:
   action: numeric
   reason: time since first frame in this tcp stream
   multi: false
   time_ratios:
-    p25: 26.14
-    p50: 1.19
-    p75: 10.14
-    p99: 9883.29
-  suspect: false
-  suspect_reasons_resolved:
-  - Normal vs Attack on TCP-only packets differ x9883.3 at p99 (Normal 9989.31, Attack
-    1.01073).
+    p25: 1.4
+    p50: 1.08
+    p75: 2.21
+    p99: 2.17
   diagnostic: false
   g1_decision: Was a diagnostic column (decided at G1, final call at G2).
   g2_decision: 'Core feature. Phase 5: adding it lifts val macro-F1 0.442 -> 0.499
@@ -87,14 +83,14 @@ will_message_length:
   reason: will message length
   multi: false
   genuine_absence: Empty in Normal because Normal rarely/never triggers the parent
-    event (parent column will_flag is present in 0.075 of Normal rows); not treated
+    event (parent column will_flag is present in 0.137 of Normal rows); not treated
     as an extraction artifact.
 will_topic_length:
   action: numeric
   reason: will topic length
   multi: false
   genuine_absence: Empty in Normal because Normal rarely/never triggers the parent
-    event (parent column will_flag is present in 0.075 of Normal rows); not treated
+    event (parent column will_flag is present in 0.137 of Normal rows); not treated
     as an extraction artifact.
 topic_length:
   action: numeric
@@ -176,27 +172,9 @@ protocol:
   multi: false
   category_mismatch:
     normal_only:
-      ARP: 73
-      CDP: 5642
-      DHCPv6: 44
-      DNS: 80
       ICMP: 80
-      ICMPv6: 22
-      IGMPv3: 16
-      LLDP: 362
-      LLMNR: 54
-      LOOP: 33855
-      MDNS: 88
-      NBNS: 120
-      SSDP: 7546
-      STP: 168958
-    attack_only: {}
-  suspect: false
-  suspect_reasons_resolved:
-  - '0.476% of Normal tokens have values never seen in Attack: {''ARP'': 73, ''CDP'':
-    5642, ''DHCPv6'': 44, ''DNS'': 80, ''ICMP'': 80, ''ICMPv6'': 22, ''IGMPv3'': 16,
-    ''LLDP'': 362, ''LLMNR'': 54, ''LOOP'': 33855, ''MDNS'': 88, ''NBNS'': 120, ''SSDP'':
-    7546, ''STP'': 168958}.'
+    attack_only:
+      RIPv2: 128
   g1_decision: Keep. Rows are filtered to row_filters.protocol in Phase 3 (all sources)
     (STP/LOOP/SSDP/... occur in every Normal capture, never in Attack).
 message_type:
@@ -209,7 +187,7 @@ message_type:
   multi_policy: first_only
   unmapped_tokens:
     count: 27
-    share: 1.19e-06
+    share: 1.95e-06
     examples:
     - Reserved
     - Publish Re
@@ -218,11 +196,11 @@ message_type:
     - Publish R
   category_mismatch:
     normal_only:
-      '0': 125
-      '10': 14
-      '14': 19
+      '0': 128
+      '10': 13
+      '14': 18
       '15': 56
-      '9': 26
+      '9': 14
     attack_only: {}
   value_map:
     Connect Command: '1'
