@@ -4,169 +4,169 @@ searches:
       chosen_m: 1
       rows:
       - m: 1
-        rows_kept: 76463.0
-        macro_f1_mean: 0.36600061518650434
-        macro_f1_std: 0.005343878244229985
-        bin_f1_mean: 0.8290605427956209
-        bin_f1_std: 0.0061238080956294485
-        rare_recall_mean: 0.240625
-        rare_recall_std: 0.010424330514074579
+        rows_kept: 77106.0
+        macro_f1_mean: 0.3692829857594935
+        macro_f1_std: 0.011405128380837702
+        bin_f1_mean: 0.8191791997660337
+        bin_f1_std: 0.01338474087843277
+        rare_recall_mean: 0.25458333333333333
+        rare_recall_std: 0.017327222480504157
       - m: 2
-        rows_kept: 79500.0
-        macro_f1_mean: 0.33005197854982266
-        macro_f1_std: 0.00699268369076406
-        bin_f1_mean: 0.8084982905143451
-        bin_f1_std: 0.017909899586093493
-        rare_recall_mean: 0.196125
-        rare_recall_std: 0.009922092353262314
+        rows_kept: 80244.0
+        macro_f1_mean: 0.32902662851570147
+        macro_f1_std: 0.02658250560189203
+        bin_f1_mean: 0.7864016931681325
+        bin_f1_std: 0.006228156892593292
+        rare_recall_mean: 0.20733333333333334
+        rare_recall_std: 0.013830195427236574
       - m: 4
-        rows_kept: 81072.0
-        macro_f1_mean: 0.28058799212458935
-        macro_f1_std: 0.044827017926708485
-        bin_f1_mean: 0.8056894422865438
-        bin_f1_std: 0.021590853431048922
-        rare_recall_mean: 0.13383333333333333
-        rare_recall_std: 0.04712531314366928
+        rows_kept: 81989.0
+        macro_f1_mean: 0.24306352996491584
+        macro_f1_std: 0.019474016733975273
+        bin_f1_mean: 0.6979881510699523
+        bin_f1_std: 0.017224884310516133
+        rare_recall_mean: 0.10233333333333335
+        rare_recall_std: 0.01500289323949069
       rule: mean of 3 seeds on validation
     capture:
       chosen_m: 25
       rows:
       - m: 25
         rows_kept: 3675.0
-        macro_f1_mean: 0.1019711316698007
-        macro_f1_std: 0.026518803698129357
-        bin_f1_mean: 0.8437755139733775
-        bin_f1_std: 0.05431650490643004
-        rare_recall_mean: 0.140875
-        rare_recall_std: 0.08662009966899521
+        macro_f1_mean: 0.1394493223589515
+        macro_f1_std: 0.011674738524047
+        bin_f1_mean: 0.6855740103631719
+        bin_f1_std: 0.13751736542901305
+        rare_recall_mean: 0.10379166666666667
+        rare_recall_std: 0.014721842238282844
       - m: 50
         rows_kept: 7350.0
-        macro_f1_mean: 0.06971842098122703
-        macro_f1_std: 0.008641162643536395
-        bin_f1_mean: 0.4734436061128405
-        bin_f1_std: 0.32836891785626293
-        rare_recall_mean: 0.08354166666666667
-        rare_recall_std: 0.08142777559831096
+        macro_f1_mean: 0.10818755062414603
+        macro_f1_std: 0.02645412757897513
+        bin_f1_mean: 0.7660319608499937
+        bin_f1_std: 0.08747333345639298
+        rare_recall_mean: 0.062625
+        rare_recall_std: 0.06366423970068807
       - m: 100
         rows_kept: 14000.0
-        macro_f1_mean: 0.07741540718472796
-        macro_f1_std: 0.01253135502279461
-        bin_f1_mean: 0.6585232634837122
-        bin_f1_std: 0.28155656947041624
-        rare_recall_mean: 0.025666666666666667
-        rare_recall_std: 0.018149074050454718
+        macro_f1_mean: 0.12908193610271554
+        macro_f1_std: 0.019082420523389175
+        bin_f1_mean: 0.7463859877357555
+        bin_f1_std: 0.06200364078965959
+        rare_recall_mean: 0.10066666666666668
+        rare_recall_std: 0.019495013607472952
       rule: mean of 3 seeds on validation
   eps5:
-    stream:
-      chosen_m: 2
-      rows:
-      - m: 1
-        rows_kept: 76463.0
-        macro_f1_mean: 0.3597588119108344
-        macro_f1_std: 0.011636193264008665
-        bin_f1_mean: 0.8492115640262754
-        bin_f1_std: 0.008147880916710514
-        rare_recall_mean: 0.26695833333333335
-        rare_recall_std: 0.016048862022655142
-      - m: 2
-        rows_kept: 79500.0
-        macro_f1_mean: 0.36209993924212314
-        macro_f1_std: 0.023543850819157768
-        bin_f1_mean: 0.843308173262531
-        bin_f1_std: 0.015502036368707322
-        rare_recall_mean: 0.24916666666666668
-        rare_recall_std: 0.0278345808103677
-      - m: 4
-        rows_kept: 81072.0
-        macro_f1_mean: 0.32132278269770015
-        macro_f1_std: 0.01593466703342682
-        bin_f1_mean: 0.8317534463795179
-        bin_f1_std: 0.019598440207909233
-        rare_recall_mean: 0.18416666666666667
-        rare_recall_std: 0.02054880707540519
-      rule: mean of 3 seeds on validation
-    capture:
-      chosen_m: 25
-      rows:
-      - m: 25
-        rows_kept: 3675.0
-        macro_f1_mean: 0.1468564509518094
-        macro_f1_std: 0.010197484130351753
-        bin_f1_mean: 0.6760358322773993
-        bin_f1_std: 0.0992253058348273
-        rare_recall_mean: 0.049375
-        rare_recall_std: 0.01589057634784424
-      - m: 50
-        rows_kept: 7350.0
-        macro_f1_mean: 0.14376102869132426
-        macro_f1_std: 0.028720429283124432
-        bin_f1_mean: 0.7590422812296705
-        bin_f1_std: 0.0904661962895633
-        rare_recall_mean: 0.03933333333333333
-        rare_recall_std: 0.02792966115480498
-      - m: 100
-        rows_kept: 14000.0
-        macro_f1_mean: 0.1431769665033142
-        macro_f1_std: 0.0175811691696462
-        bin_f1_mean: 0.8177227814804606
-        bin_f1_std: 0.05084368820344668
-        rare_recall_mean: 0.02841666666666667
-        rare_recall_std: 0.020976508024189558
-      rule: mean of 3 seeds on validation
-  eps10:
     stream:
       chosen_m: 1
       rows:
       - m: 1
-        rows_kept: 76463.0
-        macro_f1_mean: 0.3835230372374295
-        macro_f1_std: 0.004441476802299694
-        bin_f1_mean: 0.8446480122557679
-        bin_f1_std: 0.013218200173245011
-        rare_recall_mean: 0.2956666666666667
-        rare_recall_std: 0.019621505350564266
+        rows_kept: 77106.0
+        macro_f1_mean: 0.4141607344133138
+        macro_f1_std: 0.00859721159286827
+        bin_f1_mean: 0.8321598532054152
+        bin_f1_std: 0.007785202130461858
+        rare_recall_mean: 0.33395833333333336
+        rare_recall_std: 0.01659610061296193
       - m: 2
-        rows_kept: 79500.0
-        macro_f1_mean: 0.3727222317997052
-        macro_f1_std: 0.01207941928232561
-        bin_f1_mean: 0.8408258358529994
-        bin_f1_std: 0.01176324378225508
-        rare_recall_mean: 0.2748333333333333
-        rare_recall_std: 0.02654052195333687
+        rows_kept: 80244.0
+        macro_f1_mean: 0.4034907923277737
+        macro_f1_std: 0.01700550885149602
+        bin_f1_mean: 0.8307439681803416
+        bin_f1_std: 0.0037086938370360953
+        rare_recall_mean: 0.3227083333333333
+        rare_recall_std: 0.03485540568628568
       - m: 4
-        rows_kept: 81072.0
-        macro_f1_mean: 0.3693811944018121
-        macro_f1_std: 0.013769947929791453
-        bin_f1_mean: 0.8550903397902253
-        bin_f1_std: 0.008150308420783396
-        rare_recall_mean: 0.254875
-        rare_recall_std: 0.010069032558625823
+        rows_kept: 81989.0
+        macro_f1_mean: 0.3797076353448187
+        macro_f1_std: 0.013414175265449578
+        bin_f1_mean: 0.8065900843731146
+        bin_f1_std: 0.005522408587323093
+        rare_recall_mean: 0.2738333333333333
+        rare_recall_std: 0.024034986073546122
       rule: mean of 3 seeds on validation
     capture:
-      chosen_m: 25
+      chosen_m: 50
       rows:
       - m: 25
         rows_kept: 3675.0
-        macro_f1_mean: 0.2173804538021404
-        macro_f1_std: 0.03586701041036763
-        bin_f1_mean: 0.7418230306525353
-        bin_f1_std: 0.03261741743826989
-        rare_recall_mean: 0.09041666666666666
-        rare_recall_std: 0.045500267093233154
+        macro_f1_mean: 0.13586717999614792
+        macro_f1_std: 0.03198043267978227
+        bin_f1_mean: 0.779371609460004
+        bin_f1_std: 0.07488338380886761
+        rare_recall_mean: 0.051708333333333335
+        rare_recall_std: 0.04511332181912074
       - m: 50
         rows_kept: 7350.0
-        macro_f1_mean: 0.1757880843199342
-        macro_f1_std: 0.013771804469777328
-        bin_f1_mean: 0.7443069136033272
-        bin_f1_std: 0.04315436423570524
-        rare_recall_mean: 0.06054166666666666
-        rare_recall_std: 0.02624451000791509
+        macro_f1_mean: 0.15334623514829915
+        macro_f1_std: 0.004510030913227899
+        bin_f1_mean: 0.7187529366333503
+        bin_f1_std: 0.00865494350719409
+        rare_recall_mean: 0.04779166666666667
+        rare_recall_std: 0.0025048563941981916
       - m: 100
         rows_kept: 14000.0
-        macro_f1_mean: 0.17535951392835858
-        macro_f1_std: 0.018374605616949282
-        bin_f1_mean: 0.8007734794264882
-        bin_f1_std: 0.04668563481257718
-        rare_recall_mean: 0.04933333333333334
-        rare_recall_std: 0.02326060092851334
+        macro_f1_mean: 0.12954346329690564
+        macro_f1_std: 0.019534513012805878
+        bin_f1_mean: 0.6730550240084723
+        bin_f1_std: 0.054069563091592714
+        rare_recall_mean: 0.026125
+        rare_recall_std: 0.016488948319000416
+      rule: mean of 3 seeds on validation
+  eps10:
+    stream:
+      chosen_m: 2
+      rows:
+      - m: 1
+        rows_kept: 77106.0
+        macro_f1_mean: 0.39947864480587175
+        macro_f1_std: 0.00904992530699254
+        bin_f1_mean: 0.8256403948977146
+        bin_f1_std: 0.007399346013065273
+        rare_recall_mean: 0.31266666666666665
+        rare_recall_std: 0.0028546988554934423
+      - m: 2
+        rows_kept: 80244.0
+        macro_f1_mean: 0.40787311703028434
+        macro_f1_std: 0.00364992909009253
+        bin_f1_mean: 0.8396189060838896
+        bin_f1_std: 0.006231819429630099
+        rare_recall_mean: 0.3232083333333333
+        rare_recall_std: 0.0052701333527298356
+      - m: 4
+        rows_kept: 81989.0
+        macro_f1_mean: 0.393971840685388
+        macro_f1_std: 0.012586232395057037
+        bin_f1_mean: 0.8184813153720635
+        bin_f1_std: 0.013095622535598475
+        rare_recall_mean: 0.29541666666666666
+        rare_recall_std: 0.034528420258615265
+      rule: mean of 3 seeds on validation
+    capture:
+      chosen_m: 100
+      rows:
+      - m: 25
+        rows_kept: 3675.0
+        macro_f1_mean: 0.14070441545876355
+        macro_f1_std: 0.021706565994198918
+        bin_f1_mean: 0.7206233544660718
+        bin_f1_std: 0.07753335754481927
+        rare_recall_mean: 0.03166666666666667
+        rare_recall_std: 0.022554178597816905
+      - m: 50
+        rows_kept: 7350.0
+        macro_f1_mean: 0.15010678542233657
+        macro_f1_std: 0.02023940653858446
+        bin_f1_mean: 0.7174679271226848
+        bin_f1_std: 0.08106724504578373
+        rare_recall_mean: 0.04516666666666667
+        rare_recall_std: 0.019302777577908884
+      - m: 100
+        rows_kept: 14000.0
+        macro_f1_mean: 0.1653877830469753
+        macro_f1_std: 0.023436915141590575
+        bin_f1_mean: 0.7053070671083731
+        bin_f1_std: 0.08509773314122758
+        rare_recall_mean: 0.046958333333333324
+        rare_recall_std: 0.029287784237725385
       rule: mean of 3 seeds on validation

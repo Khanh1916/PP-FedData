@@ -11,7 +11,11 @@ Four classifiers (all the same MLP, 128-64, trained with Adam, no hyper-paramete
 - `CentMLP`, `CentMLPcw`  the same network and the same number of passes over the pooled data: the control that separates "federated" from "this MLP".
 
 Written in plain PyTorch, in process: it measures utility, not Flower's overhead, and it is not protected by DP or SecAgg (the comparison is with the
-unprotected CVAE pipelines B3 and M2, on utility only). Federated SMOTE and a DP / SecAgg version of this classifier are not done.
+unprotected CVAE pipelines B3 and M2, on utility only). The DP / SecAgg version is in `fed_protected.py`.
+
+Round R adds `FedMLPsm`, **federated SMOTE**: before training, every client oversamples the classes it holds with SMOTE on its own rows only (the
+rule of B1b, its target `generate.target_per_class` scaled to the client's share of the train rows; a class with fewer than 2 rows at a client is
+left as it is), then FedAvg as `FedMLP`. Nothing leaves a client but the model updates; FedAvg weights the clients by their oversampled sizes.
 """
 from __future__ import annotations
 
@@ -33,6 +37,7 @@ from ppfeddata.utils import config_hash, git_commit, set_seed
 logger = logging.getLogger("ppfeddata.fed_classifier")
 
 NAMES = ("FedMLP", "FedMLPcw", "CentMLP", "CentMLPcw")
+EXTRA = ("FedMLPsm",)                    # round R: federated SMOTE (run with `fed-baseline --only FedMLPsm --merge`)
 REFERENCES = {"B0-mlp": "real data only (pooled)", "B1b-mlp": "SMOTE (pooled)", "B3-TSTR-mlp": "CVAE + FL, synthetic data only", "M2-TSTR-mlp": "CVAE + FL + SecAgg, synthetic data only"}
 OUT = Path("results") / "fed_classifier.json"
 LONGER = 100                             # the second budget (rounds), against the 30 of the federated CVAE
@@ -94,14 +99,32 @@ def fedavg_round(global_state: dict[str, torch.Tensor], clients: list[tuple[torc
     return acc
 
 
+def client_smote(X: np.ndarray, y: np.ndarray, schema: dict[str, Any], target: int, seed: int, k_neighbors: int = 5) -> tuple[np.ndarray, np.ndarray]:
+    """One client's own SMOTE: every class it holds with 2 rows or more and fewer than `target` is brought up to `target`, from its rows only."""
+    from imblearn.over_sampling import SMOTE
+
+    from ppfeddata.eval.utility import snap_encoded
+
+    counts = np.bincount(y)
+    strategy = {int(c): int(target) for c in range(len(counts)) if 2 <= counts[c] < target}
+    if not strategy:
+        return X, y
+    k = int(min(k_neighbors, min(counts[c] for c in strategy) - 1))
+    Xr, yr = SMOTE(sampling_strategy=strategy, k_neighbors=k, random_state=seed).fit_resample(X, y)
+    Xr = Xr.astype(X.dtype, copy=False)
+    Xr[len(X):] = snap_encoded(Xr[len(X):], schema)
+    return Xr, yr
+
+
 def file_label(label: str) -> str:
     """`FedMLP@100` (a longer budget) is stored as `FedMLP-r100`."""
     return label.replace("@", "-r")
 
 
-def run_one(label: str, cfg: dict[str, Any], data: dict[str, dict[str, np.ndarray]], classes: list[str], seed: int, parts: list[np.ndarray] | None) -> dict[str, Any]:
-    """Train `label` (a name of NAMES, optionally `name@rounds`) for one seed; the round with the best validation macro-F1 is kept.
-    Returns the test result and saves the predictions."""
+def run_one(label: str, cfg: dict[str, Any], data: dict[str, dict[str, np.ndarray]], classes: list[str], seed: int, parts: list[np.ndarray] | None,
+            schema: dict[str, Any] | None = None) -> dict[str, Any]:
+    """Train `label` (a name of NAMES or EXTRA, optionally `name@rounds`) for one seed; the round with the best validation macro-F1 is kept.
+    Returns the test result and saves the predictions. `schema` is needed by federated SMOTE (valid one-hot / binary values)."""
     name, _, extra = label.partition("@")
     k, fl = len(classes), cfg["fl"]
     rounds, local = int(extra or fl["rounds"]), int(fl["local_epochs"])
@@ -116,6 +139,16 @@ def run_one(label: str, cfg: dict[str, Any], data: dict[str, dict[str, np.ndarra
     best, best_f1, best_step, history = None, -1.0, 0, []
     federated = name.startswith("Fed")
     clients = [(Xtr[torch.as_tensor(p)], ytr[torch.as_tensor(p)]) for p in parts] if federated else None
+    if name.endswith("sm"):                                           # federated SMOTE: each client oversamples its own rows before training
+        n_tr = len(data["train"]["y"])
+        target = int(cfg["generate"]["target_per_class"])
+        k_nb = int((cfg["eval"].get("smote") or {}).get("k_neighbors", 5))
+        aug = []
+        for cid, p in enumerate(parts):
+            Xa, ya = client_smote(data["train"]["X"][p], data["train"]["y"][p].astype(np.int64), schema, max(2, round(target * len(p) / n_tr)),
+                                  seed * 1009 + cid, k_nb)
+            aug.append((torch.tensor(Xa), torch.tensor(ya, dtype=torch.long)))
+        clients = aug
     for rnd in range(1, rounds + 1):
         if federated:
             state = fedavg_round(state, clients, Xtr.shape[1], k, local, weight, seed, rnd)
@@ -175,9 +208,10 @@ def compare_with_references(cfg: dict[str, Any], y_test: np.ndarray, classes: li
 
 
 def run_all(cfg: dict[str, Any], seeds: list[int] | None = None, names: tuple[str, ...] = NAMES, n_boot: int | None = None, out: str | Path | None = None,
-            longer: int | None = LONGER) -> dict[str, Any]:
+            longer: int | None = LONGER, merge: bool = False) -> dict[str, Any]:
     """Every classifier at the federated budget of the config (`rounds` x `local_epochs`) and, if `longer`, again with `longer` rounds: a classifier may
-    need more passes than a generator, and the best round is picked on validation either way."""
+    need more passes than a generator, and the best round is picked on validation either way. `merge` (round R): add these classifiers to the
+    existing file and keep everything else in it (the other classifiers, their comparisons and the protected block)."""
     from ppfeddata.eval.baselines import load_data
 
     names = tuple(names) + tuple(f"{n}@{longer}" for n in names if longer and longer != int(cfg["fl"]["rounds"]))
@@ -194,9 +228,10 @@ def run_all(cfg: dict[str, Any], seeds: list[int] | None = None, names: tuple[st
     for seed in seeds:
         parts, _ = make_partition(cfg, data["train"]["y"], classes, seed=seed)       # the partition B3 used for this seed
         for n in names:
-            runs[n].append(run_one(n, cfg, data, classes, seed, parts))
+            runs[n].append(run_one(n, cfg, data, classes, seed, parts, schema))
     for n in names:
         result["classifiers"][n] = summarise(runs[n], classes, rare)
+    p = Path(out) if out else Path(cfg["compute"]["runs_csv"]).parent / "fed_classifier.json"
     # the references of the main experiment, from the summary
     try:
         import pandas as pd
@@ -206,7 +241,12 @@ def run_all(cfg: dict[str, Any], seeds: list[int] | None = None, names: tuple[st
     except FileNotFoundError:
         result["references"] = {}
     result["comparisons"] = compare_with_references(cfg, data["test"]["y"].astype(np.int64), classes, rare, seeds, int(n_boot or cfg["eval"]["bootstrap"]), names)
-    p = Path(out) if out else Path(cfg["compute"]["runs_csv"]).parent / "fed_classifier.json"
+    if merge and p.exists():
+        old = json.loads(p.read_text(encoding="utf-8"))
+        old.setdefault("classifiers", {}).update(result["classifiers"])
+        old.setdefault("comparisons", {}).update(result["comparisons"])
+        old["references"] = result["references"] or old.get("references", {})
+        result = old
     from ppfeddata.interpret import to_jsonable
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(to_jsonable(result), indent=1), encoding="utf-8")

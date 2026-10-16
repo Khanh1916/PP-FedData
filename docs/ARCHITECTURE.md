@@ -105,14 +105,15 @@ flowchart TB
 
 ## 4. Data
 
-- **Source:** the DoS-DDoS-MQTT-IoT dataset (59.6 million packet rows, about 13 GB of CSV exports), not in the repository. Its path is
+- **Source:** the DoS-DDoS-MQTT-IoT dataset (39.0 million packet rows in use, about 12 GB of CSV), not in the repository. Its path is
   set in `configs/local.yaml` or `PPFEDDATA_RAW_ROOT`.
 - **Provenance:** the attack rows are the authors' CSV from the Kaggle release, used as published; the release has the Normal traffic only
-  as PCAP, so `tools/extract_normal_pcap.py` exported every Normal packet with TShark into the same 33 columns. `check-extraction`
-  (`data/extraction_check.py`) checks the files against the release, one row per packet in every Normal capture, a byte-identical
-  re-extraction, and the procedure against the authors' CSV on the attack PCAP; it also reproduces the two settings of the authors'
-  export (a display filter on the packets sent to the broker, two-pass dissection) and measures what they change in the results.
-  Details and numbers: `results/reports/data_provenance.md`, README section "Where the data come from".
+  as PCAP, so `extract-normal` (`data/normal_extract.py`) exports it with the script `tools/extract_normal_pcap.py` and the two settings of
+  the authors' export (two-pass dissection, a display filter on the packets sent to the broker) into the same 33 columns.
+  `check-extraction` (`data/extraction_check.py`) checks the files against the release, the procedure against the authors' CSV on the
+  attack PCAP (with these settings: the same frames in 48 of 48 captures) and the Normal extraction against a full extraction of the same
+  PCAP. The first study used a one-pass extraction of every packet; round R re-ran the study on the new one. Details and numbers:
+  `results/reports/data_provenance.md`, README section "Where the data come from".
 - **Unit:** one row = one packet; 6 classes (NORMAL, BCF, DELAYED, SYN, INVALID, WILL); an 11-class mode separates DoS and DDoS.
 - **Split:** train / val / test by **capture group**, so test groups are never seen in training; quotas per class; the test split is used
   only for final numbers, every choice is made on validation.

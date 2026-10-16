@@ -12,6 +12,7 @@ together: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). The modules are li
 | `data/split_sample.py` | group-aware train / val / test split and streaming sampling to the class quotas (`sample`) |
 | `data/parse_multi.py` | parse multi-value cells such as "Publish Message,Publish Message" |
 | `data/preprocess.py` | fit-on-train encoding, `feature_schema.json`, processed arrays (`preprocess`) |
+| `data/normal_extract.py` | round R: the Normal PCAP extracted again with the authors' export settings (two-pass, display filter on the packets sent to the broker), same script, own folder (`extract-normal`) |
 | `data/extraction_check.py` | provenance of the raw data (`check-extraction`): the local files against the Kaggle release, the Normal PCAP-to-CSV extraction (`tools/extract_normal_pcap.py`) against the authors' attack CSV, completeness of the Normal CSV, the authors' export settings reproduced, their weight on the results |
 
 ## Checks (Phase 5) — `checks/`
@@ -74,13 +75,13 @@ together: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). The modules are li
 | `tune_dp.py` | DP search of the CVAE on a one-client proxy (`tune-dp`, `verify-dp`) |
 | `tune_dp_full.py` | DP search of the CVAE at full scale, one study per epsilon (`tune-dp-full`) |
 | `tune_fedsgd.py` | search and final runs of DP-FedSGD (`tune-fedsgd`) |
-| `tune_marginal.py` | settings of FedDP-Marginal chosen on validation, final runs, options and post-processing (`tune-marginal`) |
+| `tune_marginal.py` | settings of FedDP-Marginal chosen on validation (3 seeds), final runs, options and post-processing (`tune-marginal`); `framework_name`: the framework's configuration at each epsilon |
 | `privacy_units.py` | group-level DP and honest-client threshold (`privacy-units`) |
 | `mg_nodp.py` | FedDP-Marginal without DP, through SecAgg+ and in plain Flower rounds (`mg-nodp`, round Q1) |
 | `ids_followup.py` | IDS-side options and local augmentation (`ids-followup`) |
-| `robustness.py` | FedDP-Marginal under other federations and 11 classes (`robustness`) |
-| `sensitivity.py` | other test groups (A4) and a per-stream cap (A5) (`sensitivity`) |
-| `fed_classifier.py`, `fed_protected.py` | the IDS itself trained by FL, plain and protected (`fed-baseline`) |
+| `robustness.py` | FedDP-Marginal under other federations and 11 classes, with the CVAE in 11 classes (A3) (`robustness`) |
+| `sensitivity.py` | other rare-class quotas (A2), other test groups (A4) and a per-stream cap (A5), each world with the framework at epsilon 5 (`sensitivity`) |
+| `fed_classifier.py`, `fed_protected.py` | the IDS itself trained by FL, plain, with federated SMOTE (`FedMLPsm`) and protected (`fed-baseline`) |
 | `mia_model.py`, `mia_marginal.py` | membership attacks with access to the released CVAE / FedDP-Marginal model (`mia`, `mia-marginal`) |
 
 ## Analysis and reporting

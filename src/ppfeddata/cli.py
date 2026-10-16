@@ -130,7 +130,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_fc = sub.add_parser("fed-baseline", help="Train the IDS classifier itself by FedAvg on the same non-IID clients as B3 (and the pooled controls) -> results/fed_classifier.json; run `aggregate` after it")
     p_fc.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     p_fc.add_argument("--seeds", nargs="+", type=int, default=None, help="default: config seeds")
-    p_fc.add_argument("--only", nargs="+", default=None, help="subset of FedMLP FedMLPcw CentMLP CentMLPcw")
+    p_fc.add_argument("--only", nargs="+", default=None, help="subset of FedMLP FedMLPcw CentMLP CentMLPcw, or FedMLPsm (federated SMOTE, round R)")
+    p_fc.add_argument("--merge", action="store_true", help="add the classifiers to results/fed_classifier.json and keep the rest of it")
     p_fc.add_argument("--protected", action="store_true", help="instead: tune the class-weighted FedAvg MLP on validation and run it with SecAgg numerics, DP (eps 1, 5, 10) and both -> adds `tuning` and `protected` to results/fed_classifier.json (run after the plain baseline)")
     p_mi = sub.add_parser("mia", help="Membership inference with access to the released model (loss-based, calibrated by a reference model) with positive controls: B3 and M1 on random halves of the train pool -> results/mia_model.json")
     p_mi.add_argument("--label-mode", choices=["6class", "11class"], default=None)
@@ -175,17 +176,22 @@ def build_parser() -> argparse.ArgumentParser:
     p_rc.add_argument("--max-mia", type=float, default=None, help="calibrated model-access MIA AUC must stay below this (not attacked = excluded)")
     p_mm = sub.add_parser("mia-marginal", help="Optimisation O3(a): membership inference with access to the released FedDP-Marginal tables (log-likelihood, calibrated by a reference model), positive controls without noise -> results/mia_marginal.json")
     p_mm.add_argument("--seeds", nargs="+", type=int, default=None)
+    p_mm.add_argument("--eps", nargs="+", type=float, default=None, help="epsilons of the released configurations, default dp.epsilons (round R adds 0.5, 2, 20)")
     p_rb = sub.add_parser("robustness", help="Optimisation O4: FedDP-Marginal under other federations (Dirichlet alpha 0.1 / 10, 10 / 20 clients) and with 11 classes -> results/robustness.json, results/reports/robustness.md")
     p_rb.add_argument("--report-only", action="store_true", help="only rewrite the report from the ledger")
     p_pu = sub.add_parser("privacy-units", help="Follow-up round P1: group-level DP (TCP stream, capture) and honest-client threshold for FedDP-Marginal; m chosen on validation (3 seeds), then 3 seeds through Flower SecAgg+ -> configs/best_group_dp.yaml, results/runs.csv, results/reports/privacy_units.md")
     p_pu.add_argument("--stage", choices=["all", "search", "final", "report"], default="all")
     p_ce = sub.add_parser("check-extraction", help="Provenance of the raw data: the local files against the Kaggle release (network), the group's PCAP-to-CSV extraction (tools/extract_normal_pcap.py) against the authors' attack CSV, the Normal CSV (frames 1..N, rows recorded), the Normal PCAP (packets = rows, byte-identical re-extraction), the authors' export settings reproduced, the weight of the broker-sent Normal rows on the results; needs TShark -> results/data_provenance.json, results/reports/data_provenance.md")
     p_ce.add_argument("--extractor", default="tools/extract_normal_pcap.py")
-    p_ce.add_argument("--stages", nargs="+", choices=["kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact"],
+    p_ce.add_argument("--stages", nargs="+", choices=["kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact", "normal_authors"],
                       default=["kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact"])
     p_ce.add_argument("--only", nargs="+", default=None, help="attack captures (CSV names without .csv) for the method and recipe checks; default all")
     p_ce.add_argument("--reextract", nargs="+", default=["NormalData31.pcap", "NormalData50.pcap", "NormalData1.pcap"],
                       help="Normal PCAP files to extract again and compare byte by byte")
+    p_xn = sub.add_parser("extract-normal", help="Round R: extract the Normal PCAP again with the authors' export settings (two-pass, display filter ip.dst==<broker>) into NormalData/CSV_Authors_Settings, with the same script (tools/extract_normal_pcap.py); resumable; needs TShark")
+    p_xn.add_argument("--extractor", default="tools/extract_normal_pcap.py")
+    p_xn.add_argument("--broker", default=None, help="the broker's address; default the one found by check-extraction (results/data_provenance.json)")
+    p_xn.add_argument("--out-dir", default=None, help="folder under NormalData, default CSV_Authors_Settings")
     p_nd = sub.add_parser("mg-nodp", help="Round Q1: FedDP-Marginal without DP, through Flower SecAgg+ (MGs-nodp) and in plain Flower rounds (MGp-nodp); bins chosen on validation (3 seeds), 3 seeds each, membership attack -> configs/best_marginal_nodp.yaml, results/runs.csv, results/mia_marginal.json, results/reports/mg_nodp.md")
     p_nd.add_argument("--stage", choices=["all", "search", "final", "mia", "report"], default="all")
     p_if = sub.add_parser("ids-followup", help="Follow-up round P2: IDS-side options on synthetic data (all rows, class-probability weights chosen on validation) and local augmentation at each client -> results/ids_followup.json, results/reports/ids_followup.md")
@@ -193,8 +199,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_tr = sub.add_parser("taug-rare", help="Optimisation round: TAugR = real data + synthetic rows for the rare classes only, ratio chosen on validation (seed 0), from the saved synthetic sets of the scorecard generators -> results/runs.csv (`<prefix>-TAugR-<clf>`); run `aggregate` and `scorecard` after it")
     p_tr.add_argument("--prefixes", nargs="+", default=None, help="generator prefixes, default the valid rows of the scorecard")
     p_tr.add_argument("--seeds", nargs="+", type=int, default=None)
-    p_se = sub.add_parser("sensitivity", help="Extensions A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
-    p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default A4-s1 A4-s2 A5-cap20")
+    p_se = sub.add_parser("sensitivity", help="Extensions A2 (rare-class train quotas, round R), A4 (other split_seed) and A5 (max_rows_per_stream): re-run Phase 3-4, B0, B3, MGs-eps5 (and M1-eps5 for A5) in separate worlds, then write results/sensitivity.json and results/reports/sensitivity.md")
+    p_se.add_argument("--tags", nargs="+", default=None, help="worlds to run, default all: A4-s1 A4-s2 A5-cap20 A2-r10 A2-r200")
     p_se.add_argument("--report-only", action="store_true", help="do not run anything, only rewrite the report from the worlds that exist")
     p_se.add_argument("--seeds", nargs="+", type=int, default=None)
     p_pk = sub.add_parser("package", help="Reproducibility bundle: results/repro/ (pip freeze, configs, environment, checksums), the feature schema next to the split manifests, requirements-lock.txt")
@@ -443,7 +449,7 @@ def main(argv: list[str] | None = None) -> None:
                 logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f%s", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"],
                             f", epsilon max {v['dp']['eps_max_over_seeds']:.3f}" if "dp" in v else "")
             return
-        r = run_all(c, seeds=a.seeds, names=tuple(a.only) if a.only else NAMES)
+        r = run_all(c, seeds=a.seeds, names=tuple(a.only) if a.only else NAMES, merge=a.merge)
         for n, v in r["classifiers"].items():
             logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"])
 
@@ -528,7 +534,7 @@ def main(argv: list[str] | None = None) -> None:
 
     def cmd_mia_marginal(a):
         from ppfeddata.mia_marginal import run_all
-        r = run_all(load_config(a.config), seeds=a.seeds)
+        r = run_all(load_config(a.config), seeds=a.seeds, eps_list=a.eps)
         for n, v in {**r["controls"], **r["configs"]}.items():
             logger.info("%s: calibrated AUC %.3f, plain %.3f", n, v["calibrated"]["auc_mean"]["mean"], v["plain"]["auc_mean"]["mean"])
 
@@ -552,6 +558,21 @@ def main(argv: list[str] | None = None) -> None:
         from ppfeddata.data.extraction_check import run
         out = run(load_config(a.config), a.extractor, tuple(a.stages), a.only, a.reextract)
         logger.info("check-extraction: %d method rows, %d Normal captures", len(out.get("method") or []), len(out.get("normal_csv") or []))
+
+    def cmd_extract_normal(a):
+        import json
+        from pathlib import Path
+
+        from ppfeddata.data.extraction_check import broker_from
+        from ppfeddata.data.normal_extract import OUT_DIR, extract_all
+        c = load_config(a.config)
+        pv = Path(c["compute"]["runs_csv"]).parent / "data_provenance.json"
+        broker = a.broker or (broker_from(json.loads(pv.read_text(encoding="utf-8"))) if pv.exists() else None)
+        if not broker:
+            raise SystemExit("the broker's address is unknown: pass --broker or run check-extraction first")
+        res = extract_all(Path(c["paths"]["raw_root"]), a.extractor, broker, a.out_dir or OUT_DIR)
+        logger.info("extract-normal: %d captures, %s rows, statuses %s", len(res), sum(int(r.get("Rows") or 0) for r in res),
+                    sorted({str(r.get("Status")) for r in res}))
 
     def cmd_mg_nodp(a):
         from ppfeddata import mg_nodp as nd
@@ -641,6 +662,7 @@ def main(argv: list[str] | None = None) -> None:
         "privacy-units": cmd_privacy_units,
         "mg-nodp": cmd_mg_nodp,
         "check-extraction": cmd_check_extraction,
+        "extract-normal": cmd_extract_normal,
         "robustness": cmd_robustness,
         "mia-marginal": cmd_mia_marginal,
         "accept": cmd_accept,

@@ -2,61 +2,64 @@ tuning:
   label_mode: 6class
   tuned_at_epsilon: 5.0
   n_trials: 24
-  baseline_proxy_val_tstr_macro_f1: 0.2075092322283576
+  baseline_proxy_val_tstr_macro_f1: 0.19746804251332908
   fitness: val macro-F1 of RF(100) trained on plain-decoder samples; proxy = one client,
     20% stratified subsample, FL schedule
   limitation: tuned on real non-private validation data, one seed per trial, single-client
     proxy, one epsilon
 candidates:
 - trial: 18
-  proxy_val_tstr_macro_f1: 0.2652041236009956
-  proxy_val_elbo: 4.865865740458171
-  max_grad_norm: 8.045779557003268
+  proxy_val_tstr_macro_f1: 0.232096792545004
+  proxy_val_elbo: 6.543736975351969
+  max_grad_norm: 0.13269513216367995
   cvae:
     latent_dim: 16
     hidden:
-    - 128
     - 64
-    beta: 0.28480783353640604
-    lr: 0.004507272627314837
-    batch_size: 512
-- trial: 21
-  proxy_val_tstr_macro_f1: 0.26346090830801977
-  proxy_val_elbo: 5.293339912414551
-  max_grad_norm: 5.8730989295790765
+    - 32
+    beta: 0.5686905657307847
+    lr: 0.0015952187363071618
+    batch_size: 1024
+- trial: 13
+  proxy_val_tstr_macro_f1: 0.2149019884112192
+  proxy_val_elbo: 5.432242806752523
+  max_grad_norm: 1.8369647195716972
+  cvae:
+    latent_dim: 32
+    hidden:
+    - 64
+    - 32
+    beta: 0.3375274892486161
+    lr: 0.004146914898069792
+    batch_size: 1024
+- trial: 10
+  proxy_val_tstr_macro_f1: 0.21471553324939988
+  proxy_val_elbo: 6.524211596171061
+  max_grad_norm: 0.8202307802646113
   cvae:
     latent_dim: 16
     hidden:
-    - 128
     - 64
-    beta: 0.3306813438422919
-    lr: 0.0038752725892509626
-    batch_size: 512
-- trial: 17
-  proxy_val_tstr_macro_f1: 0.2516730795527215
-  proxy_val_elbo: 5.468308577219645
-  max_grad_norm: 14.486518044470683
-  cvae:
-    latent_dim: 16
-    hidden:
-    - 128
-    - 64
-    beta: 0.4024621326672572
-    lr: 0.0025536929479792725
-    batch_size: 512
+    - 32
+    beta: 0.3745854694815463
+    lr: 0.0012130725710743806
+    batch_size: 1024
 verification:
   seed: 0
   eps: 5.0
   rule: max val TSTR-rf macro-F1, ties within 0.01 -> lower val ELBO
   runs:
-  - trial: 18
-    val_f1: 0.2341190648409799
-    val_elbo: 4.9544174677530926
   - &id001
-    trial: 21
-    val_f1: 0.2423223644707599
-    val_elbo: 4.90045472462972
-  - trial: 17
-    val_f1: 0.223195211201655
-    val_elbo: 5.367061884562174
+    trial: 18
+    val_f1: 0.1960307980343947
+    val_elbo: 5.952658401489257
+  - trial: 13
+    val_f1: 0.1939734669507072
+    val_elbo: 5.9915283533732095
+  - trial: 10
+    val_f1: 0.185343898036292
+    val_elbo: 5.528067620595296
+  - trial: 23
+    val_f1: 0.1922753343745743
+    val_elbo: 6.637842492421468
 selected: *id001

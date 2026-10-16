@@ -38,55 +38,55 @@ Per client, target eps 5, seed 0 (clients differ in size, so sigma, q and eps_i 
 
 | config | runs | macro-F1 (test) | balanced acc | PR-AUC macro |
 |---|---|---|---|---|
-| B0-rf | 3 | 0.4472 ± 0.0010 | 0.4830 ± 0.0007 | 0.5764 ± 0.0005 |
-| B0-mlp | 3 | 0.3282 ± 0.0114 | 0.4069 ± 0.0044 | 0.5770 ± 0.0066 |
-| B1b-rf | 3 | 0.5043 ± 0.0009 | 0.5215 ± 0.0007 | 0.5998 ± 0.0026 |
-| B1b-mlp | 3 | 0.4687 ± 0.0085 | 0.4860 ± 0.0066 | 0.6110 ± 0.0021 |
-| B3-plain-TSTR-rf | 3 | 0.3859 ± 0.0140 | 0.4024 ± 0.0151 | 0.4090 ± 0.0359 |
-| B3-plain-TSTR-mlp | 3 | 0.3883 ± 0.0125 | 0.4055 ± 0.0113 | 0.4470 ± 0.0371 |
-| B3-plain-TAug-rf | 3 | 0.4474 ± 0.0006 | 0.4826 ± 0.0004 | 0.5681 ± 0.0022 |
-| B3-plain-TAug-mlp | 3 | 0.3485 ± 0.0101 | 0.4103 ± 0.0042 | 0.5545 ± 0.0026 |
-| M1-eps1-plain-TSTR-rf | 3 | 0.2009 ± 0.0418 | 0.2823 ± 0.0184 | 0.2425 ± 0.0058 |
-| M1-eps1-plain-TSTR-mlp | 3 | 0.2006 ± 0.0441 | 0.2715 ± 0.0170 | 0.2459 ± 0.0233 |
-| M1-eps1-plain-TAug-rf | 3 | 0.4481 ± 0.0012 | 0.4838 ± 0.0008 | 0.5723 ± 0.0001 |
-| M1-eps1-plain-TAug-mlp | 3 | 0.3432 ± 0.0023 | 0.4103 ± 0.0020 | 0.5500 ± 0.0041 |
-| M1-eps5-plain-TSTR-rf | 3 | 0.1890 ± 0.0118 | 0.2783 ± 0.0183 | 0.2627 ± 0.0103 |
-| M1-eps5-plain-TSTR-mlp | 3 | 0.1851 ± 0.0182 | 0.2803 ± 0.0108 | 0.2783 ± 0.0101 |
-| M1-eps5-plain-TAug-rf | 3 | 0.4474 ± 0.0002 | 0.4832 ± 0.0002 | 0.5720 ± 0.0009 |
-| M1-eps5-plain-TAug-mlp | 3 | 0.3397 ± 0.0097 | 0.4109 ± 0.0055 | 0.5493 ± 0.0024 |
-| M1-eps10-plain-TSTR-rf | 3 | 0.1978 ± 0.0465 | 0.2789 ± 0.0103 | 0.2562 ± 0.0071 |
-| M1-eps10-plain-TSTR-mlp | 3 | 0.1967 ± 0.0511 | 0.2787 ± 0.0120 | 0.2681 ± 0.0140 |
-| M1-eps10-plain-TAug-rf | 3 | 0.4472 ± 0.0012 | 0.4830 ± 0.0009 | 0.5715 ± 0.0011 |
-| M1-eps10-plain-TAug-mlp | 3 | 0.3416 ± 0.0088 | 0.4126 ± 0.0041 | 0.5545 ± 0.0076 |
+| B0-rf | 3 | 0.4477 ± 0.0005 | 0.4807 ± 0.0003 | 0.5720 ± 0.0001 |
+| B0-mlp | 3 | 0.3427 ± 0.0056 | 0.4179 ± 0.0018 | 0.5778 ± 0.0046 |
+| B1b-rf | 3 | 0.5051 ± 0.0015 | 0.5160 ± 0.0014 | 0.6008 ± 0.0016 |
+| B1b-mlp | 3 | 0.4765 ± 0.0139 | 0.4848 ± 0.0120 | 0.6112 ± 0.0078 |
+| B3-plain-TSTR-rf | 3 | 0.3889 ± 0.0214 | 0.4034 ± 0.0185 | 0.4281 ± 0.0286 |
+| B3-plain-TSTR-mlp | 3 | 0.4073 ± 0.0214 | 0.4200 ± 0.0184 | 0.4675 ± 0.0132 |
+| B3-plain-TAug-rf | 3 | 0.4496 ± 0.0008 | 0.4814 ± 0.0006 | 0.5656 ± 0.0037 |
+| B3-plain-TAug-mlp | 3 | 0.3783 ± 0.0090 | 0.4322 ± 0.0028 | 0.5533 ± 0.0068 |
+| M1-eps1-plain-TSTR-rf | 3 | 0.1663 ± 0.0281 | 0.2586 ± 0.0023 | 0.2213 ± 0.0091 |
+| M1-eps1-plain-TSTR-mlp | 3 | 0.1711 ± 0.0050 | 0.2665 ± 0.0161 | 0.2184 ± 0.0102 |
+| M1-eps1-plain-TAug-rf | 3 | 0.4471 ± 0.0005 | 0.4806 ± 0.0005 | 0.5687 ± 0.0007 |
+| M1-eps1-plain-TAug-mlp | 3 | 0.3502 ± 0.0058 | 0.4160 ± 0.0004 | 0.5407 ± 0.0046 |
+| M1-eps5-plain-TSTR-rf | 3 | 0.1886 ± 0.0070 | 0.2824 ± 0.0025 | 0.2496 ± 0.0092 |
+| M1-eps5-plain-TSTR-mlp | 3 | 0.1918 ± 0.0110 | 0.2824 ± 0.0151 | 0.2321 ± 0.0085 |
+| M1-eps5-plain-TAug-rf | 3 | 0.4479 ± 0.0007 | 0.4809 ± 0.0004 | 0.5677 ± 0.0005 |
+| M1-eps5-plain-TAug-mlp | 3 | 0.3489 ± 0.0107 | 0.4148 ± 0.0043 | 0.5507 ± 0.0106 |
+| M1-eps10-plain-TSTR-rf | 3 | 0.1940 ± 0.0108 | 0.2815 ± 0.0207 | 0.2501 ± 0.0097 |
+| M1-eps10-plain-TSTR-mlp | 3 | 0.2034 ± 0.0024 | 0.2871 ± 0.0102 | 0.2500 ± 0.0072 |
+| M1-eps10-plain-TAug-rf | 3 | 0.4476 ± 0.0004 | 0.4810 ± 0.0004 | 0.5680 ± 0.0014 |
+| M1-eps10-plain-TAug-mlp | 3 | 0.3588 ± 0.0093 | 0.4222 ± 0.0040 | 0.5431 ± 0.0065 |
 
 ### Recall per class (test)
 
 | config | NORMAL | BCF | DELAYED | SYN | INVALID | WILL |
 |---|---|---|---|---|---|---|
-| B0-rf | 0.975 | 0.820 | 0.289 | 0.352 | 0.186 | 0.278 |
-| B0-mlp | 0.977 | 0.828 | 0.070 | 0.319 | 0.038 | 0.209 |
-| B1b-rf | 0.950 | 0.669 | 0.418 | 0.343 | 0.342 | 0.408 |
-| B1b-mlp | 0.964 | 0.554 | 0.342 | 0.280 | 0.350 | 0.426 |
-| B3-plain-TSTR-rf | 0.799 | 0.375 | 0.338 | 0.334 | 0.299 | 0.271 |
-| B3-plain-TSTR-mlp | 0.801 | 0.328 | 0.442 | 0.259 | 0.329 | 0.274 |
-| B3-plain-TAug-rf | 0.974 | 0.814 | 0.291 | 0.344 | 0.193 | 0.280 |
-| B3-plain-TAug-mlp | 0.979 | 0.782 | 0.080 | 0.275 | 0.134 | 0.210 |
-| M1-eps1-plain-TSTR-rf | 0.779 | 0.602 | 0.024 | 0.058 | 0.147 | 0.085 |
-| M1-eps1-plain-TSTR-mlp | 0.792 | 0.529 | 0.032 | 0.074 | 0.064 | 0.138 |
-| M1-eps1-plain-TAug-rf | 0.975 | 0.820 | 0.291 | 0.355 | 0.186 | 0.276 |
-| M1-eps1-plain-TAug-mlp | 0.977 | 0.805 | 0.061 | 0.289 | 0.118 | 0.211 |
-| M1-eps5-plain-TSTR-rf | 0.841 | 0.612 | 0.070 | 0.053 | 0.010 | 0.084 |
-| M1-eps5-plain-TSTR-mlp | 0.847 | 0.606 | 0.014 | 0.041 | 0.047 | 0.126 |
-| M1-eps5-plain-TAug-rf | 0.975 | 0.819 | 0.291 | 0.353 | 0.184 | 0.277 |
-| M1-eps5-plain-TAug-mlp | 0.976 | 0.820 | 0.070 | 0.307 | 0.083 | 0.209 |
-| M1-eps10-plain-TSTR-rf | 0.766 | 0.646 | 0.075 | 0.049 | 0.042 | 0.096 |
-| M1-eps10-plain-TSTR-mlp | 0.743 | 0.636 | 0.065 | 0.036 | 0.047 | 0.145 |
-| M1-eps10-plain-TAug-rf | 0.975 | 0.819 | 0.290 | 0.352 | 0.184 | 0.278 |
-| M1-eps10-plain-TAug-mlp | 0.977 | 0.812 | 0.078 | 0.320 | 0.078 | 0.210 |
+| B0-rf | 0.964 | 0.780 | 0.231 | 0.472 | 0.161 | 0.276 |
+| B0-mlp | 0.967 | 0.780 | 0.055 | 0.458 | 0.037 | 0.211 |
+| B1b-rf | 0.930 | 0.643 | 0.342 | 0.470 | 0.309 | 0.401 |
+| B1b-mlp | 0.959 | 0.488 | 0.291 | 0.393 | 0.340 | 0.437 |
+| B3-plain-TSTR-rf | 0.743 | 0.403 | 0.401 | 0.343 | 0.235 | 0.295 |
+| B3-plain-TSTR-mlp | 0.746 | 0.497 | 0.376 | 0.312 | 0.297 | 0.293 |
+| B3-plain-TAug-rf | 0.964 | 0.776 | 0.234 | 0.465 | 0.171 | 0.279 |
+| B3-plain-TAug-mlp | 0.968 | 0.754 | 0.079 | 0.425 | 0.150 | 0.218 |
+| M1-eps1-plain-TSTR-rf | 0.769 | 0.616 | 0.064 | 0.078 | 0.010 | 0.014 |
+| M1-eps1-plain-TSTR-mlp | 0.751 | 0.686 | 0.021 | 0.095 | 0.033 | 0.012 |
+| M1-eps1-plain-TAug-rf | 0.964 | 0.781 | 0.232 | 0.472 | 0.158 | 0.276 |
+| M1-eps1-plain-TAug-mlp | 0.969 | 0.767 | 0.044 | 0.404 | 0.102 | 0.211 |
+| M1-eps5-plain-TSTR-rf | 0.832 | 0.667 | 0.109 | 0.047 | 0.006 | 0.034 |
+| M1-eps5-plain-TSTR-mlp | 0.760 | 0.737 | 0.099 | 0.075 | 0.019 | 0.005 |
+| M1-eps5-plain-TAug-rf | 0.964 | 0.780 | 0.232 | 0.472 | 0.161 | 0.276 |
+| M1-eps5-plain-TAug-mlp | 0.971 | 0.757 | 0.055 | 0.410 | 0.087 | 0.210 |
+| M1-eps10-plain-TSTR-rf | 0.789 | 0.658 | 0.075 | 0.072 | 0.031 | 0.064 |
+| M1-eps10-plain-TSTR-mlp | 0.765 | 0.699 | 0.073 | 0.091 | 0.012 | 0.081 |
+| M1-eps10-plain-TAug-rf | 0.964 | 0.780 | 0.232 | 0.475 | 0.158 | 0.277 |
+| M1-eps10-plain-TAug-mlp | 0.970 | 0.748 | 0.067 | 0.446 | 0.087 | 0.214 |
 
 ### Trend with epsilon (TSTR macro-F1, plain decoder; eps 1, 5, 10, then no DP)
 
-rf: 0.2009 -> 0.1890 -> 0.1978 -> 0.3859; mlp: 0.2006 -> 0.1851 -> 0.1967 -> 0.3883. **Not monotone: all three DP levels sit at the same low level, about half of the non-DP value, and their differences are inside the seed std (up to 0.05). The expected trend is not visible in TSTR macro-F1 because it is already at a floor at eps = 10; the validation loss below does show it.**
+rf: 0.1663 -> 0.1886 -> 0.1940 -> 0.3889; mlp: 0.1711 -> 0.1918 -> 0.2034 -> 0.4073. Non-decreasing as the budget grows (within 0.005), as expected.
 
 ## Validation loss (ELBO at the final beta) of the final global model
 
@@ -94,12 +94,12 @@ Less noisy than macro-F1: it uses all 12,000 validation rows and no classifier. 
 
 | eps | val loss (per seed) | mean | numeric | binary | categorical | KL |
 |---|---|---|---|---|---|---|
-| 1 | 6.12, 13.38, 7.99 | 9.16 | 3.15 | 1.97 | 1.91 | 5.76 |
-| 5 | 5.16, 8.79, 5.98 | 6.64 | 2.00 | 1.77 | 1.31 | 4.21 |
-| 10 | 4.75, 8.38, 5.95 | 6.36 | 2.09 | 1.71 | 1.11 | 3.90 |
-| no DP (B3) | 1.76, 3.30, 1.88 | 2.31 | 0.40 | 0.41 | 0.10 | 3.80 |
+| 1 | 5.31, 10.65, 5.95 | 7.31 | 2.48 | 1.88 | 1.46 | 6.20 |
+| 5 | 4.29, 7.71, 5.43 | 5.81 | 1.99 | 1.65 | 1.14 | 4.33 |
+| 10 | 4.18, 8.55, 5.17 | 5.97 | 1.91 | 1.95 | 1.17 | 3.92 |
+| no DP (B3) | 1.23, 2.48, 1.27 | 1.66 | 0.29 | 0.31 | 0.08 | 4.09 |
 
-The loss grows as the budget shrinks and every DP level is far above the non-DP model: the DP-trained models are much worse generators than B3, and the drop from eps = 10 to eps = 1 is visible here even though TSTR macro-F1 (above) is already at its floor at eps = 10.
+The loss does not grow monotonically as the budget shrinks: the DP-trained models are much worse generators than B3, and the drop from eps = 10 to eps = 1 is visible here even though TSTR macro-F1 (above) is already at its floor at eps = 10.
 
 ## Paired difference vs B3-plain (test macro-F1; stratified bootstrap)
 
@@ -107,42 +107,42 @@ Criterion: paired CI excludes 0 and |diff| > std of macro-F1 over seeds.
 
 | comparison | seed | diff | 95% CI | excludes 0 | \|diff\| > seed std |
 |---|---|---|---|---|---|
-| M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.1586 | [-0.1652, -0.1517] | True | True |
-| M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.2330 | [-0.2386, -0.2273] | True | True |
-| M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 2 | -0.1633 | [-0.1697, -0.1571] | True | True |
-| M1-eps1-plain-TSTR-mlp - B3-plain-TSTR-mlp | 0 | -0.1392 | [-0.1456, -0.1327] | True | True |
-| M1-eps1-plain-TSTR-mlp - B3-plain-TSTR-mlp | 1 | -0.2061 | [-0.2127, -0.1995] | True | True |
-| M1-eps1-plain-TSTR-mlp - B3-plain-TSTR-mlp | 2 | -0.2180 | [-0.2235, -0.2130] | True | True |
-| M1-eps1-plain-TAug-rf - B3-plain-TAug-rf | 0 | -0.0006 | [-0.0024, +0.0013] | False | False |
-| M1-eps1-plain-TAug-rf - B3-plain-TAug-rf | 1 | +0.0014 | [-0.0004, +0.0033] | False | True |
-| M1-eps1-plain-TAug-rf - B3-plain-TAug-rf | 2 | +0.0013 | [-0.0004, +0.0032] | False | True |
-| M1-eps1-plain-TAug-mlp - B3-plain-TAug-mlp | 0 | -0.0064 | [-0.0098, -0.0027] | True | True |
-| M1-eps1-plain-TAug-mlp - B3-plain-TAug-mlp | 1 | -0.0180 | [-0.0219, -0.0142] | True | True |
-| M1-eps1-plain-TAug-mlp - B3-plain-TAug-mlp | 2 | +0.0086 | [+0.0053, +0.0123] | True | True |
-| M1-eps5-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.2003 | [-0.2063, -0.1934] | True | True |
-| M1-eps5-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.2014 | [-0.2073, -0.1951] | True | True |
-| M1-eps5-plain-TSTR-rf - B3-plain-TSTR-rf | 2 | -0.1893 | [-0.1948, -0.1839] | True | True |
-| M1-eps5-plain-TSTR-mlp - B3-plain-TSTR-mlp | 0 | -0.1917 | [-0.1981, -0.1853] | True | True |
-| M1-eps5-plain-TSTR-mlp - B3-plain-TSTR-mlp | 1 | -0.2039 | [-0.2099, -0.1977] | True | True |
-| M1-eps5-plain-TSTR-mlp - B3-plain-TSTR-mlp | 2 | -0.2140 | [-0.2193, -0.2084] | True | True |
-| M1-eps5-plain-TAug-rf - B3-plain-TAug-rf | 0 | +0.0002 | [-0.0016, +0.0019] | False | False |
-| M1-eps5-plain-TAug-rf - B3-plain-TAug-rf | 1 | +0.0010 | [-0.0008, +0.0028] | False | True |
-| M1-eps5-plain-TAug-rf - B3-plain-TAug-rf | 2 | -0.0010 | [-0.0027, +0.0008] | False | True |
-| M1-eps5-plain-TAug-mlp - B3-plain-TAug-mlp | 0 | -0.0185 | [-0.0212, -0.0158] | True | True |
-| M1-eps5-plain-TAug-mlp - B3-plain-TAug-mlp | 1 | -0.0226 | [-0.0262, -0.0188] | True | True |
-| M1-eps5-plain-TAug-mlp - B3-plain-TAug-mlp | 2 | +0.0148 | [+0.0114, +0.0181] | True | True |
-| M1-eps10-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.1421 | [-0.1482, -0.1359] | True | True |
-| M1-eps10-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.2187 | [-0.2243, -0.2126] | True | True |
-| M1-eps10-plain-TSTR-rf - B3-plain-TSTR-rf | 2 | -0.2036 | [-0.2093, -0.1983] | True | True |
-| M1-eps10-plain-TSTR-mlp - B3-plain-TSTR-mlp | 0 | -0.1333 | [-0.1400, -0.1266] | True | True |
-| M1-eps10-plain-TSTR-mlp - B3-plain-TSTR-mlp | 1 | -0.2162 | [-0.2218, -0.2103] | True | True |
-| M1-eps10-plain-TSTR-mlp - B3-plain-TSTR-mlp | 2 | -0.2255 | [-0.2312, -0.2201] | True | True |
-| M1-eps10-plain-TAug-rf - B3-plain-TAug-rf | 0 | -0.0017 | [-0.0035, +0.0002] | False | True |
-| M1-eps10-plain-TAug-rf - B3-plain-TAug-rf | 1 | +0.0011 | [-0.0005, +0.0028] | False | False |
-| M1-eps10-plain-TAug-rf - B3-plain-TAug-rf | 2 | -0.0000 | [-0.0019, +0.0017] | False | False |
-| M1-eps10-plain-TAug-mlp - B3-plain-TAug-mlp | 0 | -0.0126 | [-0.0152, -0.0099] | True | True |
-| M1-eps10-plain-TAug-mlp - B3-plain-TAug-mlp | 1 | -0.0076 | [-0.0116, -0.0032] | True | False |
-| M1-eps10-plain-TAug-mlp - B3-plain-TAug-mlp | 2 | -0.0003 | [-0.0041, +0.0035] | False | False |
+| M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.2085 | [-0.2145, -0.2028] | True | True |
+| M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.2415 | [-0.2469, -0.2358] | True | True |
+| M1-eps1-plain-TSTR-rf - B3-plain-TSTR-rf | 2 | -0.2179 | [-0.2233, -0.2121] | True | True |
+| M1-eps1-plain-TSTR-mlp - B3-plain-TSTR-mlp | 0 | -0.2663 | [-0.2724, -0.2603] | True | True |
+| M1-eps1-plain-TSTR-mlp - B3-plain-TSTR-mlp | 1 | -0.2232 | [-0.2287, -0.2180] | True | True |
+| M1-eps1-plain-TSTR-mlp - B3-plain-TSTR-mlp | 2 | -0.2189 | [-0.2248, -0.2128] | True | True |
+| M1-eps1-plain-TAug-rf - B3-plain-TAug-rf | 0 | -0.0010 | [-0.0028, +0.0006] | False | True |
+| M1-eps1-plain-TAug-rf - B3-plain-TAug-rf | 1 | -0.0041 | [-0.0058, -0.0023] | True | True |
+| M1-eps1-plain-TAug-rf - B3-plain-TAug-rf | 2 | -0.0023 | [-0.0043, -0.0004] | True | True |
+| M1-eps1-plain-TAug-mlp - B3-plain-TAug-mlp | 0 | -0.0258 | [-0.0300, -0.0214] | True | True |
+| M1-eps1-plain-TAug-mlp - B3-plain-TAug-mlp | 1 | -0.0234 | [-0.0271, -0.0195] | True | True |
+| M1-eps1-plain-TAug-mlp - B3-plain-TAug-mlp | 2 | -0.0354 | [-0.0395, -0.0310] | True | True |
+| M1-eps5-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.2169 | [-0.2233, -0.2112] | True | True |
+| M1-eps5-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.2021 | [-0.2081, -0.1956] | True | True |
+| M1-eps5-plain-TSTR-rf - B3-plain-TSTR-rf | 2 | -0.1817 | [-0.1877, -0.1755] | True | True |
+| M1-eps5-plain-TSTR-mlp - B3-plain-TSTR-mlp | 0 | -0.2423 | [-0.2483, -0.2362] | True | True |
+| M1-eps5-plain-TSTR-mlp - B3-plain-TSTR-mlp | 1 | -0.2113 | [-0.2164, -0.2059] | True | True |
+| M1-eps5-plain-TSTR-mlp - B3-plain-TSTR-mlp | 2 | -0.1928 | [-0.1990, -0.1863] | True | True |
+| M1-eps5-plain-TAug-rf - B3-plain-TAug-rf | 0 | -0.0016 | [-0.0032, +0.0002] | False | True |
+| M1-eps5-plain-TAug-rf - B3-plain-TAug-rf | 1 | -0.0027 | [-0.0045, -0.0009] | True | True |
+| M1-eps5-plain-TAug-rf - B3-plain-TAug-rf | 2 | -0.0007 | [-0.0028, +0.0011] | False | True |
+| M1-eps5-plain-TAug-mlp - B3-plain-TAug-mlp | 0 | -0.0483 | [-0.0521, -0.0448] | True | True |
+| M1-eps5-plain-TAug-mlp - B3-plain-TAug-mlp | 1 | -0.0116 | [-0.0158, -0.0076] | True | True |
+| M1-eps5-plain-TAug-mlp - B3-plain-TAug-mlp | 2 | -0.0284 | [-0.0319, -0.0247] | True | True |
+| M1-eps10-plain-TSTR-rf - B3-plain-TSTR-rf | 0 | -0.2329 | [-0.2390, -0.2276] | True | True |
+| M1-eps10-plain-TSTR-rf - B3-plain-TSTR-rf | 1 | -0.1821 | [-0.1877, -0.1763] | True | True |
+| M1-eps10-plain-TSTR-rf - B3-plain-TSTR-rf | 2 | -0.1697 | [-0.1764, -0.1629] | True | True |
+| M1-eps10-plain-TSTR-mlp - B3-plain-TSTR-mlp | 0 | -0.2347 | [-0.2409, -0.2292] | True | True |
+| M1-eps10-plain-TSTR-mlp - B3-plain-TSTR-mlp | 1 | -0.1873 | [-0.1929, -0.1814] | True | True |
+| M1-eps10-plain-TSTR-mlp - B3-plain-TSTR-mlp | 2 | -0.1896 | [-0.1968, -0.1821] | True | True |
+| M1-eps10-plain-TAug-rf - B3-plain-TAug-rf | 0 | -0.0016 | [-0.0033, -0.0000] | True | True |
+| M1-eps10-plain-TAug-rf - B3-plain-TAug-rf | 1 | -0.0026 | [-0.0044, -0.0009] | True | True |
+| M1-eps10-plain-TAug-rf - B3-plain-TAug-rf | 2 | -0.0016 | [-0.0035, +0.0004] | False | True |
+| M1-eps10-plain-TAug-mlp - B3-plain-TAug-mlp | 0 | -0.0180 | [-0.0214, -0.0145] | True | True |
+| M1-eps10-plain-TAug-mlp - B3-plain-TAug-mlp | 1 | +0.0004 | [-0.0031, +0.0040] | False | False |
+| M1-eps10-plain-TAug-mlp - B3-plain-TAug-mlp | 2 | -0.0411 | [-0.0451, -0.0368] | True | True |
 
 ## Fidelity and empirical privacy of the synthetic set (plain decoder, mean over classes)
 
@@ -150,10 +150,10 @@ The MIA only detects near-copies of training rows (positive control in b2_cvae.m
 
 | eps | C2ST AUC | Wasserstein | JS | dup rate | DCR ratio | MIA AUC |
 |---|---|---|---|---|---|---|
-| 1 | 1.0000 ± 0.0000 | 0.2606 ± 0.0161 | 0.0162 ± 0.0019 | 0.0000 ± 0.0000 | 0.9551 ± 0.0048 | 0.4900 ± 0.0020 |
-| 5 | 1.0000 ± 0.0000 | 0.2189 ± 0.0045 | 0.0119 ± 0.0005 | 0.0000 ± 0.0000 | 0.9599 ± 0.0111 | 0.4905 ± 0.0051 |
-| 10 | 1.0000 ± 0.0000 | 0.2070 ± 0.0080 | 0.0107 ± 0.0005 | 0.0000 ± 0.0000 | 0.9635 ± 0.0286 | 0.4901 ± 0.0034 |
-| no DP (B3) | 0.9995 ± 0.0001 | 0.1189 ± 0.0137 | 0.0035 ± 0.0017 | 0.0005 ± 0.0002 | 0.9440 ± 0.0137 | 0.4901 ± 0.0049 |
+| 1 | 1.0000 ± 0.0000 | 0.2414 ± 0.0042 | 0.0175 ± 0.0011 | 0.0000 ± 0.0000 | 0.9428 ± 0.0123 | 0.4918 ± 0.0031 |
+| 5 | 1.0000 ± 0.0000 | 0.1881 ± 0.0024 | 0.0129 ± 0.0010 | 0.0000 ± 0.0000 | 0.9301 ± 0.0139 | 0.4927 ± 0.0030 |
+| 10 | 0.9999 ± 0.0000 | 0.1732 ± 0.0087 | 0.0112 ± 0.0023 | 0.0000 ± 0.0000 | 0.9239 ± 0.0231 | 0.4905 ± 0.0007 |
+| no DP (B3) | 0.9994 ± 0.0002 | 0.0998 ± 0.0020 | 0.0024 ± 0.0004 | 0.0007 ± 0.0002 | 0.8890 ± 0.0087 | 0.4881 ± 0.0011 |
 
 ## Plain decoder vs residual noise (RF macro-F1, test)
 
@@ -161,26 +161,26 @@ The with-noise rows use scales that are not covered by epsilon; the gap shows ho
 
 | eps | generator | TSTR-rf | TAug-rf |
 |---|---|---|---|
-| 1 | plain decoder | 0.2009 ± 0.0418 | 0.4481 ± 0.0012 |
-| 1 | with residual noise | 0.1943 ± 0.0445 | 0.4481 ± 0.0012 |
-| 5 | plain decoder | 0.1890 ± 0.0118 | 0.4474 ± 0.0002 |
-| 5 | with residual noise | 0.2392 ± 0.0096 | 0.4477 ± 0.0005 |
-| 10 | plain decoder | 0.1978 ± 0.0465 | 0.4472 ± 0.0012 |
-| 10 | with residual noise | 0.2419 ± 0.0021 | 0.4472 ± 0.0011 |
-| no DP (B3) | plain decoder | 0.3859 ± 0.0140 | 0.4474 ± 0.0006 |
-| no DP (B3) | with residual noise | 0.3961 ± 0.0146 | 0.4478 ± 0.0008 |
+| 1 | plain decoder | 0.1663 ± 0.0281 | 0.4471 ± 0.0005 |
+| 1 | with residual noise | 0.2272 ± 0.0304 | 0.4484 ± 0.0004 |
+| 5 | plain decoder | 0.1886 ± 0.0070 | 0.4479 ± 0.0007 |
+| 5 | with residual noise | 0.2298 ± 0.0202 | 0.4481 ± 0.0003 |
+| 10 | plain decoder | 0.1940 ± 0.0108 | 0.4476 ± 0.0004 |
+| 10 | with residual noise | 0.2349 ± 0.0156 | 0.4479 ± 0.0002 |
+| no DP (B3) | plain decoder | 0.3889 ± 0.0214 | 0.4496 ± 0.0008 |
+| no DP (B3) | with residual noise | 0.3975 ± 0.0053 | 0.4488 ± 0.0009 |
 
 ## Cost (wall time per round, 5 clients in parallel on one machine)
 
 | eps | median s/round (rounds 2+) | B3 median s/round | overhead (DP / plain) |
 |---|---|---|---|
-| 1 | 19.82 | 1.82 | 10.91x |
-| 5 | 20.11 | 1.82 | 11.07x |
-| 10 | 19.92 | 1.82 | 10.96x |
+| 1 | 22.38 | 1.92 | 11.67x |
+| 5 | 23.27 | 1.92 | 12.13x |
+| 10 | 21.52 | 1.92 | 11.22x |
 
 ## Sanity checks (seed 0)
 
-- **sigma = 0, C = 1e6 vs B3:** validation loss 1.8028 vs 1.7638, relative difference 2.21 % (gate < 5 %): OK.
+- **sigma = 0, C = 1e6 vs B3:** validation loss 1.2070 vs 1.2344, relative difference 2.23 % (gate < 5 %): OK.
 - **Resume (target eps 5):** stopped at round 10 of a 20-round plan, then resumed: max |weight difference| 0.00e+00; DP step counters equal: True; eps max 4.9993 vs 4.9993 for the uninterrupted run (OK).
 
 ![utility-privacy](../figures/utility_privacy_m1.png)
@@ -189,7 +189,7 @@ The with-noise rows use scales that are not covered by epsilon; the gap shows ho
 
 - epsilon_within_2pct: OK
 - sigma_increases_as_eps_decreases: OK
-- tstr_f1_trend_monotone: FAIL
-- val_loss_monotone_in_eps: OK
+- tstr_f1_trend_monotone: OK
+- val_loss_monotone_in_eps: FAIL
 - sigma0_matches_b3: OK
 - resume_identical: OK

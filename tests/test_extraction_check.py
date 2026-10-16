@@ -156,3 +156,40 @@ def test_limitation_reads_the_provenance_numbers():
     t = provenance_text(pv)
     assert "2 of 2 captures" in t and "`ip.dst==10.0.0.9`" in t and "in 2 of 3 attack captures; `ip` in 1" in t and "3 of 3 captures" in t
     assert "44.2 %" in t and "1.01-1.04" in t and "100.0 %, against 50.0 %-50.0 %" in t and "-0.019" in t and "0.993" in t and "+0.000 to +0.001" in t
+
+
+def test_normal_extracted_again_is_compared_with_the_first_extraction(tmp_path):
+    from ppfeddata.data.normal_extract import authors_options
+    assert authors_options("10.0.0.9") == ("-2", "-Y", "ip.dst==10.0.0.9")
+    nd = tmp_path / "NormalData"
+    (nd / "Old").mkdir(parents=True)
+    (nd / "New").mkdir(parents=True)
+    cols = {"Message Type": ["1", "2", "3", "", "3"], "Syn": ["1", "0", "0", "0", "0"]}
+    old = pd.DataFrame({"No.": ["1", "2", "3", "4", "5"], "Epoch Time": ["0.0", "0.001", "0.002", "0.003", "0.004"],
+                        "Source": ["10.0.0.2", "10.0.0.9", "10.0.0.2", "aa:bb:cc:dd:ee:ff", "10.0.0.3"], **cols,
+                        "Time delta from previous displayed frame": ["0", "0.001", "0.001", "0.001", "0.001"],
+                        "Info": ["5000 → 1883 [SYN]", "1883 → 5000 [SYN, ACK]", "Publish", "Conf. Root", "Publish"],
+                        "Label": ["Normal"] * 5, "Capture_ID": ["Pcap Files/N1.pcap"] * 5})
+    old.iloc[:3].to_csv(nd / "Old" / "Pcap_Files__N1_part001.csv", index=False)
+    old.iloc[3:].to_csv(nd / "Old" / "Pcap_Files__N1_part002.csv", index=False)
+    new = old.iloc[[0, 2, 4]].copy()
+    new["Time delta from previous displayed frame"] = ["0", "0.002", "0.002"]
+    new.to_csv(nd / "New" / "Pcap_Files__N1_part001.csv", index=False)
+    (nd / "New" / "Pcap_Files__N1.done.json").write_text('{"pcap": "Pcap Files/N1.pcap", "rows": 3, "parts": 1}', encoding="utf-8")
+    r = ec.check_normal_authors(tmp_path, DEC, "10.0.0.9", "New", "Old")[0]
+    assert (r["rows_new"], r["rows_old"], r["rows_common"], r["frames_missing_in_old"]) == (3, 5, 3, 0) and r["frames_increasing"]
+    assert r["by_sender"] == {"client": {"packets": 3, "kept": 3}, "broker": {"packets": 1, "kept": 0}, "non-IP": {"packets": 1, "kept": 0}}
+    assert r["delta_is_gap_to_previous_kept"] == 1.0 and r["columns"]["message_type"]["match"] == 1.0
+    md = ec.render({"normal_authors": [r]})
+    assert "**1 of 1** captures" in md and "| broker | 1 | 0 | 0.0 % |" in md and "100.00 % to 100.00 %" in md
+
+
+def test_limitation_after_round_r():
+    from ppfeddata.limitations import provenance_text
+
+    pv = {"recipe": [{"capture": "A_1", "filter": "ip.dst==10.0.0.9"}, {"capture": "A_2", "filter": "ip.dst==10.0.0.9"}, {"capture": "SYN_1", "filter": "ip"}],
+          "normal_authors": [{"rows_new": 5, "rows_recorded": 5, "frames_missing_in_old": 0, "delta_is_gap_to_previous_kept": 1.0}],
+          "impact": {"broker_share": {"train": {"NORMAL": 0.442, "SYN": 0.181}}}}
+    t = provenance_text(pv)
+    assert "`ip.dst==10.0.0.9`" in t and "2 of 3 attack captures" in t and "SYN_1 with `ip`" in t and "18.1 %" in t
+    assert "1 of 1 captures" in t and "44.2 %" in t and "display filter" in t and "left for later" not in t

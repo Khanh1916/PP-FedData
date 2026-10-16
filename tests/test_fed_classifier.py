@@ -222,3 +222,29 @@ def test_readme_check_reads_the_clean_install_record():
     assert "not tried on a clean machine" in ac.check_readme(texts, set()).evidence
     r = ac.check_readme(texts, set(), "ran pytest: 346 passed")
     assert r.status == "PARTIAL" and "clean-install record" in r.evidence and "raw-data phases were not re-run" in r.evidence
+
+
+def test_a2_worlds_change_only_the_rare_train_quotas(tmp_path):
+    q = {"NORMAL": [60000, 2000, 5000], "BCF": [20000, 2000, 5000], "DELAYED": [3000, 2000, 5000], "SYN": [3000, 2000, 5000],
+         "INVALID": [1500, 2000, 5000], "WILL": [1000, 2000, 5000]}
+    cfg = {**make_cfg(tmp_path), "quota": q}
+    r10, r200 = se.world_cfg(cfg, "A2-r10"), se.world_cfg(cfg, "A2-r200")
+    assert r10["quota"]["NORMAL"][0] / r10["quota"]["WILL"][0] == 10 and r200["quota"]["NORMAL"][0] / r200["quota"]["WILL"][0] == 200
+    for w in (r10, r200):
+        assert all(w["quota"][c][1:] == q[c][1:] for c in q) and w["quota"]["NORMAL"] == q["NORMAL"] and w["quota"]["BCF"] == q["BCF"]
+    assert cfg["quota"] == q                                                                                                       # the main config is not touched
+    from ppfeddata.tune_marginal import framework_name
+    assert se._names(cfg)["MG-eps5-TSTR-rf"] == f"{framework_name(5.0)}-TSTR-rf"
+
+
+def test_federated_smote_stays_inside_one_client():
+    rng = np.random.default_rng(0)
+    X = rng.normal(size=(40, 4)).astype(np.float32)
+    y = np.array([0] * 30 + [1] * 8 + [2] * 1 + [3] * 1)
+    schema = {"blocks": [{"name": "a", "type": "numeric", "start": 0, "width": 2}, {"name": "b", "type": "binary", "start": 2, "width": 1},
+                         {"name": "c", "type": "numeric", "start": 3, "width": 1}]}
+    Xa, ya = fc.client_smote(X, y, schema, target=20, seed=0)
+    assert np.bincount(ya).tolist() == [30, 20, 1, 1]                       # class 1 raised to the target, single-row classes left as they are, none reduced
+    assert np.array_equal(Xa[:40], X) and set(np.unique(Xa[40:, 2])) <= {0.0, 1.0}
+    same = fc.client_smote(X, y, schema, target=5, seed=0)                  # every class at or above the target: nothing to add
+    assert len(same[1]) == 40

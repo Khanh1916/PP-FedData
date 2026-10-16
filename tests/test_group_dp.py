@@ -115,6 +115,8 @@ def test_gateway_dropout_needs_the_epsilon_with_three_honest_clients():
 
 def test_membership_attack_covers_the_threshold_configurations():
     from ppfeddata import mia_marginal as mm
+    from ppfeddata.tune_marginal import framework_name
     s = mm.threshold_settings({"dp": {"epsilons": [1.0, 5.0]}})
-    assert set(s) == {"MGr-t3-eps1", "MGr-t2-eps1", "MGs-t3-eps5", "MGs-t2-eps5"}
-    assert s["MGs-t2-eps5"]["honest_t"] == 2 and "refine" in s["MGr-t3-eps1"] and "refine" not in s["MGs-t3-eps5"]
+    v1, v5 = framework_name(1.0)[:3], framework_name(5.0)[:3]   # MGr where the post-processing search kept one, else MGs (read from the repository's files)
+    assert set(s) == {f"{v1}-t3-eps1", f"{v1}-t2-eps1", f"{v5}-t3-eps5", f"{v5}-t2-eps5"}
+    assert s[f"{v5}-t2-eps5"]["honest_t"] == 2 and ("refine" in s[f"{v1}-t3-eps1"]) == (v1 == "MGr") and ("refine" in s[f"{v5}-t3-eps5"]) == (v5 == "MGr")

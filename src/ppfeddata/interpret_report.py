@@ -167,7 +167,8 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         fed = _fed_clause(R)
         tail = (" What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give "
                 f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. "
-                + (f"{fed} " + (f"{_fed_prot_clause(R)} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators. See 9.9." if _fed_prot(R)
+                + (f"{fed} " + (f"{_fed_prot_clause(R)} {_fed_smote_clause(R)} Not tested: other generators. See 9.9." if _fed_prot(R) and _fed_smote_clause(R) else
+                                f"{_fed_prot_clause(R)} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators. See 9.9." if _fed_prot(R)
                                 else "Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators, a DP or SecAgg version of the direct classifier. See 9.9.")
                    if fed else "Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
                    "federated class weights or SMOTE, other generators. See 9.9.") if tstr and b0 else " See 9.9.")
@@ -513,6 +514,18 @@ def _fed_facts(R: dict[str, Any]) -> dict[str, Any] | None:
     return {"F": F, "cl": cl, "ref": ref, "vs": vs, "b3": ref.get("B3-TSTR-mlp"), "b0": ref.get("B0-mlp"), "smote": ref.get("B1b-mlp")}
 
 
+def _fed_smote_clause(R: dict[str, Any]) -> str | None:
+    """Round R: federated SMOTE (every client oversamples its own rows, then FedAvg of the MLP) against the CVAE route; None when not run."""
+    f = _fed_facts(R)
+    if not f or "FedMLPsm" not in f["cl"]:
+        return None
+    s = f"Federated SMOTE (each client oversamples its own rows with SMOTE, then FedAvg; no generator, no protection) reaches {f['cl']['FedMLPsm']['macro_f1_mean']:.3f}"
+    w = f["vs"]("FedMLPsm", "B3-TSTR-mlp")
+    if w and f["b3"]:
+        s += f", {WORD_VS[w['effect']]} the CVAE route ({f['b3']['macro_f1_mean']:.3f}; delta {w['delta']:+.3f})"
+    return s + "."
+
+
 def _fed_prot(R: dict[str, Any]) -> dict[str, Any] | None:
     P = (R.get("fed_classifier") or {}).get("protected")
     return P if P and P.get("comparisons") else None
@@ -830,7 +843,8 @@ def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
     out = {"eps": {}, "b3": by.get("B3"), "m2": by.get("M2"), "mg_nodp": by.get("MGs-nodp")}         # round Q1: FedDP-Marginal without DP
     for e in (1.0, 5.0, 10.0):
         c, m = cvae(e), mg(e)
-        main = {1.0: ("MGr-eps1", "MGs-eps1"), 5.0: ("MGs-eps5",), 10.0: ("MGs-eps10",)}[e]       # the framework's configuration (as in R6), not the best variant
+        from ppfeddata.tune_marginal import framework_name
+        main = (framework_name(e), f"MGs-eps{e:g}")                     # the framework's configuration (round R: chosen on validation), not the best variant
         m = [by[x] for x in main if x in by] or m
         if c and m:
             bc, bm = max(c, key=lambda r: r["tstr_f1"]), m[0]
@@ -1313,9 +1327,10 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
              + ("detected leakage in " + ", ".join(_mia_facts(R)["detected"]) if _mia_facts(R)["detected"] else "detected no leakage in B3 or in the DP models") if _mia_facts(R) and _mia_facts(R)["passes"] else "")
           + ", so the study cannot show that the synthetic data leak less than the real data. Only epsilon (M1, M3) gives a guarantee"
           + (f", and it costs {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % of the synthetic-only macro-F1 (R4)." if dpl else "."),
-          ("- Not tested: federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); "
+          ("- Not tested: " + ("" if _fed_smote_clause(R) else "federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); ")
            + ("" if _fed_prot(R) else "a DP or SecAgg version of the direct federated classifier; ") + "other generators (the optional WGAN-GP, "
-           "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)."
+           "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)"
+           + (", with federated SMOTE (round R)." if _fed_smote_clause(R) else ".")
            if _fed_facts(R) else
            "- Not tested: federated training of the IDS classifier itself (for example FedAvg on the MLP), the obvious alternative when raw data cannot be pooled and no synthetic data have to be shared; federated "
            "versions of class weighting or SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); other generators (the optional WGAN-GP, TVAE or CTGAN-type models, diffusion); "

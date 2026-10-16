@@ -28,8 +28,16 @@ import numpy as np
 
 logger = logging.getLogger("ppfeddata.ids_followup")
 
-GENERATORS = {"B3": "B3", "M2": "M2", "M1o-eps5": "M1o-t27-eps5-plain", "MG-eps1": "MGr-eps1", "MG-eps5": "MGs-eps5", "MG-eps10": "MGs-eps10",
-              "MGl-eps5": "MGl-eps5"}
+def generators(cfg: dict[str, Any]) -> dict[str, str]:
+    """label -> run prefix of the saved synthetic data: the CVAE references, the O1 winner at epsilon 5 (plain decoder, trial read from
+    configs/best_cvae_dp_full.yaml) and the framework's configurations (round R: names read from the search files, not written here)."""
+    import yaml
+
+    from ppfeddata.tune_marginal import framework_name
+
+    t = yaml.safe_load(Path("configs/best_cvae_dp_full.yaml").read_text(encoding="utf-8"))["searches"]["eps5"]["best_trial"]
+    return {"B3": "B3", "M2": "M2", "M1o-eps5": f"M1o-t{int(t)}-eps5-plain", "MG-eps1": framework_name(1.0), "MG-eps5": framework_name(5.0),
+            "MG-eps10": framework_name(10.0), "MGl-eps5": "MGl-eps5"}
 GRID = [0.25, 0.5, 1.0, 2.0, 4.0]
 FILL = 5000
 
@@ -88,7 +96,7 @@ def item5(cfg: dict[str, Any], seeds: list[int] | None = None) -> dict[str, Any]
     k, rare, spc = len(classes), rare_labels(cfg, schema), int(cfg["tune"]["syn_per_class"])
     seeds = list(cfg["seeds"]) if seeds is None else seeds
     out = {}
-    for label, prefix in GENERATORS.items():
+    for label, prefix in generators(cfg).items():
         for clf in ("rf", "mlp"):
             res: dict[str, Any] = {}
             for opt, n in (("base", spc), ("rows", None)):
@@ -128,7 +136,7 @@ def item6(cfg: dict[str, Any], seeds: list[int] | None = None) -> dict[str, Any]
     rows = []
     for s in seeds:
         parts = _parts(cfg, y, schema, s)
-        syn = {label: _synthetic(cfg, prefix, s) for label, prefix in GENERATORS.items()}
+        syn = {label: _synthetic(cfg, prefix, s) for label, prefix in generators(cfg).items()}
         only = {label: _metrics(data["test"]["y"], _fit(cfg, "rf", *_head(Xs, ys, spc, k), s).predict(data["test"]["X"]), classes, rare)
                 for label, (Xs, ys) in syn.items()}                      # synthetic data only: the same model for every client of the seed
         for cid, idx in enumerate(parts):
@@ -146,7 +154,7 @@ def item6(cfg: dict[str, Any], seeds: list[int] | None = None) -> dict[str, Any]
             logger.info("local aug seed %d client %d (%d rows, classes %s): local %.3f, + MG-eps5 %.3f, + B3 %.3f", s, cid, len(idx), cnt.tolist(),
                         r["local"]["macro_f1"], r["MG-eps5"]["macro_f1"], r["B3"]["macro_f1"])
     summary = {}
-    for label in ["local"] + list(GENERATORS) + [f"only:{g}" for g in GENERATORS]:
+    for label in ["local"] + list(generators(cfg)) + [f"only:{g}" for g in generators(cfg)]:
         summary[label] = {key: (float(np.mean([r[label][key] for r in rows])), float(np.std([r[label][key] for r in rows]))) for key in ("macro_f1", "bin_f1", "rare_recall")}
         if label != "local":
             d = [r[label]["macro_f1"] - r["local"]["macro_f1"] for r in rows]

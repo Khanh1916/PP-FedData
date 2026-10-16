@@ -23,17 +23,16 @@
    "unit": null,
    "secagg": false,
    "eps_eff": "inf",
-   "tstr_f1": 0.4441281754602185,
-   "tstr_f1_std": 0.0169188051031806,
-   "bin_f1": 0.9079225432263368,
-   "rare_recall": 0.33499999999999996,
-   "mb_round": 0.12940333333333331,
+   "tstr_f1": 0.4586082403293253,
+   "tstr_f1_std": 0.0070973543027611,
+   "bin_f1": 0.8853319299781527,
+   "rare_recall": 0.3671333333333333,
+   "mb_round": 0.11365,
    "rounds": 3.0,
-   "mb_total": 0.38820999999999994
+   "mb_total": 0.34095
   },
   "ties_with_best": [
-   "MGr-eps10",
-   "MGs-eps10"
+   "MGs-nodp"
   ],
   "command": "python -m ppfeddata.cli mg-nodp --stage final",
   "front": [
@@ -44,43 +43,73 @@
     "unit": null,
     "secagg": false,
     "eps_eff": "inf",
-    "tstr_f1": 0.4441281754602185,
-    "tstr_f1_std": 0.0169188051031806,
-    "bin_f1": 0.9079225432263368,
-    "rare_recall": 0.33499999999999996,
-    "mb_round": 0.12940333333333331,
+    "tstr_f1": 0.4586082403293253,
+    "tstr_f1_std": 0.0070973543027611,
+    "bin_f1": 0.8853319299781527,
+    "rare_recall": 0.3671333333333333,
+    "mb_round": 0.11365,
     "rounds": 3.0,
-    "mb_total": 0.38820999999999994
+    "mb_total": 0.34095
    },
    {
-    "label": "MGr-eps10",
+    "label": "MGs-nodp",
+    "method": "MG",
+    "dp_mode": null,
+    "unit": null,
+    "secagg": true,
+    "eps_eff": "inf",
+    "tstr_f1": 0.4586082403293253,
+    "tstr_f1_std": 0.0070973543027611,
+    "bin_f1": 0.8853319299781527,
+    "rare_recall": 0.3671333333333333,
+    "mb_round": 0.158041,
+    "rounds": 3.0,
+    "mb_total": 0.474123
+   },
+   {
+    "label": "MGs-t3-eps10",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4327417310836014,
-    "tstr_f1_std": 0.0075418242601213,
-    "bin_f1": 0.9152465480277652,
-    "rare_recall": 0.3181666666666667,
-    "mb_round": 0.15757077777777778,
+    "eps_eff": 9.999998485510783,
+    "tstr_f1": 0.4485638795866256,
+    "tstr_f1_std": 0.0054497575161615,
+    "bin_f1": 0.892142250503584,
+    "rare_recall": 0.3456666666666666,
+    "mb_round": 0.15849622222222223,
     "rounds": 3.0,
-    "mb_total": 0.47271233333333335
+    "mb_total": 0.4754886666666666
    },
    {
-    "label": "MGs-eps10",
+    "label": "MGd-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4285058147054687,
-    "tstr_f1_std": 0.0077193655804001,
-    "bin_f1": 0.9058194443750892,
-    "rare_recall": 0.3306166666666666,
-    "mb_round": 0.15758511111111112,
+    "eps_eff": 5.000000000000005,
+    "tstr_f1": 0.4263829566137446,
+    "tstr_f1_std": 0.0055879988155717,
+    "bin_f1": 0.8492677702523682,
+    "rare_recall": 0.32511666666666666,
+    "mb_round": 0.3442810863654585,
     "rounds": 3.0,
-    "mb_total": 0.47275533333333336
+    "mb_total": 1.0328432590963754
+   },
+   {
+    "label": "MGs-t3-eps5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
+    "rounds": 3.0,
+    "mb_total": 0.5147243333333333
    },
    {
     "label": "B3",
@@ -89,105 +118,148 @@
     "unit": null,
     "secagg": false,
     "eps_eff": "inf",
-    "tstr_f1": 0.4199140101428949,
-    "tstr_f1_std": 0.0144545494846896,
-    "bin_f1": 0.929408615089573,
-    "rare_recall": 0.3673666666666667,
-    "mb_round": 4.22256,
+    "tstr_f1": 0.4129102743739949,
+    "tstr_f1_std": 0.0054047499129155,
+    "bin_f1": 0.9036341623664615,
+    "rare_recall": 0.36133333333333334,
+    "mb_round": 4.20204,
     "rounds": 30.0,
-    "mb_total": 126.6768
+    "mb_total": 126.0612
    },
    {
-    "label": "MGs-eps5",
+    "label": "MGs-eps2",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 4.999997979927501,
-    "tstr_f1": 0.4083561734297294,
-    "tstr_f1_std": 0.0025025915386084,
-    "bin_f1": 0.9014290391662256,
-    "rare_recall": 0.29296666666666665,
-    "mb_round": 0.14937377777777777,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
     "rounds": 3.0,
-    "mb_total": 0.44812133333333337
+    "mb_total": 0.5827326666666668
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-t3-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "tstr_f1": 0.3729315203436125,
+    "tstr_f1_std": 0.0291322684077511,
+    "bin_f1": 0.8138684684489382,
+    "rare_recall": 0.23253333333333334,
+    "mb_round": 0.17674066666666666,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.530222
    },
    {
-    "label": "MGr-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3893990943141031,
-    "tstr_f1_std": 0.0095371942854061,
-    "bin_f1": 0.8747844202184053,
-    "rare_recall": 0.2529666666666667,
-    "mb_round": 0.20143677777777771,
+    "tstr_f1": 0.3661722282862964,
+    "tstr_f1_std": 0.0181131875685138,
+    "bin_f1": 0.8133164862685546,
+    "rare_recall": 0.23108333333333334,
+    "mb_round": 0.17657011111111112,
     "rounds": 3.0,
-    "mb_total": 0.6043103333333332
+    "mb_total": 0.5297103333333334
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.4999998389432194,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
    "MGp-nodp",
    "MGs-nodp",
-   "MGb-eps10",
-   "MGr-eps10",
-   "MGs-eps10",
    "MGs-t3-eps10",
+   "MGs-eps20",
+   "MGd-eps20",
+   "MGs-eps10",
    "MGd-eps10",
-   "B3",
-   "MGs-t2-eps10",
    "MGd-eps5",
-   "M2",
-   "MGl-eps10",
-   "MGs-strm1-eps10",
-   "MGs-eps5",
+   "MGr-t2-eps5",
+   "MGr-eps5",
+   "MGl-eps20",
    "MGs-t3-eps5",
+   "MGr-t3-eps5",
+   "MGs-t2-eps10",
+   "M2",
    "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "B3",
+   "MGs-eps5",
+   "MGs-eps2",
+   "MGl-eps10",
+   "MGb-eps5",
+   "MGs-strm1-eps5",
    "MGl-eps5",
-   "MGs-strm2-eps5",
-   "MGr-strm1-eps1",
+   "MGr-eps2",
+   "MGs-strm2-eps10",
+   "MGd-eps2",
+   "MGr-strm1-eps5",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
    "M1o-eps10",
-   "M1o-eps5 (plain)",
-   "M3o-eps5 (plain)",
-   "M1o-eps5",
-   "M1o-eps10 (plain)",
-   "M3o-eps10 (plain)",
    "M3o-eps10",
+   "MGl-eps1",
+   "M3o-eps10 (plain)",
    "M3o-eps5",
+   "M1o-eps5",
+   "M1o-eps5 (plain)",
+   "M1o-eps10 (plain)",
+   "MGl-eps0.5",
+   "M3o-eps5 (plain)",
+   "M1-eps10",
    "M1-eps5",
    "M3-eps5",
-   "MGl-eps1",
-   "M1-eps10",
+   "MGr-cap50-eps5",
    "M1-eps1",
-   "MGs-cap25-eps5",
-   "M1o-eps1 (plain)",
-   "MGs-cap25-eps10",
-   "M3o-eps1 (plain)",
    "M1o-eps1",
    "M3o-eps1",
-   "MGr-cap25-eps1"
+   "MGs-cap25-eps5",
+   "M1o-eps1 (plain)",
+   "M3o-eps1 (plain)",
+   "MGs-cap100-eps10",
+   "MGs-cap25-eps1"
   ],
   "rejected": {}
  },
@@ -209,96 +281,170 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-eps5",
+   "label": "MGd-eps5",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "packet",
    "secagg": true,
-   "eps_eff": 4.999997979927501,
-   "tstr_f1": 0.4083561734297294,
-   "tstr_f1_std": 0.0025025915386084,
-   "bin_f1": 0.9014290391662256,
-   "rare_recall": 0.29296666666666665,
-   "mb_round": 0.14937377777777777,
+   "eps_eff": 5.000000000000005,
+   "tstr_f1": 0.4263829566137446,
+   "tstr_f1_std": 0.0055879988155717,
+   "bin_f1": 0.8492677702523682,
+   "rare_recall": 0.32511666666666666,
+   "mb_round": 0.3442810863654585,
    "rounds": 3.0,
-   "mb_total": 0.44812133333333337
+   "mb_total": 1.0328432590963754
   },
-  "ties_with_best": [],
+  "ties_with_best": [
+   "MGs-t3-eps5"
+  ],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 5",
   "front": [
    {
-    "label": "MGs-eps5",
+    "label": "MGd-eps5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 5.000000000000005,
+    "tstr_f1": 0.4263829566137446,
+    "tstr_f1_std": 0.0055879988155717,
+    "bin_f1": 0.8492677702523682,
+    "rare_recall": 0.32511666666666666,
+    "mb_round": 0.3442810863654585,
+    "rounds": 3.0,
+    "mb_total": 1.0328432590963754
+   },
+   {
+    "label": "MGs-t3-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 4.999997979927501,
-    "tstr_f1": 0.4083561734297294,
-    "tstr_f1_std": 0.0025025915386084,
-    "bin_f1": 0.9014290391662256,
-    "rare_recall": 0.29296666666666665,
-    "mb_round": 0.14937377777777777,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
     "rounds": 3.0,
-    "mb_total": 0.44812133333333337
+    "mb_total": 0.5147243333333333
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
+    "rounds": 3.0,
+    "mb_total": 0.5827326666666668
+   },
+   {
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-t3-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "tstr_f1": 0.3729315203436125,
+    "tstr_f1_std": 0.0291322684077511,
+    "bin_f1": 0.8138684684489382,
+    "rare_recall": 0.23253333333333334,
+    "mb_round": 0.17674066666666666,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.530222
    },
    {
-    "label": "MGr-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3893990943141031,
-    "tstr_f1_std": 0.0095371942854061,
-    "bin_f1": 0.8747844202184053,
-    "rare_recall": 0.2529666666666667,
-    "mb_round": 0.20143677777777771,
+    "tstr_f1": 0.3661722282862964,
+    "tstr_f1_std": 0.0181131875685138,
+    "bin_f1": 0.8133164862685546,
+    "rare_recall": 0.23108333333333334,
+    "mb_round": 0.17657011111111112,
     "rounds": 3.0,
-    "mb_total": 0.6043103333333332
+    "mb_total": 0.5297103333333334
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.4999998389432194,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
    "MGd-eps5",
-   "MGs-eps5",
+   "MGr-t2-eps5",
+   "MGr-eps5",
    "MGs-t3-eps5",
+   "MGr-t3-eps5",
    "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "MGs-eps5",
+   "MGs-eps2",
+   "MGb-eps5",
+   "MGs-strm1-eps5",
    "MGl-eps5",
-   "MGs-strm2-eps5",
-   "MGr-strm1-eps1",
+   "MGr-eps2",
+   "MGd-eps2",
+   "MGr-strm1-eps5",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
-   "M1o-eps5 (plain)",
-   "M3o-eps5 (plain)",
-   "M1o-eps5",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
+   "MGl-eps1",
    "M3o-eps5",
+   "M1o-eps5",
+   "M1o-eps5 (plain)",
+   "MGl-eps0.5",
+   "M3o-eps5 (plain)",
    "M1-eps5",
    "M3-eps5",
-   "MGl-eps1",
+   "MGr-cap50-eps5",
    "M1-eps1",
+   "M1o-eps1",
+   "M3o-eps1",
    "MGs-cap25-eps5",
    "M1o-eps1 (plain)",
    "M3o-eps1 (plain)",
-   "M1o-eps1",
-   "M3o-eps1",
-   "MGr-cap25-eps1"
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -323,32 +469,35 @@
    "M3o-eps10 (plain)": [
     "epsilon 10 > 5"
    ],
-   "MGb-eps10": [
-    "epsilon 10 > 5"
-   ],
    "MGd-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGd-eps20": [
+    "epsilon 20 > 5"
+   ],
    "MGl-eps10": [
     "epsilon 10 > 5"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 5"
    ],
    "MGp-nodp": [
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps10": [
-    "epsilon 10 > 5"
-   ],
-   "MGs-cap25-eps10": [
+   "MGs-cap100-eps10": [
     "epsilon 10 > 5"
    ],
    "MGs-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGs-eps20": [
+    "epsilon 20 > 5"
+   ],
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
+   "MGs-strm2-eps10": [
     "epsilon 10 > 5"
    ],
    "MGs-t2-eps10": [
@@ -377,144 +526,215 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGr-eps10",
+   "label": "MGs-nodp",
    "method": "MG",
-   "dp_mode": "distributed",
-   "unit": "packet",
+   "dp_mode": null,
+   "unit": null,
    "secagg": true,
-   "eps_eff": 9.99999458023253,
-   "tstr_f1": 0.4327417310836014,
-   "tstr_f1_std": 0.0075418242601213,
-   "bin_f1": 0.9152465480277652,
-   "rare_recall": 0.3181666666666667,
-   "mb_round": 0.15757077777777778,
+   "eps_eff": "inf",
+   "tstr_f1": 0.4586082403293253,
+   "tstr_f1_std": 0.0070973543027611,
+   "bin_f1": 0.8853319299781527,
+   "rare_recall": 0.3671333333333333,
+   "mb_round": 0.158041,
    "rounds": 3.0,
-   "mb_total": 0.47271233333333335
+   "mb_total": 0.474123
   },
-  "ties_with_best": [
-   "MGs-eps10"
-  ],
-  "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
+  "ties_with_best": [],
+  "command": "python -m ppfeddata.cli mg-nodp --stage final",
   "front": [
    {
-    "label": "MGr-eps10",
+    "label": "MGs-nodp",
+    "method": "MG",
+    "dp_mode": null,
+    "unit": null,
+    "secagg": true,
+    "eps_eff": "inf",
+    "tstr_f1": 0.4586082403293253,
+    "tstr_f1_std": 0.0070973543027611,
+    "bin_f1": 0.8853319299781527,
+    "rare_recall": 0.3671333333333333,
+    "mb_round": 0.158041,
+    "rounds": 3.0,
+    "mb_total": 0.474123
+   },
+   {
+    "label": "MGs-t3-eps10",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4327417310836014,
-    "tstr_f1_std": 0.0075418242601213,
-    "bin_f1": 0.9152465480277652,
-    "rare_recall": 0.3181666666666667,
-    "mb_round": 0.15757077777777778,
+    "eps_eff": 9.999998485510783,
+    "tstr_f1": 0.4485638795866256,
+    "tstr_f1_std": 0.0054497575161615,
+    "bin_f1": 0.892142250503584,
+    "rare_recall": 0.3456666666666666,
+    "mb_round": 0.15849622222222223,
     "rounds": 3.0,
-    "mb_total": 0.47271233333333335
+    "mb_total": 0.4754886666666666
    },
    {
-    "label": "MGs-eps10",
+    "label": "MGd-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4285058147054687,
-    "tstr_f1_std": 0.0077193655804001,
-    "bin_f1": 0.9058194443750892,
-    "rare_recall": 0.3306166666666666,
-    "mb_round": 0.15758511111111112,
+    "eps_eff": 5.000000000000005,
+    "tstr_f1": 0.4263829566137446,
+    "tstr_f1_std": 0.0055879988155717,
+    "bin_f1": 0.8492677702523682,
+    "rare_recall": 0.32511666666666666,
+    "mb_round": 0.3442810863654585,
     "rounds": 3.0,
-    "mb_total": 0.47275533333333336
+    "mb_total": 1.0328432590963754
    },
    {
-    "label": "MGs-eps5",
+    "label": "MGs-t3-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 4.999997979927501,
-    "tstr_f1": 0.4083561734297294,
-    "tstr_f1_std": 0.0025025915386084,
-    "bin_f1": 0.9014290391662256,
-    "rare_recall": 0.29296666666666665,
-    "mb_round": 0.14937377777777777,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
     "rounds": 3.0,
-    "mb_total": 0.44812133333333337
+    "mb_total": 0.5147243333333333
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
+    "rounds": 3.0,
+    "mb_total": 0.5827326666666668
+   },
+   {
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-t3-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "tstr_f1": 0.3729315203436125,
+    "tstr_f1_std": 0.0291322684077511,
+    "bin_f1": 0.8138684684489382,
+    "rare_recall": 0.23253333333333334,
+    "mb_round": 0.17674066666666666,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.530222
    },
    {
-    "label": "MGr-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3893990943141031,
-    "tstr_f1_std": 0.0095371942854061,
-    "bin_f1": 0.8747844202184053,
-    "rare_recall": 0.2529666666666667,
-    "mb_round": 0.20143677777777771,
+    "tstr_f1": 0.3661722282862964,
+    "tstr_f1_std": 0.0181131875685138,
+    "bin_f1": 0.8133164862685546,
+    "rare_recall": 0.23108333333333334,
+    "mb_round": 0.17657011111111112,
     "rounds": 3.0,
-    "mb_total": 0.6043103333333332
+    "mb_total": 0.5297103333333334
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.4999998389432194,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
    "MGs-nodp",
-   "MGb-eps10",
-   "MGr-eps10",
-   "MGs-eps10",
    "MGs-t3-eps10",
+   "MGs-eps20",
+   "MGd-eps20",
+   "MGs-eps10",
    "MGd-eps10",
-   "MGs-t2-eps10",
    "MGd-eps5",
-   "M2",
-   "MGl-eps10",
-   "MGs-strm1-eps10",
-   "MGs-eps5",
+   "MGr-t2-eps5",
+   "MGr-eps5",
+   "MGl-eps20",
    "MGs-t3-eps5",
+   "MGr-t3-eps5",
+   "MGs-t2-eps10",
+   "M2",
    "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "MGs-eps5",
+   "MGs-eps2",
+   "MGl-eps10",
+   "MGb-eps5",
+   "MGs-strm1-eps5",
    "MGl-eps5",
-   "MGs-strm2-eps5",
-   "MGr-strm1-eps1",
+   "MGr-eps2",
+   "MGs-strm2-eps10",
+   "MGd-eps2",
+   "MGr-strm1-eps5",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
    "M1o-eps10",
-   "M1o-eps5 (plain)",
-   "M3o-eps5 (plain)",
-   "M1o-eps5",
-   "M1o-eps10 (plain)",
-   "M3o-eps10 (plain)",
    "M3o-eps10",
+   "MGl-eps1",
+   "M3o-eps10 (plain)",
    "M3o-eps5",
+   "M1o-eps5",
+   "M1o-eps5 (plain)",
+   "M1o-eps10 (plain)",
+   "MGl-eps0.5",
+   "M3o-eps5 (plain)",
+   "M1-eps10",
    "M1-eps5",
    "M3-eps5",
-   "MGl-eps1",
-   "M1-eps10",
+   "MGr-cap50-eps5",
    "M1-eps1",
-   "MGs-cap25-eps5",
-   "M1o-eps1 (plain)",
-   "MGs-cap25-eps10",
-   "M3o-eps1 (plain)",
    "M1o-eps1",
    "M3o-eps1",
-   "MGr-cap25-eps1"
+   "MGs-cap25-eps5",
+   "M1o-eps1 (plain)",
+   "M3o-eps1 (plain)",
+   "MGs-cap100-eps10",
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -543,82 +763,129 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGl-eps10",
+   "label": "MGr-t2-eps5",
    "method": "MG",
-   "dp_mode": "local",
+   "dp_mode": "distributed",
    "unit": "packet",
-   "secagg": false,
-   "eps_eff": 10.000000000000002,
-   "tstr_f1": 0.4134103845336809,
-   "tstr_f1_std": 0.0073108015145161,
-   "bin_f1": 0.8991475572434847,
-   "rare_recall": 0.30646666666666667,
-   "mb_round": 0.3090267266366059,
+   "secagg": true,
+   "eps_eff": 7.6265538555579555,
+   "tstr_f1": 0.4254146261985765,
+   "tstr_f1_std": 0.0105336017650264,
+   "bin_f1": 0.832062637381967,
+   "rare_recall": 0.31,
+   "mb_round": 0.17040044444444447,
    "rounds": 3.0,
-   "mb_total": 0.9270801799098177
+   "mb_total": 0.5112013333333334
   },
-  "ties_with_best": [],
-  "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
+  "ties_with_best": [
+   "MGs-t3-eps5"
+  ],
+  "command": "python -m ppfeddata.cli privacy-units --stage final",
   "front": [
    {
-    "label": "MGl-eps10",
-    "method": "MG",
-    "dp_mode": "local",
-    "unit": "packet",
-    "secagg": false,
-    "eps_eff": 10.000000000000002,
-    "tstr_f1": 0.4134103845336809,
-    "tstr_f1_std": 0.0073108015145161,
-    "bin_f1": 0.8991475572434847,
-    "rare_recall": 0.30646666666666667,
-    "mb_round": 0.3090267266366059,
-    "rounds": 3.0,
-    "mb_total": 0.9270801799098177
-   },
-   {
-    "label": "MGs-t2-eps5",
+    "label": "MGr-t2-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 7.6265538555579555,
-    "tstr_f1": 0.3962076601458538,
-    "tstr_f1_std": 0.0054000561556945,
-    "bin_f1": 0.89101652685778,
-    "rare_recall": 0.2596333333333333,
-    "mb_round": 0.14927566666666667,
+    "tstr_f1": 0.4254146261985765,
+    "tstr_f1_std": 0.0105336017650264,
+    "bin_f1": 0.832062637381967,
+    "rare_recall": 0.31,
+    "mb_round": 0.17040044444444447,
     "rounds": 3.0,
-    "mb_total": 0.447827
+    "mb_total": 0.5112013333333334
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-t3-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 1.826337590208231,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "eps_eff": 10.095163222935604,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.5147243333333333
    },
    {
-    "label": "MGr-t2-eps1",
+    "label": "MGs-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 5.022592971105182,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
+    "rounds": 3.0,
+    "mb_total": 0.5827326666666668
+   },
+   {
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 5.022592971105182,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-t2-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 1.4607281291709355,
-    "tstr_f1": 0.3408798028080451,
-    "tstr_f1_std": 0.0266978770002237,
-    "bin_f1": 0.8426145359382237,
-    "rare_recall": 0.19391666666666665,
-    "mb_round": 0.20787344444444442,
+    "tstr_f1": 0.3440225745502257,
+    "tstr_f1_std": 0.0126463569195354,
+    "bin_f1": 0.7993364075739166,
+    "rare_recall": 0.20375,
+    "mb_round": 0.17697466666666667,
     "rounds": 3.0,
-    "mb_total": 0.6236203333333332
+    "mb_total": 0.530924
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.1987293880450791,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
+   },
+   {
+    "label": "MGd-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.1327212588178228,
+    "tstr_f1": 0.3043757431182316,
+    "tstr_f1_std": 0.0053232835207904,
+    "bin_f1": 0.791285620062539,
+    "rare_recall": 0.15990000000000001,
+    "mb_round": 0.32104698013980504,
+    "rounds": 3.0,
+    "mb_total": 0.9631409404194152
    },
    {
     "label": "MGl-eps1",
@@ -627,43 +894,28 @@
     "unit": "packet",
     "secagg": false,
     "eps_eff": 1.0000000000000009,
-    "tstr_f1": 0.2525649548360243,
-    "tstr_f1_std": 0.0286618815858956,
-    "bin_f1": 0.7727341018542941,
-    "rare_recall": 0.08658333333333333,
-    "mb_round": 0.5204334488609333,
+    "tstr_f1": 0.2672113556646044,
+    "tstr_f1_std": 0.0208152505631793,
+    "bin_f1": 0.7742307159380158,
+    "rare_recall": 0.1168,
+    "mb_round": 0.37635344929394077,
     "rounds": 3.0,
-    "mb_total": 1.5613003465828
+    "mb_total": 1.1290603478818224
    },
    {
-    "label": "M1-eps1",
-    "method": "M1",
+    "label": "MGl-eps0.5",
+    "method": "MG",
     "dp_mode": "local",
     "unit": "packet",
     "secagg": false,
-    "eps_eff": 0.996977369540466,
-    "tstr_f1": 0.2270280321044862,
-    "tstr_f1_std": 0.0303133422147699,
-    "bin_f1": 0.8052172873930236,
-    "rare_recall": 0.13228333333333334,
-    "mb_round": 1.45776,
-    "rounds": 30.0,
-    "mb_total": 43.7328
-   },
-   {
-    "label": "M3o-eps1 (plain)",
-    "method": "M3",
-    "dp_mode": "local",
-    "unit": "packet",
-    "secagg": true,
-    "eps_eff": 0.9999506792200886,
-    "tstr_f1": 0.184431839183746,
-    "tstr_f1_std": 0.0442821994946206,
-    "bin_f1": 0.611193989311523,
-    "rare_recall": 0.06303333333333333,
-    "mb_round": 2.159529333333333,
-    "rounds": 30.0,
-    "mb_total": 64.78587999999999
+    "eps_eff": 0.5000000000000009,
+    "tstr_f1": 0.2243594742435569,
+    "tstr_f1_std": 0.02542828087093,
+    "bin_f1": 0.7285970300391108,
+    "rare_recall": 0.077,
+    "mb_round": 0.32628122210481897,
+    "rounds": 3.0,
+    "mb_total": 0.9788436663144569
    },
    {
     "label": "M3o-eps1",
@@ -671,45 +923,68 @@
     "dp_mode": "local",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 0.9999506792200886,
-    "tstr_f1": 0.1702767411570951,
-    "tstr_f1_std": 0.0150174254698442,
-    "bin_f1": 0.6877888110221594,
-    "rare_recall": 0.036950000000000004,
-    "mb_round": 2.159529333333333,
+    "eps_eff": 0.99983064174968,
+    "tstr_f1": 0.1623538167821842,
+    "tstr_f1_std": 0.0331543634401126,
+    "bin_f1": 0.6767457145995558,
+    "rare_recall": 0.04111666666666667,
+    "mb_round": 2.237189,
     "rounds": 30.0,
-    "mb_total": 64.78587999999999
+    "mb_total": 67.11567
+   },
+   {
+    "label": "M3o-eps1 (plain)",
+    "method": "M3",
+    "dp_mode": "local",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.99983064174968,
+    "tstr_f1": 0.152908232473999,
+    "tstr_f1_std": 0.0068490115773266,
+    "bin_f1": 0.6905054352534843,
+    "rare_recall": 0.020383333333333333,
+    "mb_round": 2.237189,
+    "rounds": 30.0,
+    "mb_total": 67.11567
    }
   ],
   "meets": [
-   "MGl-eps10",
+   "MGr-t2-eps5",
    "MGs-t3-eps5",
+   "MGr-t3-eps5",
    "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "MGs-eps2",
+   "MGl-eps10",
    "MGl-eps5",
-   "MGr-strm1-eps1",
+   "MGr-eps2",
+   "MGd-eps2",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
    "M1o-eps10",
-   "M1o-eps5 (plain)",
-   "M3o-eps5 (plain)",
-   "M1o-eps5",
-   "M1o-eps10 (plain)",
-   "M3o-eps10 (plain)",
    "M3o-eps10",
+   "MGl-eps1",
+   "M3o-eps10 (plain)",
    "M3o-eps5",
+   "M1o-eps5",
+   "M1o-eps5 (plain)",
+   "M1o-eps10 (plain)",
+   "MGl-eps0.5",
+   "M3o-eps5 (plain)",
+   "M1-eps10",
    "M1-eps5",
    "M3-eps5",
-   "MGl-eps1",
-   "M1-eps10",
    "M1-eps1",
-   "M1o-eps1 (plain)",
-   "M3o-eps1 (plain)",
    "M1o-eps1",
    "M3o-eps1",
-   "MGr-cap25-eps1"
+   "M1o-eps1 (plain)",
+   "M3o-eps1 (plain)",
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -719,30 +994,45 @@
    "M2": [
     "no DP"
    ],
-   "MGb-eps10": [
-    "epsilon 36 > 10"
+   "MGb-eps5": [
+    "epsilon 14.2 > 10"
    ],
    "MGd-eps10": [
     "epsilon 26.6 > 10"
    ],
+   "MGd-eps20": [
+    "epsilon 58.4 > 10"
+   ],
    "MGd-eps5": [
     "epsilon 12.4 > 10"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 10"
    ],
    "MGp-nodp": [
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps10": [
-    "epsilon 36 > 10"
+   "MGr-cap50-eps5": [
+    "epsilon 13 > 10"
    ],
-   "MGs-cap25-eps10": [
+   "MGr-eps5": [
+    "epsilon 14.2 > 10"
+   ],
+   "MGr-strm1-eps5": [
+    "epsilon 14.2 > 10"
+   ],
+   "MGs-cap100-eps10": [
     "epsilon 27.5 > 10"
    ],
    "MGs-cap25-eps5": [
     "epsilon 13 > 10"
    ],
    "MGs-eps10": [
-    "epsilon 36 > 10"
+    "epsilon 33.1 > 10"
+   ],
+   "MGs-eps20": [
+    "epsilon 99.6 > 10"
    ],
    "MGs-eps5": [
     "epsilon 14.2 > 10"
@@ -750,17 +1040,17 @@
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
-    "epsilon 36 > 10"
+   "MGs-strm1-eps5": [
+    "epsilon 14.2 > 10"
    ],
-   "MGs-strm2-eps5": [
-    "epsilon 13.3 > 10"
+   "MGs-strm2-eps10": [
+    "epsilon 28.5 > 10"
    ],
    "MGs-t2-eps10": [
-    "epsilon 16.3 > 10"
+    "epsilon 15.9 > 10"
    ],
    "MGs-t3-eps10": [
-    "epsilon 23.3 > 10"
+    "epsilon 22.3 > 10"
    ]
   }
  },
@@ -782,70 +1072,87 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGr-t3-eps1",
+   "label": "MGs-t3-eps1",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "packet",
    "secagg": true,
    "eps_eff": 0.9999998342281304,
-   "tstr_f1": 0.392105396465033,
-   "tstr_f1_std": 0.0117489451156506,
-   "bin_f1": 0.875135329562478,
-   "rare_recall": 0.25079999999999997,
-   "mb_round": 0.20247877777777773,
+   "tstr_f1": 0.3729315203436125,
+   "tstr_f1_std": 0.0291322684077511,
+   "bin_f1": 0.8138684684489382,
+   "rare_recall": 0.23253333333333334,
+   "mb_round": 0.17674066666666666,
    "rounds": 3.0,
-   "mb_total": 0.6074363333333331
+   "mb_total": 0.530222
   },
   "ties_with_best": [
-   "MGr-eps1"
+   "MGs-eps1"
   ],
   "command": "python -m ppfeddata.cli privacy-units --stage final",
   "front": [
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-t3-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "tstr_f1": 0.3729315203436125,
+    "tstr_f1_std": 0.0291322684077511,
+    "bin_f1": 0.8138684684489382,
+    "rare_recall": 0.23253333333333334,
+    "mb_round": 0.17674066666666666,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.530222
    },
    {
-    "label": "MGr-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3893990943141031,
-    "tstr_f1_std": 0.0095371942854061,
-    "bin_f1": 0.8747844202184053,
-    "rare_recall": 0.2529666666666667,
-    "mb_round": 0.20143677777777771,
+    "tstr_f1": 0.3661722282862964,
+    "tstr_f1_std": 0.0181131875685138,
+    "bin_f1": 0.8133164862685546,
+    "rare_recall": 0.23108333333333334,
+    "mb_round": 0.17657011111111112,
     "rounds": 3.0,
-    "mb_total": 0.6043103333333332
+    "mb_total": 0.5297103333333334
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.4999998389432194,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
-   "MGr-t3-eps1",
-   "MGr-eps1",
-   "MGr-strm1-eps1",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
    "MGl-eps1",
+   "MGl-eps0.5",
    "M1-eps1",
-   "M1o-eps1 (plain)",
-   "M3o-eps1 (plain)",
    "M1o-eps1",
    "M3o-eps1",
-   "MGr-cap25-eps1"
+   "M1o-eps1 (plain)",
+   "M3o-eps1 (plain)",
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -864,22 +1171,16 @@
    "M3-eps5": [
     "epsilon 5 > 1"
    ],
-   "M1o-eps10": [
-    "epsilon 10 > 1"
-   ],
-   "M1o-eps10 (plain)": [
-    "epsilon 10 > 1"
-   ],
    "M1o-eps5": [
     "epsilon 5 > 1"
    ],
    "M1o-eps5 (plain)": [
     "epsilon 5 > 1"
    ],
-   "M3o-eps10": [
+   "M1o-eps10": [
     "epsilon 10 > 1"
    ],
-   "M3o-eps10 (plain)": [
+   "M1o-eps10 (plain)": [
     "epsilon 10 > 1"
    ],
    "M3o-eps5": [
@@ -888,17 +1189,35 @@
    "M3o-eps5 (plain)": [
     "epsilon 5 > 1"
    ],
-   "MGb-eps10": [
+   "M3o-eps10": [
     "epsilon 10 > 1"
+   ],
+   "M3o-eps10 (plain)": [
+    "epsilon 10 > 1"
+   ],
+   "MGb-eps5": [
+    "epsilon 5 > 1"
    ],
    "MGd-eps10": [
     "epsilon 10 > 1"
+   ],
+   "MGd-eps2": [
+    "epsilon 2 > 1"
+   ],
+   "MGd-eps20": [
+    "epsilon 20 > 1"
    ],
    "MGd-eps5": [
     "epsilon 5 > 1"
    ],
    "MGl-eps10": [
     "epsilon 10 > 1"
+   ],
+   "MGl-eps2": [
+    "epsilon 2 > 1"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 1"
    ],
    "MGl-eps5": [
     "epsilon 5 > 1"
@@ -907,10 +1226,25 @@
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps10": [
-    "epsilon 10 > 1"
+   "MGr-cap50-eps5": [
+    "epsilon 5 > 1"
    ],
-   "MGs-cap25-eps10": [
+   "MGr-eps2": [
+    "epsilon 2 > 1"
+   ],
+   "MGr-eps5": [
+    "epsilon 5 > 1"
+   ],
+   "MGr-strm1-eps5": [
+    "epsilon 5 > 1"
+   ],
+   "MGr-t2-eps5": [
+    "epsilon 5 > 1"
+   ],
+   "MGr-t3-eps5": [
+    "epsilon 5 > 1"
+   ],
+   "MGs-cap100-eps10": [
     "epsilon 10 > 1"
    ],
    "MGs-cap25-eps5": [
@@ -919,17 +1253,23 @@
    "MGs-eps10": [
     "epsilon 10 > 1"
    ],
+   "MGs-eps2": [
+    "epsilon 2 > 1"
+   ],
+   "MGs-eps20": [
+    "epsilon 20 > 1"
+   ],
    "MGs-eps5": [
     "epsilon 5 > 1"
    ],
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
-    "epsilon 10 > 1"
-   ],
-   "MGs-strm2-eps5": [
+   "MGs-strm1-eps5": [
     "epsilon 5 > 1"
+   ],
+   "MGs-strm2-eps10": [
+    "epsilon 10 > 1"
    ],
    "MGs-t2-eps10": [
     "epsilon 10 > 1"
@@ -963,168 +1303,230 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGr-eps10",
+   "label": "MGs-t3-eps10",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "packet",
    "secagg": true,
-   "eps_eff": 9.99999458023253,
-   "tstr_f1": 0.4327417310836014,
-   "tstr_f1_std": 0.0075418242601213,
-   "bin_f1": 0.9152465480277652,
-   "rare_recall": 0.3181666666666667,
-   "mb_round": 0.15757077777777778,
+   "eps_eff": 9.999998485510783,
+   "tstr_f1": 0.4485638795866256,
+   "tstr_f1_std": 0.0054497575161615,
+   "bin_f1": 0.892142250503584,
+   "rare_recall": 0.3456666666666666,
+   "mb_round": 0.15849622222222223,
    "rounds": 3.0,
-   "mb_total": 0.47271233333333335
+   "mb_total": 0.4754886666666666
   },
-  "ties_with_best": [
-   "MGs-eps10"
-  ],
-  "command": "python -m ppfeddata.cli tune-marginal --final --eps 10",
+  "ties_with_best": [],
+  "command": "python -m ppfeddata.cli privacy-units --stage final",
   "front": [
    {
-    "label": "MGr-eps10",
+    "label": "MGs-t3-eps10",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4327417310836014,
-    "tstr_f1_std": 0.0075418242601213,
-    "bin_f1": 0.9152465480277652,
-    "rare_recall": 0.3181666666666667,
-    "mb_round": 0.15757077777777778,
+    "eps_eff": 9.999998485510783,
+    "tstr_f1": 0.4485638795866256,
+    "tstr_f1_std": 0.0054497575161615,
+    "bin_f1": 0.892142250503584,
+    "rare_recall": 0.3456666666666666,
+    "mb_round": 0.15849622222222223,
     "rounds": 3.0,
-    "mb_total": 0.47271233333333335
+    "mb_total": 0.4754886666666666
    },
    {
-    "label": "MGs-eps10",
+    "label": "MGd-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4285058147054687,
-    "tstr_f1_std": 0.0077193655804001,
-    "bin_f1": 0.9058194443750892,
-    "rare_recall": 0.3306166666666666,
-    "mb_round": 0.15758511111111112,
+    "eps_eff": 5.000000000000005,
+    "tstr_f1": 0.4263829566137446,
+    "tstr_f1_std": 0.0055879988155717,
+    "bin_f1": 0.8492677702523682,
+    "rare_recall": 0.32511666666666666,
+    "mb_round": 0.3442810863654585,
     "rounds": 3.0,
-    "mb_total": 0.47275533333333336
+    "mb_total": 1.0328432590963754
    },
    {
-    "label": "MGs-eps5",
+    "label": "MGs-t3-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 4.999997979927501,
-    "tstr_f1": 0.4083561734297294,
-    "tstr_f1_std": 0.0025025915386084,
-    "bin_f1": 0.9014290391662256,
-    "rare_recall": 0.29296666666666665,
-    "mb_round": 0.14937377777777777,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
     "rounds": 3.0,
-    "mb_total": 0.44812133333333337
+    "mb_total": 0.5147243333333333
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
+    "rounds": 3.0,
+    "mb_total": 0.5827326666666668
+   },
+   {
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-t3-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "tstr_f1": 0.3729315203436125,
+    "tstr_f1_std": 0.0291322684077511,
+    "bin_f1": 0.8138684684489382,
+    "rare_recall": 0.23253333333333334,
+    "mb_round": 0.17674066666666666,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.530222
    },
    {
-    "label": "MGr-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3893990943141031,
-    "tstr_f1_std": 0.0095371942854061,
-    "bin_f1": 0.8747844202184053,
-    "rare_recall": 0.2529666666666667,
-    "mb_round": 0.20143677777777771,
+    "tstr_f1": 0.3661722282862964,
+    "tstr_f1_std": 0.0181131875685138,
+    "bin_f1": 0.8133164862685546,
+    "rare_recall": 0.23108333333333334,
+    "mb_round": 0.17657011111111112,
     "rounds": 3.0,
-    "mb_total": 0.6043103333333332
+    "mb_total": 0.5297103333333334
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.4999998389432194,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
-   "MGb-eps10",
-   "MGr-eps10",
-   "MGs-eps10",
    "MGs-t3-eps10",
+   "MGs-eps10",
    "MGd-eps10",
-   "MGs-t2-eps10",
    "MGd-eps5",
-   "MGl-eps10",
-   "MGs-strm1-eps10",
-   "MGs-eps5",
+   "MGr-t2-eps5",
+   "MGr-eps5",
    "MGs-t3-eps5",
+   "MGr-t3-eps5",
+   "MGs-t2-eps10",
    "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "MGs-eps5",
+   "MGs-eps2",
+   "MGl-eps10",
+   "MGb-eps5",
+   "MGs-strm1-eps5",
    "MGl-eps5",
-   "MGs-strm2-eps5",
-   "MGr-strm1-eps1",
+   "MGr-eps2",
+   "MGs-strm2-eps10",
+   "MGd-eps2",
+   "MGr-strm1-eps5",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
    "M1o-eps10",
-   "M1o-eps5 (plain)",
-   "M3o-eps5 (plain)",
-   "M1o-eps5",
-   "M1o-eps10 (plain)",
-   "M3o-eps5",
-   "M1-eps5",
    "MGl-eps1",
+   "M3o-eps5",
+   "M1o-eps5",
+   "M1o-eps5 (plain)",
+   "M1o-eps10 (plain)",
+   "MGl-eps0.5",
+   "M3o-eps5 (plain)",
    "M1-eps10",
+   "M1-eps5",
+   "M3-eps5",
+   "MGr-cap50-eps5",
    "M1-eps1",
+   "M1o-eps1",
    "MGs-cap25-eps5",
    "M1o-eps1 (plain)",
-   "MGs-cap25-eps10",
-   "M1o-eps1",
-   "MGr-cap25-eps1"
+   "MGs-cap100-eps10",
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
     "the server sees the client updates in the clear",
     "no DP",
-    "4.22 MB/round > 2",
-    "127 MB in total > 100"
+    "4.2 MB/round > 2",
+    "126 MB in total > 100"
    ],
    "M2": [
     "no DP",
-    "6.4 MB/round > 2",
-    "192 MB in total > 100"
-   ],
-   "M3-eps5": [
-    "2.25 MB/round > 2"
+    "6.37 MB/round > 2",
+    "191 MB in total > 100"
    ],
    "M3o-eps10": [
-    "2.16 MB/round > 2"
+    "2.24 MB/round > 2",
+    "112 MB in total > 100"
    ],
    "M3o-eps10 (plain)": [
-    "2.16 MB/round > 2"
+    "2.24 MB/round > 2",
+    "112 MB in total > 100"
    ],
    "M3o-eps1": [
-    "2.16 MB/round > 2"
+    "2.24 MB/round > 2"
    ],
    "M3o-eps1 (plain)": [
-    "2.16 MB/round > 2"
+    "2.24 MB/round > 2"
+   ],
+   "MGd-eps20": [
+    "epsilon 20 > 10"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 10"
    ],
    "MGp-nodp": [
     "the server sees the client updates in the clear",
     "no DP"
+   ],
+   "MGs-eps20": [
+    "epsilon 20 > 10"
    ],
    "MGs-nodp": [
     "no DP"
@@ -1149,96 +1551,168 @@
   },
   "priority_metric": "rare_recall",
   "best": {
-   "label": "MGs-eps5",
+   "label": "MGd-eps5",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "packet",
    "secagg": true,
-   "eps_eff": 4.999997979927501,
-   "tstr_f1": 0.4083561734297294,
-   "tstr_f1_std": 0.0025025915386084,
-   "bin_f1": 0.9014290391662256,
-   "rare_recall": 0.29296666666666665,
-   "mb_round": 0.14937377777777777,
+   "eps_eff": 5.000000000000005,
+   "tstr_f1": 0.4263829566137446,
+   "tstr_f1_std": 0.0055879988155717,
+   "bin_f1": 0.8492677702523682,
+   "rare_recall": 0.32511666666666666,
+   "mb_round": 0.3442810863654585,
    "rounds": 3.0,
-   "mb_total": 0.44812133333333337
+   "mb_total": 1.0328432590963754
   },
   "ties_with_best": [],
   "command": "python -m ppfeddata.cli tune-marginal --final --eps 5",
   "front": [
    {
-    "label": "MGs-eps5",
+    "label": "MGd-eps5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 5.000000000000005,
+    "tstr_f1": 0.4263829566137446,
+    "tstr_f1_std": 0.0055879988155717,
+    "bin_f1": 0.8492677702523682,
+    "rare_recall": 0.32511666666666666,
+    "mb_round": 0.3442810863654585,
+    "rounds": 3.0,
+    "mb_total": 1.0328432590963754
+   },
+   {
+    "label": "MGs-t3-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 4.999997979927501,
-    "tstr_f1": 0.4083561734297294,
-    "tstr_f1_std": 0.0025025915386084,
-    "bin_f1": 0.9014290391662256,
-    "rare_recall": 0.29296666666666665,
-    "mb_round": 0.14937377777777777,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
     "rounds": 3.0,
-    "mb_total": 0.44812133333333337
+    "mb_total": 0.5147243333333333
    },
    {
-    "label": "MGr-eps1",
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 1.999999561021908,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
+    "rounds": 3.0,
+    "mb_total": 0.5827326666666668
+   },
+   {
+    "label": "MGs-t3-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3893990943141031,
-    "tstr_f1_std": 0.0095371942854061,
-    "bin_f1": 0.8747844202184053,
-    "rare_recall": 0.2529666666666667,
-    "mb_round": 0.20143677777777771,
+    "tstr_f1": 0.3729315203436125,
+    "tstr_f1_std": 0.0291322684077511,
+    "bin_f1": 0.8138684684489382,
+    "rare_recall": 0.23253333333333334,
+    "mb_round": 0.17674066666666666,
     "rounds": 3.0,
-    "mb_total": 0.6043103333333332
+    "mb_total": 0.530222
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "tstr_f1": 0.3661722282862964,
+    "tstr_f1_std": 0.0181131875685138,
+    "bin_f1": 0.8133164862685546,
+    "rare_recall": 0.23108333333333334,
+    "mb_round": 0.17657011111111112,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.5297103333333334
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.4999998389432194,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
-   "MGs-eps5",
    "MGd-eps5",
+   "MGs-strm1-eps5",
+   "MGr-t2-eps5",
    "MGs-t3-eps5",
-   "MGs-t2-eps5",
-   "MGr-eps1",
-   "MGr-t3-eps1",
-   "MGs-strm2-eps5",
+   "MGr-t3-eps5",
+   "MGr-eps5",
+   "MGr-eps2",
+   "MGs-eps2",
    "MGl-eps5",
-   "MGr-t2-eps1",
-   "MGr-strm1-eps1",
+   "MGb-eps5",
+   "MGs-t2-eps5",
+   "MGs-eps5",
+   "MGr-strm1-eps5",
+   "MGd-eps2",
+   "MGs-t3-eps1",
    "MGs-eps1",
    "MGd-eps1",
-   "M1o-eps5 (plain)",
-   "M1-eps5",
-   "M3o-eps5 (plain)",
-   "M1-eps1",
-   "M3-eps5",
+   "MGs-strm1-eps1",
+   "MGs-t2-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
    "M3o-eps5",
+   "M1o-eps5 (plain)",
+   "M3o-eps5 (plain)",
    "M1o-eps5",
    "MGl-eps1",
-   "MGs-cap25-eps5",
-   "M1o-eps1 (plain)",
-   "M3o-eps1 (plain)",
-   "MGr-cap25-eps1",
+   "MGr-cap50-eps5",
+   "MGl-eps0.5",
+   "M1-eps1",
+   "M3-eps5",
+   "M1-eps5",
+   "MGs-cap25-eps1",
    "M1o-eps1",
-   "M3o-eps1"
+   "M3o-eps1",
+   "MGs-cap25-eps5",
+   "M3o-eps1 (plain)",
+   "M1o-eps1 (plain)"
   ],
   "rejected": {
    "B3": [
@@ -1263,32 +1737,35 @@
    "M3o-eps10 (plain)": [
     "epsilon 10 > 5"
    ],
-   "MGb-eps10": [
-    "epsilon 10 > 5"
-   ],
    "MGd-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGd-eps20": [
+    "epsilon 20 > 5"
+   ],
    "MGl-eps10": [
     "epsilon 10 > 5"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 5"
    ],
    "MGp-nodp": [
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps10": [
-    "epsilon 10 > 5"
-   ],
-   "MGs-cap25-eps10": [
+   "MGs-cap100-eps10": [
     "epsilon 10 > 5"
    ],
    "MGs-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGs-eps20": [
+    "epsilon 20 > 5"
+   ],
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
+   "MGs-strm2-eps10": [
     "epsilon 10 > 5"
    ],
    "MGs-t2-eps10": [
@@ -1322,14 +1799,14 @@
    "dp_mode": "distributed",
    "unit": "packet",
    "secagg": true,
-   "eps_eff": 9.99999458023253,
-   "tstr_f1": 0.4277781314728127,
-   "tstr_f1_std": 0.0081829593958836,
-   "bin_f1": 0.9027156211480656,
-   "rare_recall": 0.3184166666666666,
-   "mb_round": 0.15911322222222224,
+   "eps_eff": 9.999998485510783,
+   "tstr_f1": 0.4485638795866256,
+   "tstr_f1_std": 0.0054497575161615,
+   "bin_f1": 0.892142250503584,
+   "rare_recall": 0.3456666666666666,
+   "mb_round": 0.15849622222222223,
    "rounds": 3.0,
-   "mb_total": 0.4773396666666667
+   "mb_total": 0.4754886666666666
   },
   "ties_with_best": [],
   "command": "python -m ppfeddata.cli privacy-units --stage final",
@@ -1340,14 +1817,29 @@
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 9.99999458023253,
-    "tstr_f1": 0.4277781314728127,
-    "tstr_f1_std": 0.0081829593958836,
-    "bin_f1": 0.9027156211480656,
-    "rare_recall": 0.3184166666666666,
-    "mb_round": 0.15911322222222224,
+    "eps_eff": 9.999998485510783,
+    "tstr_f1": 0.4485638795866256,
+    "tstr_f1_std": 0.0054497575161615,
+    "bin_f1": 0.892142250503584,
+    "rare_recall": 0.3456666666666666,
+    "mb_round": 0.15849622222222223,
     "rounds": 3.0,
-    "mb_total": 0.4773396666666667
+    "mb_total": 0.4754886666666666
+   },
+   {
+    "label": "MGr-t2-eps5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 3.937019293705067,
+    "tstr_f1": 0.4254146261985765,
+    "tstr_f1_std": 0.0105336017650264,
+    "bin_f1": 0.832062637381967,
+    "rare_recall": 0.31,
+    "mb_round": 0.17040044444444447,
+    "rounds": 3.0,
+    "mb_total": 0.5112013333333334
    },
    {
     "label": "MGs-t2-eps10",
@@ -1355,88 +1847,92 @@
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 7.566415249464491,
-    "tstr_f1": 0.4182413798257303,
-    "tstr_f1_std": 0.0026469930274277,
-    "bin_f1": 0.9079805690246866,
-    "rare_recall": 0.30959999999999993,
-    "mb_round": 0.15903222222222224,
+    "eps_eff": 7.610577180418375,
+    "tstr_f1": 0.4196176367695406,
+    "tstr_f1_std": 0.0043873690033025,
+    "bin_f1": 0.846476288225189,
+    "rare_recall": 0.28175,
+    "mb_round": 0.1584431111111111,
     "rounds": 3.0,
-    "mb_total": 0.4770966666666667
+    "mb_total": 0.47532933333333327
    },
    {
-    "label": "MGs-eps5",
+    "label": "MGs-eps2",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 6.833204548508295,
-    "tstr_f1": 0.4083561734297294,
-    "tstr_f1_std": 0.0025025915386084,
-    "bin_f1": 0.9014290391662256,
-    "rare_recall": 0.29296666666666665,
-    "mb_round": 0.14937377777777777,
+    "eps_eff": 2.66195245272469,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
     "rounds": 3.0,
-    "mb_total": 0.44812133333333337
+    "mb_total": 0.5827326666666668
    },
    {
-    "label": "MGs-t2-eps5",
+    "label": "MGr-eps2",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 3.937019293705067,
-    "tstr_f1": 0.3962076601458538,
-    "tstr_f1_std": 0.0054000561556945,
-    "bin_f1": 0.89101652685778,
-    "rare_recall": 0.2596333333333333,
-    "mb_round": 0.14927566666666667,
+    "eps_eff": 2.66195245272469,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
     "rounds": 3.0,
-    "mb_total": 0.447827
+    "mb_total": 0.5827786666666668
    },
    {
-    "label": "MGr-t3-eps1",
-    "method": "MG",
-    "dp_mode": "distributed",
-    "unit": "packet",
-    "secagg": true,
-    "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
-    "rounds": 3.0,
-    "mb_total": 0.6074363333333331
-   },
-   {
-    "label": "MGr-t2-eps1",
+    "label": "MGs-t2-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.8022434331076232,
-    "tstr_f1": 0.3408798028080451,
-    "tstr_f1_std": 0.0266978770002237,
-    "bin_f1": 0.8426145359382237,
-    "rare_recall": 0.19391666666666665,
-    "mb_round": 0.20787344444444442,
+    "tstr_f1": 0.3440225745502257,
+    "tstr_f1_std": 0.0126463569195354,
+    "bin_f1": 0.7993364075739166,
+    "rare_recall": 0.20375,
+    "mb_round": 0.17697466666666667,
     "rounds": 3.0,
-    "mb_total": 0.6236203333333332
+    "mb_total": 0.530924
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.6592221972339961,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
    }
   ],
   "meets": [
    "MGs-t3-eps10",
+   "MGr-t2-eps5",
+   "MGr-eps5",
+   "MGr-t3-eps5",
    "MGs-t2-eps10",
    "MGs-eps5",
-   "MGs-t3-eps5",
-   "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "MGs-eps2",
+   "MGb-eps5",
+   "MGr-eps2",
+   "MGs-t3-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
-   "M1-eps5",
+   "MGs-t2-eps1",
+   "MGs-eps0.5",
    "M1-eps10",
+   "M1-eps5",
    "M1-eps1"
   ],
   "rejected": {
@@ -1451,16 +1947,16 @@
    "M3-eps5": [
     "membership attack not measured"
    ],
-   "M1o-eps10": [
-    "membership attack not measured"
-   ],
-   "M1o-eps10 (plain)": [
-    "membership attack not measured"
-   ],
    "M1o-eps5": [
     "membership attack not measured"
    ],
    "M1o-eps5 (plain)": [
+    "membership attack not measured"
+   ],
+   "M1o-eps10": [
+    "membership attack not measured"
+   ],
+   "M1o-eps10 (plain)": [
     "membership attack not measured"
    ],
    "M1o-eps1": [
@@ -1469,16 +1965,16 @@
    "M1o-eps1 (plain)": [
     "membership attack not measured"
    ],
-   "M3o-eps10": [
-    "membership attack not measured"
-   ],
-   "M3o-eps10 (plain)": [
-    "membership attack not measured"
-   ],
    "M3o-eps5": [
     "membership attack not measured"
    ],
    "M3o-eps5 (plain)": [
+    "membership attack not measured"
+   ],
+   "M3o-eps10": [
+    "membership attack not measured"
+   ],
+   "M3o-eps10 (plain)": [
     "membership attack not measured"
    ],
    "M3o-eps1": [
@@ -1487,8 +1983,8 @@
    "M3o-eps1 (plain)": [
     "membership attack not measured"
    ],
-   "MGb-eps10": [
-    "epsilon 14.1 > 10"
+   "MGd-eps0.5": [
+    "membership attack not measured"
    ],
    "MGd-eps1": [
     "membership attack not measured"
@@ -1497,8 +1993,18 @@
     "epsilon 26.6 > 10",
     "membership attack not measured"
    ],
+   "MGd-eps2": [
+    "membership attack not measured"
+   ],
+   "MGd-eps20": [
+    "epsilon 58.4 > 10",
+    "membership attack not measured"
+   ],
    "MGd-eps5": [
     "epsilon 12.4 > 10",
+    "membership attack not measured"
+   ],
+   "MGl-eps0.5": [
     "membership attack not measured"
    ],
    "MGl-eps1": [
@@ -1507,42 +2013,61 @@
    "MGl-eps10": [
     "membership attack not measured"
    ],
+   "MGl-eps2": [
+    "membership attack not measured"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 10",
+    "membership attack not measured"
+   ],
    "MGl-eps5": [
     "membership attack not measured"
    ],
    "MGp-nodp": [
     "the server sees the client updates in the clear",
     "no DP",
-    "MIA AUC 0.560 >= 0.55"
+    "MIA AUC 0.573 >= 0.55"
    ],
-   "MGr-cap25-eps1": [
+   "MGr-cap50-eps5": [
     "membership attack not measured"
    ],
-   "MGr-eps10": [
-    "epsilon 14.1 > 10"
-   ],
-   "MGr-strm1-eps1": [
+   "MGr-strm1-eps5": [
     "membership attack not measured"
    ],
-   "MGs-cap25-eps10": [
+   "MGs-cap100-eps10": [
     "epsilon 13.5 > 10",
+    "membership attack not measured"
+   ],
+   "MGs-cap25-eps1": [
     "membership attack not measured"
    ],
    "MGs-cap25-eps5": [
     "membership attack not measured"
    ],
    "MGs-eps10": [
-    "epsilon 14.1 > 10"
+    "epsilon 13.9 > 10"
+   ],
+   "MGs-eps20": [
+    "epsilon 29.6 > 10"
    ],
    "MGs-nodp": [
     "no DP",
-    "MIA AUC 0.560 >= 0.55"
+    "MIA AUC 0.573 >= 0.55"
    ],
-   "MGs-strm1-eps10": [
-    "epsilon 14.1 > 10",
+   "MGs-strm1-eps1": [
     "membership attack not measured"
    ],
-   "MGs-strm2-eps5": [
+   "MGs-strm1-eps5": [
+    "membership attack not measured"
+   ],
+   "MGs-strm2-eps10": [
+    "epsilon 13.5 > 10",
+    "membership attack not measured"
+   ],
+   "MGs-t2-eps5": [
+    "membership attack not measured"
+   ],
+   "MGs-t3-eps5": [
     "membership attack not measured"
    ]
   }
@@ -1565,94 +2090,162 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-t2-eps5",
+   "label": "MGr-t2-eps5",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "packet",
    "secagg": true,
    "eps_eff": 3.937019293705067,
-   "tstr_f1": 0.3962076601458538,
-   "tstr_f1_std": 0.0054000561556945,
-   "bin_f1": 0.89101652685778,
-   "rare_recall": 0.2596333333333333,
-   "mb_round": 0.14927566666666667,
+   "tstr_f1": 0.4254146261985765,
+   "tstr_f1_std": 0.0105336017650264,
+   "bin_f1": 0.832062637381967,
+   "rare_recall": 0.31,
+   "mb_round": 0.17040044444444447,
    "rounds": 3.0,
-   "mb_total": 0.447827
+   "mb_total": 0.5112013333333334
   },
   "ties_with_best": [
-   "MGr-t3-eps1"
+   "MGs-t3-eps5"
   ],
   "command": "python -m ppfeddata.cli privacy-units --stage final",
   "front": [
    {
-    "label": "MGs-t2-eps5",
+    "label": "MGr-t2-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 3.937019293705067,
-    "tstr_f1": 0.3962076601458538,
-    "tstr_f1_std": 0.0054000561556945,
-    "bin_f1": 0.89101652685778,
-    "rare_recall": 0.2596333333333333,
-    "mb_round": 0.14927566666666667,
+    "tstr_f1": 0.4254146261985765,
+    "tstr_f1_std": 0.0105336017650264,
+    "bin_f1": 0.832062637381967,
+    "rare_recall": 0.31,
+    "mb_round": 0.17040044444444447,
     "rounds": 3.0,
-    "mb_total": 0.447827
+    "mb_total": 0.5112013333333334
    },
    {
-    "label": "MGr-t3-eps1",
+    "label": "MGs-t3-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
-    "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.392105396465033,
-    "tstr_f1_std": 0.0117489451156506,
-    "bin_f1": 0.875135329562478,
-    "rare_recall": 0.25079999999999997,
-    "mb_round": 0.20247877777777773,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.419817076317874,
+    "tstr_f1_std": 0.0110390292039044,
+    "bin_f1": 0.8543213994472768,
+    "rare_recall": 0.30811666666666665,
+    "mb_round": 0.17157477777777777,
     "rounds": 3.0,
-    "mb_total": 0.6074363333333331
+    "mb_total": 0.5147243333333333
    },
    {
-    "label": "MGr-t2-eps1",
+    "label": "MGs-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 2.66195245272469,
+    "tstr_f1": 0.4069380105730917,
+    "tstr_f1_std": 0.013328551627885,
+    "bin_f1": 0.8242367366078948,
+    "rare_recall": 0.28328333333333333,
+    "mb_round": 0.19424422222222223,
+    "rounds": 3.0,
+    "mb_total": 0.5827326666666668
+   },
+   {
+    "label": "MGr-eps2",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 2.66195245272469,
+    "tstr_f1": 0.3940748001617202,
+    "tstr_f1_std": 0.016629053747651,
+    "bin_f1": 0.8245141416875598,
+    "rare_recall": 0.28545,
+    "mb_round": 0.19425955555555557,
+    "rounds": 3.0,
+    "mb_total": 0.5827786666666668
+   },
+   {
+    "label": "MGs-t2-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "packet",
     "secagg": true,
     "eps_eff": 0.8022434331076232,
-    "tstr_f1": 0.3408798028080451,
-    "tstr_f1_std": 0.0266978770002237,
-    "bin_f1": 0.8426145359382237,
-    "rare_recall": 0.19391666666666665,
-    "mb_round": 0.20787344444444442,
+    "tstr_f1": 0.3440225745502257,
+    "tstr_f1_std": 0.0126463569195354,
+    "bin_f1": 0.7993364075739166,
+    "rare_recall": 0.20375,
+    "mb_round": 0.17697466666666667,
     "rounds": 3.0,
-    "mb_total": 0.6236203333333332
+    "mb_total": 0.530924
+   },
+   {
+    "label": "MGs-eps0.5",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "packet",
+    "secagg": true,
+    "eps_eff": 0.6592221972339961,
+    "tstr_f1": 0.317381528829541,
+    "tstr_f1_std": 0.0044504353586525,
+    "bin_f1": 0.78994347697652,
+    "rare_recall": 0.17846666666666666,
+    "mb_round": 0.16570233333333334,
+    "rounds": 3.0,
+    "mb_total": 0.497107
+   },
+   {
+    "label": "MGl-eps0.5",
+    "method": "MG",
+    "dp_mode": "local",
+    "unit": "packet",
+    "secagg": false,
+    "eps_eff": 0.5000000000000009,
+    "tstr_f1": 0.2243594742435569,
+    "tstr_f1_std": 0.02542828087093,
+    "bin_f1": 0.7285970300391108,
+    "rare_recall": 0.077,
+    "mb_round": 0.32628122210481897,
+    "rounds": 3.0,
+    "mb_total": 0.9788436663144569
    }
   ],
   "meets": [
+   "MGr-t2-eps5",
    "MGs-t3-eps5",
+   "MGr-t3-eps5",
    "MGs-t2-eps5",
-   "MGr-t3-eps1",
-   "MGr-eps1",
+   "MGs-eps2",
    "MGl-eps5",
-   "MGr-strm1-eps1",
+   "MGr-eps2",
+   "MGd-eps2",
+   "MGs-t3-eps1",
    "MGd-eps1",
    "MGs-eps1",
-   "MGr-t2-eps1",
-   "M1o-eps5 (plain)",
-   "M3o-eps5 (plain)",
-   "M1o-eps5",
+   "MGs-t2-eps1",
+   "MGs-strm1-eps1",
+   "MGl-eps2",
+   "MGs-eps0.5",
+   "MGd-eps0.5",
+   "MGl-eps1",
    "M3o-eps5",
+   "M1o-eps5",
+   "M1o-eps5 (plain)",
+   "MGl-eps0.5",
+   "M3o-eps5 (plain)",
    "M1-eps5",
    "M3-eps5",
-   "MGl-eps1",
    "M1-eps1",
-   "M1o-eps1 (plain)",
-   "M3o-eps1 (plain)",
    "M1o-eps1",
    "M3o-eps1",
-   "MGr-cap25-eps1"
+   "M1o-eps1 (plain)",
+   "M3o-eps1 (plain)",
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -1677,11 +2270,14 @@
    "M3o-eps10 (plain)": [
     "epsilon 10 > 5"
    ],
-   "MGb-eps10": [
-    "epsilon 14.1 > 5"
+   "MGb-eps5": [
+    "epsilon 6.83 > 5"
    ],
    "MGd-eps10": [
     "epsilon 26.6 > 5"
+   ],
+   "MGd-eps20": [
+    "epsilon 58.4 > 5"
    ],
    "MGd-eps5": [
     "epsilon 12.4 > 5"
@@ -1689,21 +2285,33 @@
    "MGl-eps10": [
     "epsilon 10 > 5"
    ],
+   "MGl-eps20": [
+    "epsilon 20 > 5"
+   ],
    "MGp-nodp": [
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps10": [
-    "epsilon 14.1 > 5"
+   "MGr-cap50-eps5": [
+    "epsilon 6.75 > 5"
    ],
-   "MGs-cap25-eps10": [
+   "MGr-eps5": [
+    "epsilon 6.83 > 5"
+   ],
+   "MGr-strm1-eps5": [
+    "epsilon 6.83 > 5"
+   ],
+   "MGs-cap100-eps10": [
     "epsilon 13.5 > 5"
    ],
    "MGs-cap25-eps5": [
     "epsilon 6.75 > 5"
    ],
    "MGs-eps10": [
-    "epsilon 14.1 > 5"
+    "epsilon 13.9 > 5"
+   ],
+   "MGs-eps20": [
+    "epsilon 29.6 > 5"
    ],
    "MGs-eps5": [
     "epsilon 6.83 > 5"
@@ -1711,14 +2319,14 @@
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
-    "epsilon 14.1 > 5"
+   "MGs-strm1-eps5": [
+    "epsilon 6.83 > 5"
    ],
-   "MGs-strm2-eps5": [
-    "epsilon 6.77 > 5"
+   "MGs-strm2-eps10": [
+    "epsilon 13.5 > 5"
    ],
    "MGs-t2-eps10": [
-    "epsilon 7.57 > 5"
+    "epsilon 7.61 > 5"
    ],
    "MGs-t3-eps10": [
     "epsilon 10 > 5"
@@ -1743,59 +2351,61 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-strm2-eps5",
+   "label": "MGs-strm1-eps5",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "stream",
    "secagg": true,
-   "eps_eff": 4.999999924785361,
-   "tstr_f1": 0.3713670557119419,
-   "tstr_f1_std": 0.004407487575468,
-   "bin_f1": 0.8595497698737519,
-   "rare_recall": 0.24868333333333334,
-   "mb_round": 0.1493061111111111,
+   "eps_eff": 4.999997979927501,
+   "tstr_f1": 0.3971054862953476,
+   "tstr_f1_std": 0.010481985122367,
+   "bin_f1": 0.8292728067163594,
+   "rare_recall": 0.31016666666666665,
+   "mb_round": 0.168254,
    "rounds": 3.0,
-   "mb_total": 0.44791833333333336
+   "mb_total": 0.504762
   },
   "ties_with_best": [],
   "command": "python -m ppfeddata.cli privacy-units --stage final",
   "front": [
    {
-    "label": "MGs-strm2-eps5",
+    "label": "MGs-strm1-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "stream",
     "secagg": true,
-    "eps_eff": 4.999999924785361,
-    "tstr_f1": 0.3713670557119419,
-    "tstr_f1_std": 0.004407487575468,
-    "bin_f1": 0.8595497698737519,
-    "rare_recall": 0.24868333333333334,
-    "mb_round": 0.1493061111111111,
+    "eps_eff": 4.999997979927501,
+    "tstr_f1": 0.3971054862953476,
+    "tstr_f1_std": 0.010481985122367,
+    "bin_f1": 0.8292728067163594,
+    "rare_recall": 0.31016666666666665,
+    "mb_round": 0.168254,
     "rounds": 3.0,
-    "mb_total": 0.44791833333333336
+    "mb_total": 0.504762
    },
    {
-    "label": "MGr-strm1-eps1",
+    "label": "MGs-strm1-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "stream",
     "secagg": true,
     "eps_eff": 0.9999998342281304,
-    "tstr_f1": 0.3526942740106606,
-    "tstr_f1_std": 0.0087201691459068,
-    "bin_f1": 0.8076713628678339,
-    "rare_recall": 0.18951666666666667,
-    "mb_round": 0.195004,
+    "tstr_f1": 0.3335960964883038,
+    "tstr_f1_std": 0.0250869235548692,
+    "bin_f1": 0.790758891187008,
+    "rare_recall": 0.21993333333333331,
+    "mb_round": 0.1716267777777778,
     "rounds": 3.0,
-    "mb_total": 0.585012
+    "mb_total": 0.5148803333333334
    }
   ],
   "meets": [
-   "MGs-strm2-eps5",
-   "MGr-strm1-eps1",
+   "MGs-strm1-eps5",
+   "MGr-strm1-eps5",
+   "MGs-strm1-eps1",
+   "MGr-cap50-eps5",
    "MGs-cap25-eps5",
-   "MGr-cap25-eps1"
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -1818,6 +2428,12 @@
    "M3-eps5": [
     "epsilon protects one packet, not one stream"
    ],
+   "M1o-eps5": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "M1o-eps5 (plain)": [
+    "epsilon protects one packet, not one stream"
+   ],
    "M1o-eps10": [
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
@@ -1826,16 +2442,16 @@
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
    ],
-   "M1o-eps5": [
-    "epsilon protects one packet, not one stream"
-   ],
-   "M1o-eps5 (plain)": [
-    "epsilon protects one packet, not one stream"
-   ],
    "M1o-eps1": [
     "epsilon protects one packet, not one stream"
    ],
    "M1o-eps1 (plain)": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "M3o-eps5": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "M3o-eps5 (plain)": [
     "epsilon protects one packet, not one stream"
    ],
    "M3o-eps10": [
@@ -1846,20 +2462,16 @@
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
    ],
-   "M3o-eps5": [
-    "epsilon protects one packet, not one stream"
-   ],
-   "M3o-eps5 (plain)": [
-    "epsilon protects one packet, not one stream"
-   ],
    "M3o-eps1": [
     "epsilon protects one packet, not one stream"
    ],
    "M3o-eps1 (plain)": [
     "epsilon protects one packet, not one stream"
    ],
-   "MGb-eps10": [
-    "epsilon 10 > 5",
+   "MGb-eps5": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "MGd-eps0.5": [
     "epsilon protects one packet, not one stream"
    ],
    "MGd-eps1": [
@@ -1869,7 +2481,17 @@
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
    ],
+   "MGd-eps2": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "MGd-eps20": [
+    "epsilon 20 > 5",
+    "epsilon protects one packet, not one stream"
+   ],
    "MGd-eps5": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "MGl-eps0.5": [
     "epsilon protects one packet, not one stream"
    ],
    "MGl-eps1": [
@@ -1879,6 +2501,13 @@
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
    ],
+   "MGl-eps2": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 5",
+    "epsilon protects one packet, not one stream"
+   ],
    "MGl-eps5": [
     "epsilon protects one packet, not one stream"
    ],
@@ -1886,21 +2515,23 @@
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps1": [
+   "MGr-eps2": [
     "epsilon protects one packet, not one stream"
    ],
-   "MGr-eps10": [
-    "epsilon 10 > 5",
+   "MGr-eps5": [
     "epsilon protects one packet, not one stream"
    ],
-   "MGr-t2-eps1": [
+   "MGr-t2-eps5": [
     "epsilon protects one packet, not one stream"
    ],
-   "MGr-t3-eps1": [
+   "MGr-t3-eps5": [
     "epsilon protects one packet, not one stream"
    ],
-   "MGs-cap25-eps10": [
+   "MGs-cap100-eps10": [
     "epsilon 10 > 5"
+   ],
+   "MGs-eps0.5": [
+    "epsilon protects one packet, not one stream"
    ],
    "MGs-eps1": [
     "epsilon protects one packet, not one stream"
@@ -1909,20 +2540,33 @@
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
    ],
+   "MGs-eps2": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "MGs-eps20": [
+    "epsilon 20 > 5",
+    "epsilon protects one packet, not one stream"
+   ],
    "MGs-eps5": [
     "epsilon protects one packet, not one stream"
    ],
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
+   "MGs-strm2-eps10": [
     "epsilon 10 > 5"
+   ],
+   "MGs-t2-eps1": [
+    "epsilon protects one packet, not one stream"
    ],
    "MGs-t2-eps10": [
     "epsilon 10 > 5",
     "epsilon protects one packet, not one stream"
    ],
    "MGs-t2-eps5": [
+    "epsilon protects one packet, not one stream"
+   ],
+   "MGs-t3-eps1": [
     "epsilon protects one packet, not one stream"
    ],
    "MGs-t3-eps10": [
@@ -1952,58 +2596,74 @@
   },
   "priority_metric": "tstr_f1",
   "best": {
-   "label": "MGs-cap25-eps5",
+   "label": "MGr-cap50-eps5",
    "method": "MG",
    "dp_mode": "distributed",
    "unit": "capture",
    "secagg": true,
-   "eps_eff": 4.999999429872367,
-   "tstr_f1": 0.2028790425226199,
-   "tstr_f1_std": 0.0373216573849497,
-   "bin_f1": 0.7625333939664567,
-   "rare_recall": 0.08184999999999999,
-   "mb_round": 0.15815355555555552,
+   "eps_eff": 4.999999255613143,
+   "tstr_f1": 0.1768774365267379,
+   "tstr_f1_std": 0.0198043496300421,
+   "bin_f1": 0.7213916840774823,
+   "rare_recall": 0.10496666666666667,
+   "mb_round": 0.4304278888888889,
    "rounds": 3.0,
-   "mb_total": 0.47446066666666664
+   "mb_total": 1.2912836666666665
   },
   "ties_with_best": [],
   "command": "python -m ppfeddata.cli privacy-units --stage final",
   "front": [
    {
-    "label": "MGs-cap25-eps5",
+    "label": "MGr-cap50-eps5",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "capture",
     "secagg": true,
-    "eps_eff": 4.999999429872367,
-    "tstr_f1": 0.2028790425226199,
-    "tstr_f1_std": 0.0373216573849497,
-    "bin_f1": 0.7625333939664567,
-    "rare_recall": 0.08184999999999999,
-    "mb_round": 0.15815355555555552,
+    "eps_eff": 4.999999255613143,
+    "tstr_f1": 0.1768774365267379,
+    "tstr_f1_std": 0.0198043496300421,
+    "bin_f1": 0.7213916840774823,
+    "rare_recall": 0.10496666666666667,
+    "mb_round": 0.4304278888888889,
     "rounds": 3.0,
-    "mb_total": 0.47446066666666664
+    "mb_total": 1.2912836666666665
    },
    {
-    "label": "MGr-cap25-eps1",
+    "label": "MGs-cap100-eps10",
+    "method": "MG",
+    "dp_mode": "distributed",
+    "unit": "capture",
+    "secagg": true,
+    "eps_eff": 9.999998664079609,
+    "tstr_f1": 0.1477037982919848,
+    "tstr_f1_std": 0.0214798483947393,
+    "bin_f1": 0.6939952499052859,
+    "rare_recall": 0.012366666666666666,
+    "mb_round": 0.2083543333333333,
+    "rounds": 3.0,
+    "mb_total": 0.625063
+   },
+   {
+    "label": "MGs-cap25-eps1",
     "method": "MG",
     "dp_mode": "distributed",
     "unit": "capture",
     "secagg": true,
     "eps_eff": 0.99999983269484,
-    "tstr_f1": 0.1540240711199277,
-    "tstr_f1_std": 0.0092814619359578,
-    "bin_f1": 0.6723990122277099,
-    "rare_recall": 0.05065,
-    "mb_round": 0.7650386666666666,
+    "tstr_f1": 0.0907885750587832,
+    "tstr_f1_std": 0.0372939660582955,
+    "bin_f1": 0.445940905100448,
+    "rare_recall": 0.04218333333333333,
+    "mb_round": 0.44449644444444447,
     "rounds": 3.0,
-    "mb_total": 2.295116
+    "mb_total": 1.3334893333333335
    }
   ],
   "meets": [
+   "MGr-cap50-eps5",
    "MGs-cap25-eps5",
-   "MGs-cap25-eps10",
-   "MGr-cap25-eps1"
+   "MGs-cap100-eps10",
+   "MGs-cap25-eps1"
   ],
   "rejected": {
    "B3": [
@@ -2025,16 +2685,16 @@
    "M3-eps5": [
     "epsilon protects one packet, not one capture"
    ],
-   "M1o-eps10": [
-    "epsilon protects one packet, not one capture"
-   ],
-   "M1o-eps10 (plain)": [
-    "epsilon protects one packet, not one capture"
-   ],
    "M1o-eps5": [
     "epsilon protects one packet, not one capture"
    ],
    "M1o-eps5 (plain)": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "M1o-eps10": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "M1o-eps10 (plain)": [
     "epsilon protects one packet, not one capture"
    ],
    "M1o-eps1": [
@@ -2043,16 +2703,16 @@
    "M1o-eps1 (plain)": [
     "epsilon protects one packet, not one capture"
    ],
-   "M3o-eps10": [
-    "epsilon protects one packet, not one capture"
-   ],
-   "M3o-eps10 (plain)": [
-    "epsilon protects one packet, not one capture"
-   ],
    "M3o-eps5": [
     "epsilon protects one packet, not one capture"
    ],
    "M3o-eps5 (plain)": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "M3o-eps10": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "M3o-eps10 (plain)": [
     "epsilon protects one packet, not one capture"
    ],
    "M3o-eps1": [
@@ -2061,7 +2721,10 @@
    "M3o-eps1 (plain)": [
     "epsilon protects one packet, not one capture"
    ],
-   "MGb-eps10": [
+   "MGb-eps5": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGd-eps0.5": [
     "epsilon protects one packet, not one capture"
    ],
    "MGd-eps1": [
@@ -2070,13 +2733,30 @@
    "MGd-eps10": [
     "epsilon protects one packet, not one capture"
    ],
+   "MGd-eps2": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGd-eps20": [
+    "epsilon 20 > 10",
+    "epsilon protects one packet, not one capture"
+   ],
    "MGd-eps5": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGl-eps0.5": [
     "epsilon protects one packet, not one capture"
    ],
    "MGl-eps1": [
     "epsilon protects one packet, not one capture"
    ],
    "MGl-eps10": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGl-eps2": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGl-eps20": [
+    "epsilon 20 > 10",
     "epsilon protects one packet, not one capture"
    ],
    "MGl-eps5": [
@@ -2086,19 +2766,22 @@
     "the server sees the client updates in the clear",
     "no DP"
    ],
-   "MGr-eps1": [
+   "MGr-eps2": [
     "epsilon protects one packet, not one capture"
    ],
-   "MGr-eps10": [
+   "MGr-eps5": [
     "epsilon protects one packet, not one capture"
    ],
-   "MGr-strm1-eps1": [
+   "MGr-strm1-eps5": [
     "epsilon protects one stream, not one capture"
    ],
-   "MGr-t2-eps1": [
+   "MGr-t2-eps5": [
     "epsilon protects one packet, not one capture"
    ],
-   "MGr-t3-eps1": [
+   "MGr-t3-eps5": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGs-eps0.5": [
     "epsilon protects one packet, not one capture"
    ],
    "MGs-eps1": [
@@ -2107,22 +2790,38 @@
    "MGs-eps10": [
     "epsilon protects one packet, not one capture"
    ],
+   "MGs-eps2": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGs-eps20": [
+    "epsilon 20 > 10",
+    "epsilon protects one packet, not one capture"
+   ],
    "MGs-eps5": [
     "epsilon protects one packet, not one capture"
    ],
    "MGs-nodp": [
     "no DP"
    ],
-   "MGs-strm1-eps10": [
+   "MGs-strm1-eps1": [
     "epsilon protects one stream, not one capture"
    ],
-   "MGs-strm2-eps5": [
+   "MGs-strm1-eps5": [
     "epsilon protects one stream, not one capture"
+   ],
+   "MGs-strm2-eps10": [
+    "epsilon protects one stream, not one capture"
+   ],
+   "MGs-t2-eps1": [
+    "epsilon protects one packet, not one capture"
    ],
    "MGs-t2-eps10": [
     "epsilon protects one packet, not one capture"
    ],
    "MGs-t2-eps5": [
+    "epsilon protects one packet, not one capture"
+   ],
+   "MGs-t3-eps1": [
     "epsilon protects one packet, not one capture"
    ],
    "MGs-t3-eps10": [

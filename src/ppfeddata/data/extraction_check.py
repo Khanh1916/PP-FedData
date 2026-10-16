@@ -347,6 +347,57 @@ def check_normal_pcap(root: Path, extractor, tshark: str, capinfos: str, normal_
     return out
 
 
+def check_normal_authors(root: Path, decisions: dict[str, Any], broker: str, new_name: str,
+                         old_name: str = "CSV_Extracted_Split") -> list[dict[str, Any]]:
+    """The Normal CSV extracted again with the authors' settings (`extract-normal`) against the group's first extraction, per capture:
+    its frames are a subset of the first one (none missing), which senders it keeps, whether its time delta is the gap to the previous
+    kept packet, and per column the share of equal values on the common frames. The first extraction is read part by part (memory)."""
+    nd = root / "NormalData"
+    new_dir, old_dir = nd / new_name, nd / old_name
+    out = []
+    for marker in sorted(new_dir.glob("*.done.json")):
+        m = json.loads(marker.read_text(encoding="utf-8"))
+        prefix = marker.name[:-len(".done.json")]
+        new = read_csvs(sorted(new_dir.glob(f"{prefix}_part[0-9][0-9][0-9].csv")))
+        new_no = pd.to_numeric(new["No."], errors="coerce").to_numpy() if len(new) else np.array([])
+        t = pd.to_numeric(new.get("Epoch Time", pd.Series(dtype=str)), errors="coerce").to_numpy()
+        d = pd.to_numeric(new.get("Time delta from previous displayed frame", pd.Series(dtype=str)), errors="coerce").to_numpy()
+        gap = np.r_[0.0, np.diff(t)] if len(t) else t
+        r: dict[str, Any] = {"pcap": m["pcap"], "rows_new": int(len(new)), "rows_recorded": int(m["rows"]),
+                             "frames_increasing": bool(len(new_no) == 0 or np.all(np.diff(new_no) > 0)),
+                             "labels": sorted(new["Label"].unique()) if len(new) else [], "capture_ids": sorted(new["Capture_ID"].unique()) if len(new) else [],
+                             "delta_is_gap_to_previous_kept": float(np.mean(np.abs(d - gap) < 1e-6)) if len(d) else float("nan")}
+        by_sender = {k: {"packets": 0, "kept": 0} for k in ("client", "broker", "non-IP")}
+        acc: dict[str, dict[str, Any]] = {}
+        rows_old = common = missing = 0
+        for p in sorted(old_dir.glob(f"{prefix}_part[0-9][0-9][0-9].csv")):
+            old = read_csvs([p])
+            rows_old += len(old)
+            ono = pd.to_numeric(old["No."], errors="coerce").to_numpy()
+            pop = population(old, broker).to_numpy()
+            kept = np.isin(ono, new_no)
+            for k in by_sender:
+                by_sender[k]["packets"] += int((pop == k).sum())
+                by_sender[k]["kept"] += int(((pop == k) & kept).sum())
+            sel = new[(new_no >= ono.min()) & (new_no <= ono.max())]
+            if not len(sel):
+                continue
+            c = compare(sel, old, decisions)
+            common += c["rows_common"]
+            missing += c["only_official"]
+            for col, v in c["columns"].items():
+                a = acc.setdefault(col, {"role": v["role"], "used": v["used"], "n": 0, "match": 0.0, "raw": 0.0})
+                a["n"] += c["rows_common"]
+                a["match"] += v["match"] * c["rows_common"]
+                a["raw"] += v["raw_match"] * c["rows_common"]
+        r.update(rows_old=rows_old, rows_common=common, frames_missing_in_old=missing, by_sender=by_sender,
+                 columns={col: {"role": a["role"], "used": a["used"], "match": a["match"] / a["n"], "raw_match": a["raw"] / a["n"]}
+                          for col, a in acc.items() if a["n"]})
+        logger.info("normal_authors %s: %d rows (first extraction %d), %d not found there", m["pcap"], len(new), rows_old, missing)
+        out.append(r)
+    return out
+
+
 def broker_from(out: dict[str, Any]) -> str | None:
     """The broker's address as found by checks 1 and 2 (most frequent)."""
     seen = [r["kept"]["broker"] for r in out.get("method") or [] if (r.get("kept") or {}).get("broker")]
@@ -475,7 +526,7 @@ def tool_versions(tshark: str) -> dict[str, str]:
     return {"tshark": first([tshark, "--version"])}
 
 
-STAGES = ("kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact")
+STAGES = ("kaggle", "method", "normal_csv", "normal_pcap", "recipe", "impact", "normal_authors")
 
 
 def run(cfg: dict[str, Any], extractor_path: str | Path, stages: tuple[str, ...] = STAGES,
@@ -504,7 +555,7 @@ def run(cfg: dict[str, Any], extractor_path: str | Path, stages: tuple[str, ...]
         out["normal_csv"] = check_normal_csv(root)
     if "normal_pcap" in stages:
         out["normal_pcap"] = check_normal_pcap(root, ext, tshark, capinfos, out["normal_csv"], work, reextract or [])
-    if "recipe" in stages or "impact" in stages:
+    if "recipe" in stages or "impact" in stages or "normal_authors" in stages:
         broker = broker_from(out)
         if broker is None:
             raise RuntimeError("the broker's address is not known yet: run the method or normal_csv stage first")
@@ -512,6 +563,9 @@ def run(cfg: dict[str, Any], extractor_path: str | Path, stages: tuple[str, ...]
             out["recipe"] = check_recipe(root, ext, tshark, decisions, work, broker, only)
         if "impact" in stages:
             out["impact"] = check_impact(cfg, broker)
+        if "normal_authors" in stages:
+            from ppfeddata.data.normal_extract import OUT_DIR
+            out["normal_authors"] = check_normal_authors(root, decisions, broker, OUT_DIR)
     p.write_text(json.dumps(to_jsonable(out), indent=1), encoding="utf-8")
     (res_dir / "reports" / "data_provenance.md").write_text(render(out), encoding="utf-8")
     return out
@@ -542,6 +596,10 @@ def render(out: dict[str, Any]) -> str:
          "The Kaggle release (alaaalatram/dosddos-mqtt-iot) has the authors' CSV for 48 attack captures (one more file is empty) and no CSV for the "
          "Normal captures, which the group extracted from PCAP with `tools/extract_normal_pcap.py`. "
          f"Tools: {', '.join(f'{k} {v}'.rstrip('.') for k, v in (out.get('versions') or {}).items())}.", ""]
+    if out.get("normal_authors"):
+        L += ["**Since round R** the study uses the Normal traffic extracted with the authors' export settings (section 6). Sections 2, 3 and 5 describe the "
+              "first extraction (every packet, one pass), kept in `NormalData/CSV_Extracted_Split` as the reference; section 5 measured its weight on the "
+              "results of the first study.", ""]
     kg = out.get("kaggle")
     if kg:
         L += ["## 0. The local files against the Kaggle release", "",
@@ -670,6 +728,32 @@ def render(out: dict[str, Any]) -> str:
               "| seed | trained on all rows, all test rows | trained on all rows, client-sent test rows | trained on client-sent rows, client-sent test rows |",
               "|---|---|---|---|"]
         L += [f"| {r['seed']} | {r['train_all_test_all']:.3f} | {r['train_all_test_client']:.3f} | {r['train_client_test_client']:.3f} |" for r in im["rf_retrain"]]
+    na = out.get("normal_authors") or []
+    if na:
+        ok = [r for r in na if r["rows_new"] == r["rows_recorded"] and r["frames_increasing"] and r["frames_missing_in_old"] == 0
+              and r["labels"] == ["Normal"] and r["capture_ids"] == [r["pcap"]]]
+        tot = {k: sum(r["by_sender"][k]["packets"] for r in na) for k in ("client", "broker", "non-IP")}
+        kept = {k: sum(r["by_sender"][k]["kept"] for r in na) for k in ("client", "broker", "non-IP")}
+        dg = [r["delta_is_gap_to_previous_kept"] for r in na if r["rows_new"]]
+        L += ["", "## 6. The Normal traffic extracted again with the authors' settings", "",
+              "`extract-normal`: the same script with `-2` and `-Y ip.dst==<broker>` (module `data/normal_extract.py`), into its own folder; the first "
+              f"extraction is kept. {len(na)} captures, {sum(r['rows_new'] for r in na):,} rows (first extraction: {sum(r['rows_old'] for r in na):,}). "
+              f"Rows = rows recorded, frame numbers increasing, every frame also in the first extraction, label Normal, capture id = the PCAP path: "
+              f"**{len(ok)} of {len(na)}** captures.", "",
+              "| sender (first extraction) | packets | kept | share kept |", "|---|---|---|---|"]
+        L += [f"| {k} | {tot[k]:,} | {kept[k]:,} | {_pct(kept[k] / tot[k] if tot[k] else float('nan'), 1)} |" for k in ("client", "broker", "non-IP")]
+        if dg:
+            L += ["", f"Time delta equal to the gap to the previous kept packet: {_pct(min(dg))} to {_pct(max(dg))} of the rows of each capture."]
+        cols = [r for r in na if r.get("columns") and r["rows_common"]]
+        if cols:
+            n = sum(r["rows_common"] for r in cols)
+            names = list(cols[0]["columns"])
+            L += ["", f"Per column, the new rows against the same frames of the first extraction ({n:,} rows):", "",
+                  "| column | used by the models | match | raw string equal |", "|---|---|---|---|"]
+            for c in names:
+                mt = sum(r["columns"][c]["match"] * r["rows_common"] for r in cols if c in r["columns"]) / n
+                rw = sum(r["columns"][c]["raw_match"] * r["rows_common"] for r in cols if c in r["columns"]) / n
+                L.append(f"| `{c}` | {'yes' if cols[0]['columns'][c]['used'] else 'no'} | {_pct(mt, 3)} | {_pct(rw, 1)} |")
     if out.get("extraction_command"):
         L += ["", "## Extraction command", "", "```", out["extraction_command"], "```"]
     return "\n".join(L) + "\n"

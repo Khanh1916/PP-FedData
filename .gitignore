@@ -5,6 +5,10 @@ configs/local.yaml
 data/*
 !data/.gitkeep
 
+# Round R: the outputs of the first study (Normal extracted without the authors' filter), kept as a backup
+/data_v1/
+/artifacts_v1/
+
 # Artifacts
 artifacts/*/
 artifacts/*.db

@@ -85,6 +85,9 @@ def provenance_text(pv: dict[str, Any]) -> str:
             "the Normal rows also hold the packets sent by the broker, their time gap is measured to the previous packet of either direction and iRTT is empty on "
             "their SYN packets.")
     npk, rc, im = pv.get("normal_pcap") or {}, pv.get("recipe") or [], pv.get("impact") or {}
+    na = pv.get("normal_authors") or []
+    if na and rc:                                             # round R: the Normal PCAP extracted again with the authors' settings
+        return round_r_text(pv)
     if not (npk.get("packets") and rc and im.get("shift")):
         return base + " Re-extracting the Normal PCAP with the authors' settings and re-running the study is left for later."
     pk = [r for r in npk["packets"] if r.get("present")]
@@ -116,6 +119,34 @@ def provenance_text(pv: dict[str, Any]) -> str:
         d = [r["train_client_test_client"] - r["train_all_test_client"] for r in rf]
         text += f"; an RF trained without the broker-sent rows changes its score on those rows by {min(d):+.3f} to {max(d):+.3f}"
     return text + ". Re-extracting the Normal PCAP with the authors' settings and re-running the study is left for later."
+
+
+def round_r_text(pv: dict[str, Any]) -> str:
+    """The provenance item after round R: the Normal rows come from the authors' export settings; what remains is the one capture the authors
+    exported with both directions, and the first extraction (every packet) of the first study."""
+    rc, na, im = pv.get("recipe") or [], pv.get("normal_authors") or [], pv.get("impact") or {}
+    flt: dict[str, list[str]] = {}
+    for r in rc:
+        if r.get("filter"):
+            flt.setdefault(r["filter"], []).append(r["capture"])
+    main = max(flt, key=lambda f: len(flt[f])) if flt else None
+    others = [(f, caps) for f, caps in flt.items() if f != main]
+    rows = sum(r["rows_new"] for r in na)
+    ok = sum(r["rows_new"] == r["rows_recorded"] and r["frames_missing_in_old"] == 0 for r in na)
+    dg = [r["delta_is_gap_to_previous_kept"] for r in na if r["rows_new"]]
+    share = (im.get("broker_share") or {}).get("train", {}).get("NORMAL")
+    syn = (im.get("broker_share") or {}).get("train", {}).get("SYN")
+    text = ("The attack rows are the CSV exports of the dataset's authors; the release has no CSV of the Normal traffic, so the group extracted it from the Normal "
+            f"PCAP with the authors' export settings: two-pass dissection and the display filter `{main}` (only the packets sent to the broker), the settings that "
+            f"reproduce the authors' rows exactly in {len(flt.get(main, []))} of {len(rc)} attack captures. ")
+    for f, caps in others:
+        text += (f"The authors exported {', '.join(caps)} with `{f}` (both directions); it is used as published, so the SYN class also holds packets sent by the broker"
+                 + (f" ({pct(syn)} of its train rows)" if syn is not None else "") + ". ")
+    text += (f"The Normal extraction ({rows:,} rows) is checked in {ok} of {len(na)} captures (one row per kept frame, none missing from a full extraction of the "
+             f"same PCAP) and its time gap is the gap to the previous kept packet in {pct(min(dg)) if dg else 'n/a'} of the rows. The first study used a one-pass "
+             "extraction of every packet" + (f" ({pct(share)} of its Normal train rows were packets sent by the broker)" if share is not None else "")
+             + "; round R re-ran the study on the new extraction, and the first results stay in the git history.")
+    return text
 
 
 def load_manifest(cfg: dict[str, Any]) -> dict[str, Any] | None:
@@ -239,7 +270,8 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         text = ("Most sub-classes come from a single capture file, so their validation and test rows are consecutive blocks of the same capture. Dropping the TCP streams that straddle "
                 "two blocks removes a share of the eligible rows (a bias toward short connections); the split manifest was not found, so the shares are not shown.")
     add("Block splits inside one capture", text, f"results/manifests/split_manifest_{cfg.get('label_mode', '6class')}.json; SPEC_DEVIATIONS 3.3, 3.5")   # no <mode>: Markdown would hide it as an HTML tag
-    add("Normal and attack rows exported differently", provenance_text(load_provenance(cfg)), "results/reports/data_provenance.md; SPEC_DEVIATIONS 17.1-17.4")
+    add("Normal rows extracted by the group" if (load_provenance(cfg).get("normal_authors")) else "Normal and attack rows exported differently",
+        provenance_text(load_provenance(cfg)), "results/reports/data_provenance.md; SPEC_DEVIATIONS 17.1-17.4, R.1")
     add("Protocol filter",
         "Only rows with protocol TCP or MQTT are kept. The filter removes about 0.5 % of the Normal rows and the 128 RIPv2 rows of the attack data.", "SPEC_DEVIATIONS 2.9, 3.5")
     pol = (sch or {}).get("settings", {}).get("multi_policy", "first_only")
@@ -278,10 +310,13 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     add("Intervals and verdicts",
         "The intervals and verdicts of section 9 reflect the sampling of test rows (or of whole streams) and three training seeds only. They do not cover the choice of capture groups, "
         "the hyper-parameters or the data sampling.", "section 9")
+    fc = (_read(Path(cfg["compute"]["runs_csv"]).parent / "fed_classifier.json") or {}) if (cfg.get("compute") or {}).get("runs_csv") else {}
+    smote = "FedMLPsm" in (fc.get("classifiers") or {})
     add("What was not compared",
         "The CVAE was the premise of the spec; the optimisation round compared it with one other generator, FedDP-Marginal, which the framework now uses (section 9.9b). "
-        "Training the classifier itself by FL was tested with and without the protections (section 9.9). Not tested: FLAIM / AIM (Private-PGM was not installed), "
-        "DP-CTGAN or other deep generators in the federation, federated SMOTE, a classifier trained by FL with distributed DP.", "sections 9.9, 9.9b; SPEC_DEVIATIONS 12.10, O3.2")
+        "Training the classifier itself by FL was tested with and without the protections" + (", and with federated SMOTE (round R)" if smote else "") + " (section 9.9). "
+        "Not tested: FLAIM / AIM (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation, " + ("" if smote else "federated SMOTE, ")
+        + "a classifier trained by FL with distributed DP.", "sections 9.9, 9.9b; SPEC_DEVIATIONS 12.10, O3.2" + (", R.6" if smote else ""))
     # optimisation round (spec v1.5): FedDP-Marginal
     add("Distributed DP assumes honest clients",
         "The distributed variant of FedDP-Marginal splits the noise over the clients: its epsilon holds when every client adds its share. If only h of the K clients do (the others "

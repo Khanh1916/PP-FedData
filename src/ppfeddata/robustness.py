@@ -9,7 +9,7 @@ Runs (`ppfeddata robustness`), all at the settings chosen for 6 classes:
 - MGs eps 5 through Flower SecAgg+, seed 0: Dirichlet alpha 0.1 and 10 (5 clients), 10 and 20 clients (alpha 0.5) -> `MGs-a0.1-eps5`, ...
 - MGl eps 5, 3 seeds: 10 and 20 clients -> `MGl-k10-eps5`, `MGl-k20-eps5`;
 - 11 classes (label_mode 11class, rare classes = train quota <= 5,000 rows): B0 (RF, MLP), MGs eps 1/5/10 and MGr where O3.3 chose a
-  post-processing, 3 seeds.
+  post-processing, 3 seeds; round R adds the CVAE without DP (B3, `b3 --label-mode 11class`, extension A3), 3 seeds.
 The report (`results/robustness.json`, `results/reports/robustness.md`) reads the run ledger: TSTR macro-F1 with the classifier chosen on
 validation, binary F1, rare-class recall, epsilon (and with one honest client), MB per run.
 """
@@ -99,7 +99,9 @@ def report(cfg: dict[str, Any]) -> dict[str, Any]:
     local = [r for r in [_rows(d6, "MGl-eps5", rare6)] + [_rows(d6, f"MGl-{t}-eps5", rare6) for t in ("k10", "k20")] if r]
     c11 = [r for r in [_baseline(d11, "B0-rf", rare11), _baseline(d11, "B0-mlp", rare11)] if r]
     c11 += [r for r in (_rows(d11, f"MG{v}-eps{e:g}", rare11) for v in ("s", "r") for e in (1.0, 5.0, 10.0)) if r]
-    ref6 = [r for r in [_baseline(d6, "B0-rf", rare6), _baseline(d6, "B0-mlp", rare6)] + [_rows(d6, f"MGs-eps{e:g}", rare6) for e in (1.0, 5.0, 10.0)] if r]
+    c11 += [r for r in [_rows(d11, "B3", rare11)] if r]                  # A3 for the CVAE (round R): `b3 --label-mode 11class`
+    ref6 = [r for r in [_baseline(d6, "B0-rf", rare6), _baseline(d6, "B0-mlp", rare6)] + [_rows(d6, f"MGs-eps{e:g}", rare6) for e in (1.0, 5.0, 10.0)]
+            + [_rows(d6, "B3", rare6)] if r]
     out = {"federation_distributed": fed, "federation_local": local, "eleven_classes": c11, "six_classes_reference": ref6,
            "rare_6class": rare6, "rare_11class": rare11}
     res = Path(cfg["compute"]["runs_csv"]).parent

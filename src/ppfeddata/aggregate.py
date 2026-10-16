@@ -193,8 +193,9 @@ def entries(summ: pd.DataFrame, fam: dict[str, str] | None = None) -> list[dict[
         E.append(dict(label="M3-eps5", color="dpsa", eps=5, cfgs=gen(f"{fam['M3']}-eps5-plain")))
     # FedDP-Marginal (optimisation round, spec v1.5): the framework's generator. MG = distributed Skellam noise through Flower SecAgg+, with the
     # post-processing of O3.3 where it was chosen (MGr); MGl = local DP (no trust in the other clients)
+    from ppfeddata.tune_marginal import framework_name
     for e in (1, 5, 10):
-        pre = f"MGr-eps{e}" if f"MGr-eps{e}-TSTR-rf" in names and e == 1 else f"MGs-eps{e}"
+        pre = framework_name(e) if f"{framework_name(e)}-TSTR-rf" in names else f"MGs-eps{e}"      # round R: MGr wherever chosen on validation
         E.append(dict(label=f"MG-eps{e}", color="dpsa", eps=e, cfgs=gen(pre), generator="FedDP-Marginal"))
     for e in (1, 5, 10):
         E.append(dict(label=f"MGl-eps{e}", color="dp", eps=e, cfgs=gen(f"MGl-eps{e}"), generator="FedDP-Marginal"))

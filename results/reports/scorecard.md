@@ -5,69 +5,82 @@ Utility on the real test split, mean ± std over seeds; the classifier of each p
 
 | configuration | valid | front | TSTR macro-F1 | binary F1 | rare recall | TAug gain | TAugR gain (ratio) | ε | SecAgg | MIA AUC (model) | C2ST AUC | MB / round | rounds | MB total | FL time (s) |
 |---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
-| B3 (mlp) | yes | **yes** | 0.420 ± 0.014 | 0.929 ± 0.007 | 0.367 ± 0.036 | 0.001 ± 0.001 | 0.000 ± 0.001 (0.25) | ∞ | no | 0.500 | 1.000 | 4.22 | 30 | 127 | 84 |
-| M1-eps1 (rf) | yes | no | 0.227 ± 0.030 | 0.805 ± 0.050 | 0.132 ± 0.019 | 0.000 ± 0.001 | n/a | 1.00 | no | 0.497 | 1.000 | 1.46 | 30 | 44 | 279 |
-| M1-eps5 (mlp) | yes | no | 0.258 ± 0.018 | 0.859 ± 0.029 | 0.158 ± 0.028 | -0.001 ± 0.001 | n/a | 5.00 | no | 0.496 | 1.000 | 1.46 | 30 | 44 | 272 |
-| M1-eps10 (mlp) | yes | no | 0.243 ± 0.037 | 0.827 ± 0.051 | 0.112 ± 0.043 | -0.000 ± 0.001 | n/a | 10.00 | no | 0.496 | 1.000 | 1.46 | 30 | 44 | 290 |
-| M2 (mlp) | yes | no | 0.417 ± 0.006 | 0.924 ± 0.009 | 0.308 ± 0.005 | 0.001 ± 0.001 | 0.001 ± 0.001 (2) | ∞ | yes | n/a | 1.000 | 6.40 | 30 | 192 | 87 |
-| M3-eps5 (mlp) | yes | no | 0.256 ± 0.030 | 0.837 ± 0.034 | 0.130 ± 0.041 | 0.000 ± 0.001 | n/a | 5.00 | yes | n/a | 1.000 | 2.25 | 30 | 68 | 277 |
-| M1-eps1 (residual noise) (mlp) | no | no | 0.266 ± 0.025 | 0.847 ± 0.055 | 0.151 ± 0.042 | 0.000 ± 0.001 | n/a | 1.00 | no | n/a | 1.000 | 1.46 | 30 | 44 | 279 |
-| M1-eps5 (residual noise) (mlp) | no | no | 0.285 ± 0.023 | 0.887 ± 0.018 | 0.163 ± 0.016 | -0.000 ± 0.001 | n/a | 5.00 | no | n/a | 1.000 | 1.46 | 30 | 44 | 272 |
-| M1-eps10 (residual noise) (mlp) | no | no | 0.292 ± 0.004 | 0.880 ± 0.005 | 0.169 ± 0.012 | 0.000 ± 0.001 | n/a | 10.00 | no | n/a | 1.000 | 1.46 | 30 | 44 | 290 |
-| M3-eps5 (residual noise) (rf) | no | no | 0.294 ± 0.028 | 0.874 ± 0.023 | 0.168 ± 0.025 | 0.000 ± 0.001 | n/a | 5.00 | yes | n/a | 1.000 | 2.25 | 30 | 68 | 277 |
-| M1o-eps10 (mlp) | yes | no | 0.289 ± 0.040 | 0.850 ± 0.041 | 0.132 ± 0.057 | 0.001 ± 0.001 | n/a | 10.00 | no | n/a | 1.000 | 1.40 | 30 | 42 | 268 |
-| M1o-eps10 (plain) (rf) | yes | no | 0.271 ± 0.061 | 0.790 ± 0.042 | 0.152 ± 0.083 | 0.000 ± 0.001 | n/a | 10.00 | no | n/a | 1.000 | 1.40 | 30 | 42 | 268 |
-| M1o-eps5 (mlp) | yes | no | 0.271 ± 0.025 | 0.882 ± 0.025 | 0.120 ± 0.036 | -0.000 ± 0.001 | n/a | 5.00 | no | n/a | 1.000 | 0.54 | 50 | 27 | 122 |
-| M1o-eps5 (plain) (mlp) | yes | no | 0.287 ± 0.027 | 0.800 ± 0.021 | 0.168 ± 0.036 | -0.000 ± 0.001 | n/a | 5.00 | no | n/a | 1.000 | 0.54 | 50 | 27 | 122 |
-| M1o-eps1 (mlp) | yes | no | 0.182 ± 0.019 | 0.694 ± 0.030 | 0.051 ± 0.023 | 0.000 ± 0.001 | n/a | 1.00 | no | n/a | 1.000 | 1.40 | 30 | 42 | 490 |
-| M1o-eps1 (plain) (mlp) | yes | no | 0.195 ± 0.052 | 0.636 ± 0.032 | 0.077 ± 0.058 | 0.000 ± 0.001 | n/a | 1.00 | no | n/a | 1.000 | 1.40 | 30 | 42 | 490 |
-| M3o-eps10 (mlp) | yes | no | 0.261 ± 0.059 | 0.816 ± 0.055 | 0.114 ± 0.071 | 0.000 ± 0.001 | n/a | 10.00 | yes | n/a | 1.000 | 2.16 | 30 | 65 | 277 |
-| M3o-eps10 (plain) (mlp) | yes | no | 0.263 ± 0.073 | 0.824 ± 0.058 | 0.148 ± 0.103 | 0.000 ± 0.001 | n/a | 10.00 | yes | n/a | 1.000 | 2.16 | 30 | 65 | 277 |
-| M3o-eps5 (mlp) | yes | no | 0.261 ± 0.010 | 0.812 ± 0.012 | 0.127 ± 0.019 | -0.000 ± 0.001 | n/a | 5.00 | yes | n/a | 1.000 | 0.87 | 50 | 43 | 140 |
-| M3o-eps5 (plain) (mlp) | yes | no | 0.272 ± 0.017 | 0.847 ± 0.008 | 0.157 ± 0.045 | -0.000 ± 0.001 | n/a | 5.00 | yes | n/a | 1.000 | 0.87 | 50 | 43 | 140 |
-| M3o-eps1 (mlp) | yes | no | 0.170 ± 0.015 | 0.688 ± 0.081 | 0.037 ± 0.017 | 0.001 ± 0.001 | n/a | 1.00 | yes | n/a | 1.000 | 2.16 | 30 | 65 | 507 |
-| M3o-eps1 (plain) (mlp) | yes | no | 0.184 ± 0.044 | 0.611 ± 0.043 | 0.063 ± 0.048 | 0.000 ± 0.001 | n/a | 1.00 | yes | n/a | 1.000 | 2.16 | 30 | 65 | 507 |
-| MGb-eps10 (rf) | yes | **yes** | 0.433 ± 0.010 | 0.906 ± 0.005 | 0.323 ± 0.011 | 0.001 ± 0.001 | 0.002 ± 0.001 (2) | 10.00 (36.0) | yes | 0.548 | 0.999 | 0.39 | 3 | 1.16 | 1 |
-| MGd-eps1 (rf) | yes | **yes** | 0.349 ± 0.026 | 0.821 ± 0.008 | 0.187 ± 0.025 | 0.000 ± 0.001 | n/a | 1.00 (2.3) | yes | n/a | 1.000 | 0.44 | 3 | 1.32 | 1 |
-| MGd-eps10 (mlp) | yes | **yes** | 0.427 ± 0.008 | 0.897 ± 0.016 | 0.312 ± 0.011 | 0.001 ± 0.001 | n/a | 10.00 (26.6) | yes | n/a | 0.999 | 0.31 | 3 | 0.92 | 1 |
-| MGd-eps5 (mlp) | yes | **yes** | 0.417 ± 0.009 | 0.909 ± 0.007 | 0.291 ± 0.008 | 0.000 ± 0.001 | n/a | 5.00 (12.4) | yes | n/a | 1.000 | 0.28 | 3 | 0.83 | 1 |
-| MGl-eps1 (rf) | yes | no | 0.253 ± 0.029 | 0.773 ± 0.041 | 0.087 ± 0.026 | -0.001 ± 0.001 | n/a | 1.00 | no | n/a | 1.000 | 0.52 | 3 | 1.56 | 1 |
-| MGl-eps10 (rf) | yes | **yes** | 0.413 ± 0.007 | 0.899 ± 0.009 | 0.306 ± 0.008 | 0.001 ± 0.001 | n/a | 10.00 | no | n/a | 1.000 | 0.31 | 3 | 0.93 | 1 |
-| MGl-eps5 (rf) | yes | no | 0.374 ± 0.010 | 0.866 ± 0.017 | 0.226 ± 0.008 | -0.000 ± 0.001 | n/a | 5.00 | no | n/a | 1.000 | 0.28 | 3 | 0.83 | 1 |
-| MGp-nodp (mlp) | yes | **yes** | 0.444 ± 0.017 | 0.908 ± 0.009 | 0.335 ± 0.030 | -0.002 ± 0.001 | n/a | ∞ | no | 0.560 | 0.999 | 0.13 | 3 | 0.39 | 21 |
-| MGr-cap25-eps1 (mlp) | yes | no | 0.154 ± 0.009 | 0.672 ± 0.021 | 0.051 ± 0.011 | -0.001 ± 0.001 | n/a | 1.00 (2.4) | yes | n/a | 1.000 | 0.77 | 3 | 2.30 | 23 |
-| MGr-eps1 (rf) | yes | **yes** | 0.389 ± 0.010 | 0.875 ± 0.011 | 0.253 ± 0.012 | -0.002 ± 0.001 | n/a | 1.00 (2.4) | yes | 0.514 | 1.000 | 0.20 | 3 | 0.60 | 20 |
-| MGr-eps10 (mlp) | yes | no | 0.433 ± 0.008 | 0.915 ± 0.007 | 0.318 ± 0.005 | 0.001 ± 0.001 | n/a | 10.00 (36.0) | yes | 0.531 | 1.000 | 0.16 | 3 | 0.47 | 22 |
-| MGr-strm1-eps1 (mlp) | yes | no | 0.353 ± 0.009 | 0.808 ± 0.023 | 0.190 ± 0.007 | 0.000 ± 0.001 | n/a | 1.00 (2.4) | yes | n/a | 1.000 | 0.20 | 3 | 0.59 | 25 |
-| MGr-t2-eps1 (rf) | yes | no | 0.341 ± 0.027 | 0.843 ± 0.017 | 0.194 ± 0.030 | -0.002 ± 0.002 | n/a | 1.00 (1.5) | yes | 0.506 | 1.000 | 0.21 | 3 | 0.62 | 26 |
-| MGr-t3-eps1 (rf) | yes | no | 0.392 ± 0.012 | 0.875 ± 0.009 | 0.251 ± 0.021 | -0.001 ± 0.002 | n/a | 1.00 (1.8) | yes | 0.511 | 1.000 | 0.20 | 3 | 0.61 | 25 |
-| MGs-cap25-eps10 (rf) | yes | no | 0.195 ± 0.023 | 0.708 ± 0.016 | 0.072 ± 0.034 | 0.000 ± 0.001 | n/a | 10.00 (27.5) | yes | n/a | 1.000 | 0.23 | 3 | 0.68 | 22 |
-| MGs-cap25-eps5 (rf) | yes | no | 0.203 ± 0.037 | 0.763 ± 0.060 | 0.082 ± 0.038 | 0.000 ± 0.001 | n/a | 5.00 (13.0) | yes | n/a | 1.000 | 0.16 | 3 | 0.47 | 26 |
-| MGs-eps1 (rf) | yes | no | 0.342 ± 0.008 | 0.825 ± 0.008 | 0.189 ± 0.018 | -0.002 ± 0.001 | 0.000 ± 0.001 (1) | 1.00 (2.4) | yes | 0.512 | 1.000 | 0.20 | 3 | 0.60 | 22 |
-| MGs-eps10 (mlp) | yes | **yes** | 0.429 ± 0.008 | 0.906 ± 0.011 | 0.331 ± 0.021 | 0.002 ± 0.001 | 0.001 ± 0.001 (1) | 10.00 (36.0) | yes | 0.531 | 1.000 | 0.16 | 3 | 0.47 | 19 |
-| MGs-eps5 (rf) | yes | **yes** | 0.408 ± 0.003 | 0.901 ± 0.002 | 0.293 ± 0.007 | 0.001 ± 0.001 | 0.000 ± 0.001 (2) | 5.00 (14.2) | yes | 0.522 | 1.000 | 0.15 | 3 | 0.45 | 21 |
-| MGs-nodp (mlp) | yes | no | 0.444 ± 0.017 | 0.908 ± 0.009 | 0.335 ± 0.030 | -0.002 ± 0.001 | n/a | ∞ | yes | 0.560 | 0.999 | 0.17 | 3 | 0.52 | 23 |
-| MGs-strm1-eps10 (mlp) | yes | no | 0.409 ± 0.011 | 0.872 ± 0.030 | 0.293 ± 0.023 | 0.000 ± 0.001 | n/a | 10.00 (36.0) | yes | n/a | 1.000 | 0.16 | 3 | 0.47 | 23 |
-| MGs-strm2-eps5 (rf) | yes | no | 0.371 ± 0.004 | 0.860 ± 0.010 | 0.249 ± 0.010 | 0.001 ± 0.001 | n/a | 5.00 (13.3) | yes | n/a | 1.000 | 0.15 | 3 | 0.45 | 24 |
-| MGs-t2-eps10 (rf) | yes | no | 0.418 ± 0.003 | 0.908 ± 0.002 | 0.310 ± 0.011 | 0.001 ± 0.001 | n/a | 10.00 (16.3) | yes | 0.532 | 0.999 | 0.16 | 3 | 0.48 | 25 |
-| MGs-t2-eps5 (rf) | yes | no | 0.396 ± 0.005 | 0.891 ± 0.003 | 0.260 ± 0.016 | 0.001 ± 0.001 | n/a | 5.00 (7.6) | yes | 0.511 | 1.000 | 0.15 | 3 | 0.45 | 24 |
-| MGs-t3-eps10 (mlp) | yes | no | 0.428 ± 0.008 | 0.903 ± 0.007 | 0.318 ± 0.010 | 0.002 ± 0.001 | n/a | 10.00 (23.3) | yes | 0.525 | 0.999 | 0.16 | 3 | 0.48 | 26 |
-| MGs-t3-eps5 (mlp) | yes | no | 0.408 ± 0.025 | 0.897 ± 0.042 | 0.269 ± 0.023 | 0.000 ± 0.001 | n/a | 5.00 (10.1) | yes | 0.520 | 1.000 | 0.15 | 3 | 0.44 | 26 |
+| B3 (mlp) | yes | **yes** | 0.413 ± 0.005 | 0.904 ± 0.011 | 0.361 ± 0.025 | 0.001 ± 0.001 | 0.000 ± 0.001 (0.25) | ∞ | no | 0.506 | 1.000 | 4.20 | 30 | 126 | 87 |
+| M1-eps1 (mlp) | yes | no | 0.176 ± 0.008 | 0.750 ± 0.041 | 0.068 ± 0.013 | -0.000 ± 0.000 | 0.001 ± 0.000 (0.25) | 1.00 | no | 0.502 | 1.000 | 0.56 | 30 | 17 | 138 |
+| M1-eps5 (rf) | yes | no | 0.186 ± 0.009 | 0.761 ± 0.008 | 0.055 ± 0.020 | 0.001 ± 0.001 | 0.000 ± 0.001 (1) | 5.00 | no | 0.499 | 1.000 | 0.56 | 30 | 17 | 138 |
+| M1-eps10 (mlp) | yes | no | 0.189 ± 0.021 | 0.775 ± 0.025 | 0.061 ± 0.037 | -0.001 ± 0.001 | 0.000 ± 0.000 (0.25) | 10.00 | no | 0.497 | 1.000 | 0.56 | 30 | 17 | 137 |
+| M2 (mlp) | yes | no | 0.419 ± 0.008 | 0.896 ± 0.022 | 0.361 ± 0.039 | 0.001 ± 0.001 | 0.000 ± 0.000 (0.5) | ∞ | yes | n/a | 1.000 | 6.37 | 30 | 191 | 89 |
+| M3-eps5 (mlp) | yes | no | 0.178 ± 0.010 | 0.771 ± 0.016 | 0.059 ± 0.023 | 0.001 ± 0.001 | 0.000 ± 0.000 (0.5) | 5.00 | yes | n/a | 1.000 | 0.91 | 30 | 27 | 140 |
+| M1-eps1 (residual noise) (mlp) | no | no | 0.233 ± 0.036 | 0.782 ± 0.074 | 0.105 ± 0.050 | 0.001 ± 0.000 | n/a | 1.00 | no | n/a | 1.000 | 0.56 | 30 | 17 | 138 |
+| M1-eps5 (residual noise) (mlp) | no | no | 0.269 ± 0.008 | 0.860 ± 0.024 | 0.163 ± 0.037 | 0.000 ± 0.000 | n/a | 5.00 | no | n/a | 1.000 | 0.56 | 30 | 17 | 138 |
+| M1-eps10 (residual noise) (mlp) | no | no | 0.260 ± 0.015 | 0.860 ± 0.038 | 0.131 ± 0.029 | 0.001 ± 0.001 | n/a | 10.00 | no | n/a | 1.000 | 0.56 | 30 | 17 | 137 |
+| M3-eps5 (residual noise) (mlp) | no | no | 0.263 ± 0.016 | 0.844 ± 0.035 | 0.141 ± 0.044 | 0.001 ± 0.000 | n/a | 5.00 | yes | n/a | 1.000 | 0.91 | 30 | 27 | 140 |
+| M1o-eps5 (mlp) | yes | no | 0.244 ± 0.012 | 0.810 ± 0.064 | 0.121 ± 0.052 | 0.001 ± 0.001 | 0.000 ± 0.001 (2) | 5.00 | no | n/a | 1.000 | 0.56 | 15 | 8.43 | 129 |
+| M1o-eps5 (plain) (mlp) | yes | no | 0.233 ± 0.038 | 0.817 ± 0.062 | 0.127 ± 0.042 | 0.000 ± 0.001 | 0.000 ± 0.001 (0.25) | 5.00 | no | n/a | 1.000 | 0.56 | 15 | 8.43 | 129 |
+| M1o-eps10 (mlp) | yes | no | 0.275 ± 0.015 | 0.799 ± 0.051 | 0.146 ± 0.060 | 0.000 ± 0.000 | 0.001 ± 0.000 (0.5) | 10.00 | no | n/a | 1.000 | 1.45 | 50 | 72 | 724 |
+| M1o-eps10 (plain) (mlp) | yes | no | 0.232 ± 0.015 | 0.820 ± 0.019 | 0.139 ± 0.010 | -0.000 ± 0.001 | 0.001 ± 0.000 (0.5) | 10.00 | no | n/a | 1.000 | 1.45 | 50 | 72 | 724 |
+| M1o-eps1 (rf) | yes | no | 0.167 ± 0.038 | 0.676 ± 0.077 | 0.042 ± 0.027 | -0.000 ± 0.000 | 0.000 ± 0.001 (1) | 1.00 | no | n/a | 1.000 | 1.45 | 30 | 43 | 448 |
+| M1o-eps1 (plain) (mlp) | yes | no | 0.153 ± 0.019 | 0.724 ± 0.052 | 0.020 ± 0.014 | 0.000 ± 0.001 | 0.000 ± 0.001 (0.25) | 1.00 | no | n/a | 1.000 | 1.45 | 30 | 43 | 448 |
+| M3o-eps5 (mlp) | yes | no | 0.254 ± 0.013 | 0.814 ± 0.061 | 0.132 ± 0.063 | 0.001 ± 0.001 | 0.000 ± 0.001 (2) | 5.00 | yes | n/a | 1.000 | 0.91 | 15 | 14 | 136 |
+| M3o-eps5 (plain) (mlp) | yes | no | 0.219 ± 0.024 | 0.816 ± 0.048 | 0.121 ± 0.025 | 0.000 ± 0.000 | -0.000 ± 0.000 (0.5) | 5.00 | yes | n/a | 1.000 | 0.91 | 15 | 14 | 136 |
+| M3o-eps10 (mlp) | yes | no | 0.271 ± 0.017 | 0.806 ± 0.046 | 0.122 ± 0.029 | 0.001 ± 0.001 | 0.001 ± 0.001 (2) | 10.00 | yes | n/a | 1.000 | 2.24 | 50 | 112 | 741 |
+| M3o-eps10 (plain) (mlp) | yes | no | 0.262 ± 0.045 | 0.817 ± 0.022 | 0.154 ± 0.043 | -0.000 ± 0.001 | -0.001 ± 0.001 (0.25) | 10.00 | yes | n/a | 1.000 | 2.24 | 50 | 112 | 741 |
+| M3o-eps1 (rf) | yes | no | 0.162 ± 0.033 | 0.677 ± 0.036 | 0.041 ± 0.037 | -0.000 ± 0.001 | 0.001 ± 0.001 (2) | 1.00 | yes | n/a | 1.000 | 2.24 | 30 | 67 | 458 |
+| M3o-eps1 (plain) (rf) | yes | no | 0.153 ± 0.007 | 0.691 ± 0.017 | 0.020 ± 0.008 | -0.000 ± 0.001 | 0.000 ± 0.001 (0.25) | 1.00 | yes | n/a | 1.000 | 2.24 | 30 | 67 | 458 |
+| MGb-eps5 (rf) | yes | **yes** | 0.403 ± 0.003 | 0.830 ± 0.004 | 0.277 ± 0.006 | -0.001 ± 0.000 | 0.000 ± 0.001 (1) | 5.00 (14.2) | yes | 0.523 | 1.000 | 0.24 | 3 | 0.71 | 1 |
+| MGd-eps0.5 (rf) | yes | **yes** | 0.304 ± 0.005 | 0.791 ± 0.017 | 0.160 ± 0.006 | -0.000 ± 0.000 | 0.000 ± 0.001 (0.25) | 0.50 (1.1) | yes | n/a | 1.000 | 0.32 | 3 | 0.96 | 1 |
+| MGd-eps1 (rf) | yes | **yes** | 0.373 ± 0.023 | 0.819 ± 0.006 | 0.230 ± 0.022 | -0.001 ± 0.001 | 0.000 ± 0.000 (1) | 1.00 (2.3) | yes | n/a | 1.000 | 0.35 | 3 | 1.06 | 1 |
+| MGd-eps10 (mlp) | yes | **yes** | 0.432 ± 0.001 | 0.859 ± 0.005 | 0.305 ± 0.007 | 0.000 ± 0.001 | 0.001 ± 0.001 (0.25) | 10.00 (26.6) | yes | n/a | 1.000 | 0.31 | 3 | 0.93 | 1 |
+| MGd-eps2 (rf) | yes | **yes** | 0.381 ± 0.011 | 0.826 ± 0.025 | 0.247 ± 0.010 | -0.000 ± 0.001 | 0.001 ± 0.000 (0.5) | 2.00 (4.7) | yes | n/a | 1.000 | 0.41 | 3 | 1.22 | 1 |
+| MGd-eps20 (mlp) | yes | **yes** | 0.434 ± 0.004 | 0.847 ± 0.001 | 0.317 ± 0.007 | 0.001 ± 0.001 | 0.001 ± 0.000 (1) | 20.00 (58.4) | yes | n/a | 1.000 | 0.31 | 3 | 0.92 | 1 |
+| MGd-eps5 (rf) | yes | **yes** | 0.426 ± 0.006 | 0.849 ± 0.009 | 0.325 ± 0.003 | -0.001 ± 0.001 | 0.000 ± 0.000 (1) | 5.00 (12.4) | yes | n/a | 1.000 | 0.34 | 3 | 1.03 | 1 |
+| MGl-eps0.5 (rf) | yes | no | 0.224 ± 0.025 | 0.729 ± 0.028 | 0.077 ± 0.025 | -0.000 ± 0.001 | 0.000 ± 0.000 (0.5) | 0.50 | no | n/a | 1.000 | 0.33 | 3 | 0.98 | 1 |
+| MGl-eps1 (rf) | yes | no | 0.267 ± 0.021 | 0.774 ± 0.033 | 0.117 ± 0.014 | -0.000 ± 0.001 | -0.001 ± 0.001 (2) | 1.00 | no | n/a | 1.000 | 0.38 | 3 | 1.13 | 1 |
+| MGl-eps10 (mlp) | yes | no | 0.406 ± 0.015 | 0.828 ± 0.014 | 0.277 ± 0.024 | 0.001 ± 0.001 | 0.000 ± 0.000 (0.5) | 10.00 | no | n/a | 1.000 | 0.31 | 3 | 0.94 | 1 |
+| MGl-eps2 (mlp) | yes | no | 0.328 ± 0.011 | 0.765 ± 0.007 | 0.183 ± 0.003 | 0.000 ± 0.001 | 0.000 ± 0.000 (1) | 2.00 | no | n/a | 1.000 | 0.44 | 3 | 1.31 | 1 |
+| MGl-eps20 (mlp) | yes | no | 0.424 ± 0.015 | 0.843 ± 0.006 | 0.291 ± 0.028 | 0.001 ± 0.000 | 0.001 ± 0.001 (0.25) | 20.00 | no | n/a | 1.000 | 0.31 | 3 | 0.94 | 1 |
+| MGl-eps5 (rf) | yes | no | 0.397 ± 0.006 | 0.825 ± 0.005 | 0.279 ± 0.002 | -0.001 ± 0.001 | -0.000 ± 0.001 (1) | 5.00 | no | n/a | 1.000 | 0.35 | 3 | 1.05 | 1 |
+| MGp-nodp (mlp) | yes | **yes** | 0.459 ± 0.007 | 0.885 ± 0.009 | 0.367 ± 0.005 | 0.002 ± 0.001 | 0.001 ± 0.000 (0.25) | ∞ | no | 0.573 | 0.999 | 0.11 | 3 | 0.34 | 20 |
+| MGr-cap50-eps5 (rf) | yes | no | 0.177 ± 0.020 | 0.721 ± 0.065 | 0.105 ± 0.037 | 0.001 ± 0.000 | n/a | 5.00 (13.0) | yes | n/a | 1.000 | 0.43 | 3 | 1.29 | 20 |
+| MGr-eps2 (rf) | yes | **yes** | 0.394 ± 0.017 | 0.825 ± 0.012 | 0.285 ± 0.017 | -0.001 ± 0.000 | 0.001 ± 0.001 (0.5) | 2.00 (5.0) | yes | 0.511 | 1.000 | 0.19 | 3 | 0.58 | 20 |
+| MGr-eps5 (mlp) | yes | no | 0.425 ± 0.004 | 0.824 ± 0.011 | 0.301 ± 0.011 | -0.001 ± 0.001 | -0.000 ± 0.001 (0.25) | 5.00 (14.2) | yes | 0.525 | 1.000 | 0.17 | 3 | 0.51 | 20 |
+| MGr-strm1-eps5 (mlp) | yes | no | 0.376 ± 0.007 | 0.787 ± 0.012 | 0.254 ± 0.016 | 0.000 ± 0.000 | n/a | 5.00 (14.2) | yes | n/a | 1.000 | 0.17 | 3 | 0.50 | 21 |
+| MGr-t2-eps5 (mlp) | yes | no | 0.425 ± 0.011 | 0.832 ± 0.011 | 0.310 ± 0.011 | -0.001 ± 0.001 | n/a | 5.00 (7.6) | yes | 0.517 | 1.000 | 0.17 | 3 | 0.51 | 20 |
+| MGr-t3-eps5 (mlp) | yes | no | 0.420 ± 0.009 | 0.823 ± 0.017 | 0.306 ± 0.032 | -0.002 ± 0.000 | n/a | 5.00 (10.1) | yes | 0.524 | 1.000 | 0.17 | 3 | 0.51 | 20 |
+| MGs-cap100-eps10 (rf) | yes | no | 0.148 ± 0.021 | 0.694 ± 0.056 | 0.012 ± 0.013 | 0.000 ± 0.000 | 0.001 ± 0.000 (2) | 10.00 (27.5) | yes | n/a | 1.000 | 0.21 | 3 | 0.63 | 19 |
+| MGs-cap25-eps1 (rf) | yes | no | 0.091 ± 0.037 | 0.446 ± 0.166 | 0.042 ± 0.033 | 0.000 ± 0.001 | 0.001 ± 0.001 (0.25) | 1.00 (2.4) | yes | n/a | 1.000 | 0.44 | 3 | 1.33 | 19 |
+| MGs-cap25-eps5 (rf) | yes | no | 0.162 ± 0.022 | 0.726 ± 0.063 | 0.035 ± 0.014 | -0.000 ± 0.000 | 0.000 ± 0.001 (0.25) | 5.00 (13.0) | yes | n/a | 1.000 | 0.43 | 3 | 1.28 | 19 |
+| MGs-eps0.5 (rf) | yes | **yes** | 0.317 ± 0.004 | 0.790 ± 0.016 | 0.178 ± 0.003 | 0.000 ± 0.001 | 0.001 ± 0.000 (0.25) | 0.50 (1.2) | yes | 0.501 | 1.000 | 0.17 | 3 | 0.50 | 20 |
+| MGs-eps1 (rf) | yes | **yes** | 0.366 ± 0.018 | 0.813 ± 0.009 | 0.231 ± 0.021 | -0.001 ± 0.001 | 0.000 ± 0.000 (2) | 1.00 (2.4) | yes | 0.515 | 1.000 | 0.18 | 3 | 0.53 | 20 |
+| MGs-eps10 (mlp) | yes | no | 0.433 ± 0.004 | 0.843 ± 0.004 | 0.301 ± 0.003 | 0.001 ± 0.000 | 0.001 ± 0.001 (2) | 10.00 (33.1) | yes | 0.539 | 1.000 | 0.16 | 3 | 0.48 | 20 |
+| MGs-eps2 (rf) | yes | **yes** | 0.407 ± 0.013 | 0.824 ± 0.013 | 0.283 ± 0.019 | -0.001 ± 0.000 | -0.000 ± 0.001 (2) | 2.00 (5.0) | yes | 0.510 | 1.000 | 0.19 | 3 | 0.58 | 20 |
+| MGs-eps20 (mlp) | yes | no | 0.438 ± 0.001 | 0.862 ± 0.003 | 0.319 ± 0.007 | 0.001 ± 0.001 | 0.001 ± 0.000 (0.25) | 20.00 (99.6) | yes | 0.550 | 1.000 | 0.16 | 3 | 0.47 | 20 |
+| MGs-eps5 (mlp) | yes | no | 0.408 ± 0.009 | 0.824 ± 0.012 | 0.262 ± 0.011 | -0.001 ± 0.000 | 0.000 ± 0.001 (0.5) | 5.00 (14.2) | yes | 0.528 | 1.000 | 0.17 | 3 | 0.51 | 20 |
+| MGs-nodp (mlp) | yes | **yes** | 0.459 ± 0.007 | 0.885 ± 0.009 | 0.367 ± 0.005 | 0.002 ± 0.001 | 0.001 ± 0.000 (0.25) | ∞ | yes | 0.573 | 0.999 | 0.16 | 3 | 0.47 | 22 |
+| MGs-strm1-eps1 (rf) | yes | no | 0.334 ± 0.025 | 0.791 ± 0.015 | 0.220 ± 0.020 | -0.001 ± 0.001 | -0.000 ± 0.000 (0.25) | 1.00 (2.4) | yes | n/a | 1.000 | 0.17 | 3 | 0.51 | 19 |
+| MGs-strm1-eps5 (rf) | yes | **yes** | 0.397 ± 0.010 | 0.829 ± 0.018 | 0.310 ± 0.026 | 0.001 ± 0.001 | 0.001 ± 0.001 (0.5) | 5.00 (14.2) | yes | n/a | 1.000 | 0.17 | 3 | 0.50 | 19 |
+| MGs-strm2-eps10 (rf) | yes | no | 0.382 ± 0.004 | 0.799 ± 0.009 | 0.291 ± 0.015 | 0.001 ± 0.001 | 0.000 ± 0.000 (2) | 10.00 (28.5) | yes | n/a | 1.000 | 0.16 | 3 | 0.47 | 19 |
+| MGs-t2-eps1 (rf) | yes | no | 0.344 ± 0.013 | 0.799 ± 0.032 | 0.204 ± 0.007 | -0.000 ± 0.001 | 0.000 ± 0.000 (2) | 1.00 (1.5) | yes | 0.508 | 1.000 | 0.18 | 3 | 0.53 | 20 |
+| MGs-t2-eps10 (mlp) | yes | no | 0.420 ± 0.004 | 0.846 ± 0.006 | 0.282 ± 0.009 | 0.000 ± 0.000 | 0.001 ± 0.001 (0.5) | 10.00 (15.9) | yes | 0.525 | 1.000 | 0.16 | 3 | 0.48 | 20 |
+| MGs-t2-eps5 (mlp) | yes | no | 0.414 ± 0.004 | 0.830 ± 0.005 | 0.269 ± 0.015 | -0.001 ± 0.001 | 0.000 ± 0.001 (2) | 5.00 (7.6) | yes | n/a | 1.000 | 0.17 | 3 | 0.51 | 20 |
+| MGs-t3-eps1 (rf) | yes | **yes** | 0.373 ± 0.029 | 0.814 ± 0.014 | 0.233 ± 0.030 | -0.000 ± 0.001 | 0.000 ± 0.000 (0.25) | 1.00 (1.8) | yes | 0.512 | 1.000 | 0.18 | 3 | 0.53 | 20 |
+| MGs-t3-eps10 (rf) | yes | **yes** | 0.449 ± 0.005 | 0.892 ± 0.007 | 0.346 ± 0.020 | 0.001 ± 0.001 | 0.001 ± 0.001 (0.5) | 10.00 (22.3) | yes | 0.535 | 1.000 | 0.16 | 3 | 0.48 | 20 |
+| MGs-t3-eps5 (rf) | yes | **yes** | 0.420 ± 0.011 | 0.854 ± 0.011 | 0.308 ± 0.008 | -0.001 ± 0.001 | 0.000 ± 0.000 (0.25) | 5.00 (10.1) | yes | n/a | 1.000 | 0.17 | 3 | 0.51 | 20 |
 
 Not valid (kept out of the front): M1-eps1 (residual noise): per-class residual std from train data without DP; M1-eps5 (residual noise): per-class residual std from train data without DP; M1-eps10 (residual noise): per-class residual std from train data without DP; M3-eps5 (residual noise): per-class residual std from train data without DP.
 
-Dominated: M1-eps1 by MGd-eps1, MGr-strm1-eps1; M1-eps5 by M3o-eps5 (plain), MGd-eps5, MGl-eps5, MGr-t2-eps1, MGr-t3-eps1, MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; M1-eps10 by M1-eps1, M1-eps5, M1o-eps10, M1o-eps10 (plain), M1o-eps5, M1o-eps5 (plain), M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGr-eps10, MGr-strm1-eps1, MGr-t3-eps1, MGs-eps10, MGs-eps5, MGs-strm1-eps10, MGs-strm2-eps5, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps10, MGs-t3-eps5; M2 by MGr-eps10; M3-eps5 by M3o-eps5, M3o-eps5 (plain), MGd-eps1, MGd-eps5, MGr-strm1-eps1, MGr-t3-eps1, MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; M1o-eps10 by M1o-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGr-eps10, MGs-eps10, MGs-eps5, MGs-strm1-eps10, MGs-strm2-eps5, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps10, MGs-t3-eps5; M1o-eps10 (plain) by M1-eps1, M1-eps5, M1o-eps10, M1o-eps5, M1o-eps5 (plain), M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGl-eps10, MGl-eps5, MGr-eps10, MGr-strm1-eps1, MGs-eps10, MGs-eps5, MGs-strm1-eps10, MGs-strm2-eps5, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps10, MGs-t3-eps5; M1o-eps5 by MGd-eps5, MGl-eps5, MGr-t3-eps1, MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; M1o-eps5 (plain) by MGd-eps1, MGd-eps5, MGl-eps5, MGr-strm1-eps1, MGr-t3-eps1, MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; M1o-eps1 by M1-eps1, MGd-eps1, MGr-strm1-eps1, MGr-t3-eps1; M1o-eps1 (plain) by M1-eps1, M1o-eps1, MGd-eps1, MGl-eps1, MGr-cap25-eps1, MGr-strm1-eps1, MGr-t3-eps1; M3o-eps10 by M3-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGr-eps10, MGr-strm1-eps1, MGr-t3-eps1, MGs-cap25-eps5, MGs-eps10, MGs-eps5, MGs-strm1-eps10, MGs-strm2-eps5, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps10, MGs-t3-eps5; M3o-eps10 (plain) by M3-eps5, M3o-eps5, M3o-eps5 (plain), MGb-eps10, MGd-eps1, MGd-eps10, MGd-eps5, MGr-eps10, MGr-strm1-eps1, MGr-t3-eps1, MGs-eps10, MGs-eps5, MGs-strm1-eps10, MGs-strm2-eps5, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps10, MGs-t3-eps5; M3o-eps5 by M3o-eps5 (plain), MGd-eps1, MGd-eps5, MGr-strm1-eps1, MGr-t3-eps1, MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; M3o-eps5 (plain) by MGd-eps5, MGr-t3-eps1, MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; M3o-eps1 by MGd-eps1, MGr-strm1-eps1; M3o-eps1 (plain) by MGd-eps1, MGr-cap25-eps1, MGr-strm1-eps1, MGr-t3-eps1; MGl-eps1 by MGd-eps1; MGl-eps5 by MGd-eps5; MGr-cap25-eps1 by MGd-eps1; MGr-eps10 by MGs-eps10; MGr-strm1-eps1 by MGr-t3-eps1; MGr-t2-eps1 by MGr-eps1, MGr-t3-eps1; MGr-t3-eps1 by MGr-eps1; MGs-cap25-eps10 by MGr-eps10, MGs-eps10, MGs-eps5, MGs-strm1-eps10; MGs-cap25-eps5 by MGs-eps5, MGs-strm2-eps5, MGs-t2-eps5, MGs-t3-eps5; MGs-eps1 by MGr-eps1; MGs-nodp by MGr-eps10, MGs-eps10; MGs-strm1-eps10 by MGr-eps10, MGs-eps10, MGs-eps5; MGs-strm2-eps5 by MGs-eps5, MGs-t2-eps5; MGs-t2-eps10 by MGr-eps10, MGs-eps10, MGs-t3-eps10; MGs-t2-eps5 by MGs-eps5; MGs-t3-eps10 by MGr-eps10, MGs-eps10; MGs-t3-eps5 by MGs-eps5, MGs-t2-eps5.
+Dominated: M1-eps1 by MGd-eps0.5, MGl-eps1, MGs-eps0.5, MGs-t2-eps1, MGs-t3-eps1; M1-eps5 by M1o-eps5, M1o-eps5 (plain), MGd-eps0.5, MGd-eps2, MGl-eps2, MGr-cap50-eps5, MGr-strm1-eps5, MGs-eps0.5, MGs-strm1-eps5, MGs-t3-eps1; M1-eps10 by M1-eps1, M1-eps5, M1o-eps5, M1o-eps5 (plain), MGd-eps0.5, MGd-eps1, MGd-eps10, MGd-eps2, MGd-eps5, MGl-eps1, MGl-eps10, MGl-eps2, MGr-cap50-eps5, MGr-eps5, MGr-strm1-eps5, MGs-eps0.5, MGs-eps1, MGs-eps10, MGs-eps2, MGs-eps5, MGs-strm1-eps1, MGs-strm1-eps5, MGs-strm2-eps10, MGs-t2-eps1, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps1, MGs-t3-eps10, MGs-t3-eps5; M2 by MGs-nodp, MGs-t3-eps10; M3-eps5 by M3o-eps5, M3o-eps5 (plain), MGd-eps2, MGr-cap50-eps5, MGr-strm1-eps5, MGs-eps0.5, MGs-strm1-eps5, MGs-t3-eps1; M1o-eps5 by MGd-eps0.5, MGd-eps2, MGl-eps1, MGl-eps2, MGr-strm1-eps5, MGs-eps0.5, MGs-strm1-eps5, MGs-t2-eps1, MGs-t3-eps1; M1o-eps5 (plain) by MGd-eps0.5, MGd-eps1, MGd-eps2, MGd-eps5, MGl-eps1, MGl-eps2, MGr-eps5, MGr-strm1-eps5, MGs-eps0.5, MGs-eps1, MGs-eps5, MGs-strm1-eps1, MGs-strm1-eps5, MGs-t2-eps1, MGs-t2-eps5, MGs-t3-eps1, MGs-t3-eps5; M1o-eps10 by MGd-eps10, MGd-eps2, MGl-eps10, MGr-strm1-eps5, MGs-eps0.5, MGs-eps10, MGs-strm1-eps5, MGs-t2-eps10, MGs-t3-eps10; M1o-eps10 (plain) by M1o-eps5 (plain), M1o-eps10, M3o-eps5, MGd-eps10, MGd-eps2, MGl-eps10, MGr-eps5, MGs-eps10, MGs-eps5, MGs-strm1-eps5, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps1, MGs-t3-eps10, MGs-t3-eps5; M1o-eps1 by M1-eps1, MGd-eps0.5, MGd-eps1, MGl-eps0.5, MGl-eps1, MGs-eps0.5, MGs-strm1-eps1, MGs-t2-eps1, MGs-t3-eps1; M1o-eps1 (plain) by M1-eps1, MGd-eps0.5, MGd-eps1, MGl-eps0.5, MGl-eps1, MGs-eps0.5, MGs-t2-eps1, MGs-t3-eps1; M3o-eps5 by MGr-strm1-eps5, MGs-eps0.5, MGs-strm1-eps5, MGs-t3-eps1; M3o-eps5 (plain) by M3o-eps5, MGd-eps0.5, MGd-eps1, MGd-eps2, MGr-strm1-eps5, MGs-eps0.5, MGs-strm1-eps5, MGs-t2-eps1, MGs-t3-eps1; M3o-eps10 by M3o-eps5, MGd-eps0.5, MGd-eps10, MGd-eps2, MGr-strm1-eps5, MGs-eps0.5, MGs-eps10, MGs-strm1-eps5, MGs-strm2-eps10, MGs-t2-eps1, MGs-t2-eps10, MGs-t3-eps1, MGs-t3-eps10; M3o-eps10 (plain) by M3o-eps5, M3o-eps5 (plain), M3o-eps10, MGb-eps5, MGd-eps1, MGd-eps10, MGd-eps2, MGd-eps5, MGr-eps2, MGr-eps5, MGs-eps1, MGs-eps10, MGs-eps2, MGs-eps5, MGs-strm1-eps5, MGs-strm2-eps10, MGs-t2-eps1, MGs-t2-eps10, MGs-t2-eps5, MGs-t3-eps1, MGs-t3-eps10, MGs-t3-eps5; M3o-eps1 by MGd-eps0.5, MGd-eps1, MGs-eps0.5, MGs-eps1, MGs-strm1-eps1, MGs-t2-eps1, MGs-t3-eps1; M3o-eps1 (plain) by MGd-eps0.5, MGd-eps1, MGs-eps0.5, MGs-strm1-eps1, MGs-t2-eps1, MGs-t3-eps1; MGl-eps0.5 by MGd-eps0.5; MGl-eps1 by MGd-eps0.5, MGd-eps1; MGl-eps10 by MGd-eps10; MGl-eps2 by MGd-eps2; MGl-eps20 by MGd-eps10, MGd-eps20; MGl-eps5 by MGb-eps5, MGd-eps5; MGr-cap50-eps5 by MGs-eps0.5, MGs-strm1-eps5, MGs-t3-eps1; MGr-eps5 by MGs-t3-eps5; MGr-strm1-eps5 by MGs-strm1-eps5, MGs-t3-eps1; MGr-t2-eps5 by MGs-t3-eps5; MGr-t3-eps5 by MGs-t3-eps5; MGs-cap100-eps10 by MGs-eps0.5, MGs-eps10, MGs-strm1-eps5, MGs-strm2-eps10, MGs-t2-eps10, MGs-t3-eps1, MGs-t3-eps10; MGs-cap25-eps1 by MGd-eps0.5, MGd-eps1, MGs-eps0.5, MGs-t3-eps1; MGs-cap25-eps5 by MGd-eps0.5, MGd-eps1, MGd-eps2, MGd-eps5, MGr-cap50-eps5, MGr-eps5, MGs-eps0.5, MGs-strm1-eps5, MGs-t3-eps1; MGs-eps10 by MGs-t3-eps10; MGs-eps20 by MGs-t3-eps10; MGs-eps5 by MGr-eps5, MGs-t3-eps5; MGs-strm1-eps1 by MGs-eps1, MGs-t3-eps1; MGs-strm2-eps10 by MGs-eps10, MGs-t3-eps10; MGs-t2-eps1 by MGs-eps1, MGs-strm1-eps1; MGs-t2-eps10 by MGs-eps10, MGs-t3-eps10; MGs-t2-eps5 by MGr-eps5, MGs-t3-eps5.
 
 ## Reference: the classifier trained directly by FL (releases no data)
 
 | configuration | macro-F1 | rare recall | ε | SecAgg |
 |---|---|---|---|---|
-| FedMLPcwT | 0.417 ± 0.023 | 0.298 | ∞ | no |
-| FedMLPcwT-sa | 0.416 ± 0.013 | 0.296 | ∞ | yes |
-| FedMLPcwT-dp1 | 0.246 ± 0.017 | 0.087 | 1.00 | no |
-| FedMLPcwT-dp5 | 0.285 ± 0.028 | 0.116 | 5.00 | no |
-| FedMLPcwT-dp10 | 0.292 ± 0.024 | 0.122 | 10.00 | no |
-| FedMLPcwT-dp5-sa | 0.281 ± 0.028 | 0.112 | 5.00 | yes |
+| FedMLPcwT | 0.425 ± 0.026 | 0.288 | ∞ | no |
+| FedMLPcwT-sa | 0.416 ± 0.021 | 0.283 | ∞ | yes |
+| FedMLPcwT-dp1 | 0.245 ± 0.008 | 0.086 | 1.00 | no |
+| FedMLPcwT-dp5 | 0.276 ± 0.022 | 0.116 | 5.00 | no |
+| FedMLPcwT-dp10 | 0.290 ± 0.024 | 0.129 | 10.00 | no |
+| FedMLPcwT-dp5-sa | 0.277 ± 0.026 | 0.119 | 5.00 | yes |
 
 ## Change against the baseline scorecard (`results/scorecard_baseline.json`)
 
@@ -85,39 +98,42 @@ An entry of the optimisation round is compared with the baseline row of the same
 | M1-eps5 (residual noise) | M1-eps5 (residual noise) | +0.000 (no change) | +0.000 (no change) | +0.000 (no change) | +0.000 (no change) | n/a |
 | M1-eps10 (residual noise) | M1-eps10 (residual noise) | +0.000 (no change) | +0.000 (no change) | +0.000 (no change) | +0.000 (no change) | n/a |
 | M3-eps5 (residual noise) | M3-eps5 (residual noise) | +0.000 (no change) | +0.000 (no change) | +0.000 (no change) | +0.000 (no change) | n/a |
-| M1o-eps10 | M1-eps10 | +0.046 (better) | +0.022 (no change) | +0.020 (no change) | +0.001 (no change) | n/a |
-| M1o-eps10 (plain) | M1-eps10 | +0.028 (no change) | -0.037 (no change) | +0.040 (no change) | +0.001 (no change) | n/a |
-| M1o-eps5 | M1-eps5 | +0.014 (no change) | +0.023 (no change) | -0.037 (worse) | +0.000 (no change) | n/a |
-| M1o-eps5 (plain) | M1-eps5 | +0.029 (better) | -0.059 (worse) | +0.011 (no change) | +0.000 (no change) | n/a |
-| M1o-eps1 | M1-eps1 | -0.045 (worse) | -0.111 (worse) | -0.082 (worse) | -0.000 (no change) | n/a |
-| M1o-eps1 (plain) | M1-eps1 | -0.032 (no change) | -0.169 (worse) | -0.056 (no change) | -0.000 (no change) | n/a |
-| M3o-eps10 | M1-eps10 | +0.018 (no change) | -0.012 (no change) | +0.002 (no change) | +0.000 (no change) | n/a |
-| M3o-eps10 (plain) | M1-eps10 | +0.020 (no change) | -0.004 (no change) | +0.036 (no change) | +0.000 (no change) | n/a |
-| M3o-eps5 | M3-eps5 | +0.005 (no change) | -0.024 (no change) | -0.003 (no change) | -0.001 (no change) | n/a |
-| M3o-eps5 (plain) | M3-eps5 | +0.017 (no change) | +0.011 (no change) | +0.027 (no change) | -0.001 (no change) | n/a |
-| M3o-eps1 | M1-eps1 | -0.057 (worse) | -0.117 (worse) | -0.095 (worse) | +0.001 (no change) | n/a |
-| M3o-eps1 (plain) | M1-eps1 | -0.043 (no change) | -0.194 (worse) | -0.069 (worse) | -0.000 (no change) | n/a |
-| MGb-eps10 | M1-eps10 | +0.190 (better) | +0.078 (better) | +0.211 (better) | +0.001 (better) | n/a |
-| MGd-eps1 | M1-eps1 | +0.122 (better) | +0.016 (no change) | +0.054 (better) | -0.000 (no change) | n/a |
-| MGd-eps10 | M1-eps10 | +0.184 (better) | +0.070 (better) | +0.200 (better) | +0.001 (better) | n/a |
-| MGd-eps5 | M1-eps5 | +0.160 (better) | +0.050 (better) | +0.133 (better) | +0.001 (no change) | n/a |
-| MGl-eps1 | M1-eps1 | +0.026 (no change) | -0.032 (no change) | -0.046 (worse) | -0.001 (worse) | n/a |
-| MGl-eps10 | M1-eps10 | +0.170 (better) | +0.072 (better) | +0.194 (better) | +0.001 (better) | n/a |
-| MGl-eps5 | M1-eps5 | +0.116 (better) | +0.007 (no change) | +0.068 (better) | +0.000 (no change) | n/a |
-| MGr-cap25-eps1 | M1-eps1 | -0.073 (worse) | -0.133 (worse) | -0.082 (worse) | -0.001 (worse) | n/a |
-| MGr-eps1 | M1-eps1 | +0.162 (better) | +0.070 (better) | +0.121 (better) | -0.003 (worse) | n/a |
-| MGr-eps10 | M1-eps10 | +0.190 (better) | +0.088 (better) | +0.206 (better) | +0.001 (better) | n/a |
-| MGr-strm1-eps1 | M1-eps1 | +0.126 (better) | +0.002 (no change) | +0.057 (better) | -0.000 (no change) | n/a |
-| MGr-t2-eps1 | M1-eps1 | +0.114 (better) | +0.037 (no change) | +0.062 (better) | -0.003 (worse) | n/a |
-| MGr-t3-eps1 | M1-eps1 | +0.165 (better) | +0.070 (better) | +0.119 (better) | -0.002 (worse) | n/a |
-| MGs-cap25-eps10 | M1-eps10 | -0.048 (worse) | -0.120 (worse) | -0.040 (no change) | +0.000 (no change) | n/a |
-| MGs-cap25-eps5 | M1-eps5 | -0.055 (worse) | -0.096 (worse) | -0.076 (worse) | +0.001 (no change) | n/a |
-| MGs-eps1 | M1-eps1 | +0.115 (better) | +0.019 (no change) | +0.056 (better) | -0.002 (worse) | n/a |
-| MGs-eps10 | M1-eps10 | +0.185 (better) | +0.078 (better) | +0.219 (better) | +0.002 (better) | n/a |
-| MGs-eps5 | M1-eps5 | +0.151 (better) | +0.043 (better) | +0.135 (better) | +0.002 (better) | n/a |
-| MGs-strm1-eps10 | M1-eps10 | +0.166 (better) | +0.045 (no change) | +0.181 (better) | +0.000 (no change) | n/a |
-| MGs-strm2-eps5 | M1-eps5 | +0.114 (better) | +0.001 (no change) | +0.091 (better) | +0.001 (no change) | n/a |
-| MGs-t2-eps10 | M1-eps10 | +0.175 (better) | +0.081 (better) | +0.198 (better) | +0.001 (better) | n/a |
-| MGs-t2-eps5 | M1-eps5 | +0.139 (better) | +0.032 (better) | +0.102 (better) | +0.002 (better) | n/a |
-| MGs-t3-eps10 | M1-eps10 | +0.185 (better) | +0.075 (better) | +0.206 (better) | +0.002 (better) | n/a |
-| MGs-t3-eps5 | M1-eps5 | +0.150 (better) | +0.038 (no change) | +0.111 (better) | +0.001 (no change) | n/a |
+| M1o-eps5 | M1-eps5 | +0.059 (better) | +0.049 (no change) | +0.066 (better) | -0.000 (no change) | n/a |
+| M1o-eps5 (plain) | M1-eps5 | +0.047 (better) | +0.055 (no change) | +0.072 (better) | -0.001 (no change) | n/a |
+| M1o-eps10 | M1-eps10 | +0.086 (better) | +0.024 (no change) | +0.085 (better) | +0.001 (better) | n/a |
+| M1o-eps10 (plain) | M1-eps10 | +0.043 (better) | +0.045 (better) | +0.078 (better) | +0.000 (no change) | n/a |
+| M1o-eps1 | M1-eps1 | -0.009 (no change) | -0.074 (no change) | -0.026 (no change) | -0.000 (no change) | n/a |
+| M1o-eps1 (plain) | M1-eps1 | -0.022 (worse) | -0.026 (no change) | -0.048 (worse) | +0.000 (no change) | n/a |
+| M3o-eps5 | M3-eps5 | +0.075 (better) | +0.043 (no change) | +0.073 (better) | +0.000 (no change) | n/a |
+| M3o-eps5 (plain) | M3-eps5 | +0.040 (better) | +0.046 (no change) | +0.062 (better) | -0.000 (no change) | n/a |
+| M3o-eps10 | M1-eps10 | +0.082 (better) | +0.031 (no change) | +0.061 (better) | +0.001 (better) | n/a |
+| M3o-eps10 (plain) | M1-eps10 | +0.073 (better) | +0.042 (better) | +0.093 (better) | +0.000 (no change) | n/a |
+| M3o-eps1 | M1-eps1 | -0.013 (no change) | -0.073 (worse) | -0.027 (no change) | -0.000 (no change) | n/a |
+| M3o-eps1 (plain) | M1-eps1 | -0.023 (worse) | -0.059 (worse) | -0.047 (worse) | -0.000 (no change) | n/a |
+| MGb-eps5 | M1-eps5 | +0.217 (better) | +0.069 (better) | +0.222 (better) | -0.003 (worse) | n/a |
+| MGd-eps1 | M1-eps1 | +0.197 (better) | +0.069 (better) | +0.162 (better) | -0.001 (no change) | n/a |
+| MGd-eps10 | M1-eps10 | +0.243 (better) | +0.083 (better) | +0.244 (better) | +0.001 (no change) | n/a |
+| MGd-eps5 | M1-eps5 | +0.241 (better) | +0.088 (better) | +0.270 (better) | -0.002 (worse) | n/a |
+| MGl-eps1 | M1-eps1 | +0.092 (better) | +0.024 (no change) | +0.049 (better) | -0.000 (no change) | n/a |
+| MGl-eps10 | M1-eps10 | +0.217 (better) | +0.052 (better) | +0.216 (better) | +0.002 (better) | n/a |
+| MGl-eps5 | M1-eps5 | +0.211 (better) | +0.063 (better) | +0.224 (better) | -0.002 (worse) | n/a |
+| MGr-cap50-eps5 | M1-eps5 | -0.009 (no change) | -0.040 (no change) | +0.050 (better) | -0.000 (no change) | n/a |
+| MGr-eps5 | M1-eps5 | +0.240 (better) | +0.063 (better) | +0.245 (better) | -0.002 (worse) | n/a |
+| MGr-strm1-eps5 | M1-eps5 | +0.190 (better) | +0.026 (better) | +0.199 (better) | -0.001 (no change) | n/a |
+| MGr-t2-eps5 | M1-eps5 | +0.240 (better) | +0.071 (better) | +0.255 (better) | -0.003 (worse) | n/a |
+| MGr-t3-eps5 | M1-eps5 | +0.234 (better) | +0.062 (better) | +0.250 (better) | -0.003 (worse) | n/a |
+| MGs-cap100-eps10 | M1-eps10 | -0.041 (worse) | -0.081 (worse) | -0.049 (worse) | +0.001 (better) | n/a |
+| MGs-cap25-eps1 | M1-eps1 | -0.085 (worse) | -0.304 (worse) | -0.025 (no change) | +0.000 (no change) | n/a |
+| MGs-cap25-eps5 | M1-eps5 | -0.024 (worse) | -0.035 (no change) | -0.020 (no change) | -0.001 (no change) | n/a |
+| MGs-eps1 | M1-eps1 | +0.191 (better) | +0.064 (better) | +0.163 (better) | -0.001 (worse) | n/a |
+| MGs-eps10 | M1-eps10 | +0.244 (better) | +0.067 (better) | +0.240 (better) | +0.001 (better) | n/a |
+| MGs-eps5 | M1-eps5 | +0.222 (better) | +0.063 (better) | +0.207 (better) | -0.002 (worse) | n/a |
+| MGs-strm1-eps1 | M1-eps1 | +0.158 (better) | +0.041 (better) | +0.152 (better) | -0.001 (worse) | n/a |
+| MGs-strm1-eps5 | M1-eps5 | +0.212 (better) | +0.068 (better) | +0.255 (better) | -0.000 (no change) | n/a |
+| MGs-strm2-eps10 | M1-eps10 | +0.193 (better) | +0.024 (no change) | +0.230 (better) | +0.002 (better) | n/a |
+| MGs-t2-eps1 | M1-eps1 | +0.168 (better) | +0.050 (better) | +0.136 (better) | -0.000 (no change) | n/a |
+| MGs-t2-eps10 | M1-eps10 | +0.231 (better) | +0.071 (better) | +0.221 (better) | +0.001 (better) | n/a |
+| MGs-t2-eps5 | M1-eps5 | +0.228 (better) | +0.069 (better) | +0.214 (better) | -0.002 (worse) | n/a |
+| MGs-t3-eps1 | M1-eps1 | +0.197 (better) | +0.064 (better) | +0.165 (better) | -0.000 (no change) | n/a |
+| MGs-t3-eps10 | M1-eps10 | +0.260 (better) | +0.117 (better) | +0.285 (better) | +0.002 (better) | n/a |
+| MGs-t3-eps5 | M1-eps5 | +0.234 (better) | +0.093 (better) | +0.253 (better) | -0.002 (worse) | n/a |

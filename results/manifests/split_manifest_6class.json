@@ -1,9 +1,9 @@
 {
   "label_mode": "6class",
   "split_seed": 0,
-  "config_hash": "f1e109b1e1a4",
-  "git_commit": "5c62fdacb3c3becdd8dcf701037714582ce4db9d",
-  "git_dirty": false,
+  "config_hash": "8c86c0b143d4",
+  "git_commit": "a4c4601a00d5554566acb926a0dd0154cfa5303e",
+  "git_dirty": true,
   "versions": {
     "python": "3.13.5",
     "numpy": "2.3.2",
@@ -137,11 +137,11 @@
     "test": 30000
   },
   "parquet_sha256": {
-    "train": "656848c6df2528e2d3b8ef45c2ed85d87d28c9f85c882c56b0890be0040c7e23",
-    "val": "d8d6681565b78c4dc4e4cfbd233710b1f40459515f0f81d98184a8e7ceee2dea",
-    "test": "d8ea064794e84f45140f543e598b81af847d432389313347df18a5f586d166e6"
+    "train": "6ca809bd05ee52e7075d16a2d986a440e8a17c1cc3064c1cb3d64f34a89cc161",
+    "val": "1a18d861cc2f2a74624238e37cc34f6bd4478949c5395c404231ac36ea798e02",
+    "test": "f49ddd61b5ec0827259455aae61808c617056194348886e4774688c6ce7fa614"
   },
-  "peak_rss_gb": 0.663,
+  "peak_rss_gb": 0.55,
   "warnings": [],
   "subclasses": {
     "NORMAL": {
@@ -152,283 +152,283 @@
           {
             "unit_id": "NormalData1",
             "group": "NormalData1",
-            "eligible_rows": 1947822,
+            "eligible_rows": 1060568,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData10",
             "group": "NormalData10",
-            "eligible_rows": 1950821,
+            "eligible_rows": 1061589,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData11",
             "group": "NormalData11",
-            "eligible_rows": 1953017,
+            "eligible_rows": 1063008,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData12",
             "group": "NormalData12",
-            "eligible_rows": 1953053,
+            "eligible_rows": 1062953,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData13",
             "group": "NormalData13",
-            "eligible_rows": 825998,
+            "eligible_rows": 473165,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData14",
             "group": "NormalData14",
-            "eligible_rows": 1950130,
+            "eligible_rows": 1063846,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData15",
             "group": "NormalData15",
-            "eligible_rows": 1681136,
+            "eligible_rows": 945455,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData16",
             "group": "NormalData16",
-            "eligible_rows": 1674785,
+            "eligible_rows": 942169,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData17",
             "group": "NormalData17",
-            "eligible_rows": 1681120,
+            "eligible_rows": 945578,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData18",
             "group": "NormalData18",
-            "eligible_rows": 1106461,
+            "eligible_rows": 621219,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData19",
             "group": "NormalData19",
-            "eligible_rows": 525890,
+            "eligible_rows": 287189,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData2",
             "group": "NormalData2",
-            "eligible_rows": 1949078,
+            "eligible_rows": 1060804,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData21",
             "group": "NormalData21",
-            "eligible_rows": 573362,
+            "eligible_rows": 314601,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData22",
             "group": "NormalData22",
-            "eligible_rows": 577804,
+            "eligible_rows": 318249,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData23",
             "group": "NormalData23",
-            "eligible_rows": 587829,
+            "eligible_rows": 323114,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData24",
             "group": "NormalData24",
-            "eligible_rows": 584928,
+            "eligible_rows": 322134,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData25",
             "group": "NormalData25",
-            "eligible_rows": 596658,
+            "eligible_rows": 328887,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData26",
             "group": "NormalData26",
-            "eligible_rows": 586259,
+            "eligible_rows": 322661,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData27",
             "group": "NormalData27",
-            "eligible_rows": 607770,
+            "eligible_rows": 336593,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData28",
             "group": "NormalData28",
-            "eligible_rows": 608590,
+            "eligible_rows": 337254,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData29",
             "group": "NormalData29",
-            "eligible_rows": 619942,
+            "eligible_rows": 343868,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData3",
             "group": "NormalData3",
-            "eligible_rows": 1950060,
+            "eligible_rows": 1061038,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData30",
             "group": "NormalData30",
-            "eligible_rows": 644782,
+            "eligible_rows": 358241,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData31",
             "group": "NormalData31",
-            "eligible_rows": 485841,
+            "eligible_rows": 264562,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData32",
             "group": "NormalData32",
-            "eligible_rows": 487884,
+            "eligible_rows": 265517,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData33",
             "group": "NormalData33",
-            "eligible_rows": 486573,
+            "eligible_rows": 264852,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData34",
             "group": "NormalData34",
-            "eligible_rows": 486227,
+            "eligible_rows": 264650,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData35",
             "group": "NormalData35",
-            "eligible_rows": 488481,
+            "eligible_rows": 265913,
             "sampled": 1277
           },
           {
             "unit_id": "NormalData36",
             "group": "NormalData36",
-            "eligible_rows": 487503,
+            "eligible_rows": 265300,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData37",
             "group": "NormalData37",
-            "eligible_rows": 488049,
+            "eligible_rows": 265698,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData38",
             "group": "NormalData38",
-            "eligible_rows": 486829,
+            "eligible_rows": 265047,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData39",
             "group": "NormalData39",
-            "eligible_rows": 487726,
+            "eligible_rows": 265430,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData4",
             "group": "NormalData4",
-            "eligible_rows": 1948500,
+            "eligible_rows": 1060191,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData41",
             "group": "NormalData41",
-            "eligible_rows": 144946,
+            "eligible_rows": 87351,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData42",
             "group": "NormalData42",
-            "eligible_rows": 139107,
+            "eligible_rows": 84078,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData43",
             "group": "NormalData43",
-            "eligible_rows": 151378,
+            "eligible_rows": 90626,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData44",
             "group": "NormalData44",
-            "eligible_rows": 138039,
+            "eligible_rows": 83854,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData45",
             "group": "NormalData45",
-            "eligible_rows": 155498,
+            "eligible_rows": 93125,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData46",
             "group": "NormalData46",
-            "eligible_rows": 137307,
+            "eligible_rows": 83554,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData47",
             "group": "NormalData47",
-            "eligible_rows": 140797,
+            "eligible_rows": 85216,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData48",
             "group": "NormalData48",
-            "eligible_rows": 143834,
+            "eligible_rows": 86984,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData49",
             "group": "NormalData49",
-            "eligible_rows": 158546,
+            "eligible_rows": 94520,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData50",
             "group": "NormalData50",
-            "eligible_rows": 256765,
+            "eligible_rows": 148107,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData6",
             "group": "NormalData6",
-            "eligible_rows": 1945172,
+            "eligible_rows": 1058867,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData7",
             "group": "NormalData7",
-            "eligible_rows": 1948211,
+            "eligible_rows": 1060250,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData8",
             "group": "NormalData8",
-            "eligible_rows": 1949934,
+            "eligible_rows": 1061130,
             "sampled": 1276
           },
           {
             "unit_id": "NormalData9",
             "group": "NormalData9",
-            "eligible_rows": 1950972,
+            "eligible_rows": 1061571,
             "sampled": 1276
           }
         ],
@@ -436,7 +436,7 @@
           {
             "unit_id": "NormalData5",
             "group": "NormalData5",
-            "eligible_rows": 1947756,
+            "eligible_rows": 1060398,
             "sampled": 2000
           }
         ],
@@ -444,7 +444,7 @@
           {
             "unit_id": "NormalData20",
             "group": "NormalData20",
-            "eligible_rows": 571786,
+            "eligible_rows": 314823,
             "sampled": 5000
           }
         ]

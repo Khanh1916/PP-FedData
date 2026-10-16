@@ -63,7 +63,8 @@ def generators(cfg: dict[str, Any]) -> list[Generator]:
                              federated=e.kind != "b2", eps_target=float(e.params["eps"]) if "eps" in e.params else None))
     # FedDP-Marginal (spec v1.5): the framework's generator; the Flower SecAgg+ runs (MGr = with the post-processing of O3.3 where it was chosen)
     for e in (1, 5, 10):
-        name = f"MGr-eps{e}" if e == 1 and (artifacts_dir(cfg) / run_id(f"MGr-eps{e}", int(cfg["seeds"][0]), cfg["label_mode"])).exists() else f"MGs-eps{e}"
+        from ppfeddata.tune_marginal import framework_name
+        name = framework_name(e) if (artifacts_dir(cfg) / run_id(framework_name(e), int(cfg["seeds"][0]), cfg["label_mode"])).exists() else f"MGs-eps{e}"
         out.append(Generator(f"MG-eps{e}", f"FedDP-Marginal, epsilon {e}", name, "mg", dp=True, secagg=True, federated=True, eps_target=float(e)))
     return out
 

@@ -6,8 +6,8 @@
 - Item 2: each client adds 1/t of the calibrated variance, so the target epsilon holds as long as t clients are honest (t = K is MGs, t = 1 is
   the local variant); 3 seeds through Flower for t in `THRESHOLDS` -> `MG<v>-t<t>-eps<e>`; the epsilon with every client honest and with
   one honest client is recorded.
-Both use the framework's configuration of each epsilon (bins and budget split of configs/best_marginal.yaml, the post-processing of O3.3 at
-epsilon 1: v = r there, v = s otherwise). Report: results/privacy_units.json, results/reports/privacy_units.md.
+Both use the framework's configuration of each epsilon (bins and budget split of configs/best_marginal.yaml, and the post-processing of O3.3
+wherever its search on validation kept one: v = r there, v = s otherwise; round R: at every epsilon, the first study used it at epsilon 1 only). Report: results/privacy_units.json, results/reports/privacy_units.md.
 """
 from __future__ import annotations
 
@@ -33,8 +33,8 @@ def _setting(eps: float) -> tuple[dict[str, Any], dict[str, Any] | None, str]:
 
     b = yaml.safe_load(MB.read_text(encoding="utf-8"))["searches"][f"eps{eps:g}"]["best"]
     ref = None
-    if eps == 1.0 and REFINE_PATH.exists():                  # the framework uses MGr at epsilon 1 only (O3.3 / spec v1.5)
-        ref = (yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8"))["searches"].get("eps1") or {}).get("chosen")
+    if REFINE_PATH.exists():                                 # round R: the post-processing wherever its validation search kept one
+        ref = (yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8"))["searches"].get(f"eps{eps:g}") or {}).get("chosen")
     return {"bins": int(b["bins"]), "split": list(b["split"])}, ref, ("r" if ref else "s")
 
 

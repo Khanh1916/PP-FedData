@@ -105,14 +105,15 @@ flowchart TB
 
 ## 4. Dữ liệu
 
-- **Nguồn:** bộ dữ liệu DoS-DDoS-MQTT-IoT (59,6 triệu dòng gói tin, khoảng 13 GB CSV), không có trong repo. Đường dẫn đặt trong
+- **Nguồn:** bộ dữ liệu DoS-DDoS-MQTT-IoT (39,0 triệu dòng gói tin được dùng, khoảng 12 GB CSV), không có trong repo. Đường dẫn đặt trong
   `configs/local.yaml` hoặc biến `PPFEDDATA_RAW_ROOT`.
 - **Nguồn gốc:** dòng tấn công là CSV của tác giả trong bản phát hành trên Kaggle, dùng nguyên như bản phát hành; bản phát hành chỉ có
-  lưu lượng Normal dạng PCAP, nên `tools/extract_normal_pcap.py` dùng TShark xuất mọi gói Normal vào cùng 33 cột. `check-extraction`
-  (`data/extraction_check.py`) kiểm các tệp so với bản phát hành, một dòng cho mỗi gói ở mọi capture Normal, trích lại giống từng byte,
-  và quy trình so với CSV của tác giả trên PCAP tấn công; nó cũng tái tạo hai thiết lập khi tác giả xuất (bộ lọc hiển thị giữ gói gửi
-  tới broker, phân tích hai lượt) và đo chúng làm đổi kết quả bao nhiêu. Chi tiết và số liệu: `results/reports/data_provenance.md`,
-  mục "Nguồn gốc dữ liệu" của README.
+  lưu lượng Normal dạng PCAP, nên `extract-normal` (`data/normal_extract.py`) xuất nó bằng script `tools/extract_normal_pcap.py` với hai
+  thiết lập tác giả dùng khi xuất (phân tích hai lượt, bộ lọc hiển thị giữ gói gửi tới broker) vào cùng 33 cột. `check-extraction`
+  (`data/extraction_check.py`) kiểm các tệp so với bản phát hành, quy trình so với CSV của tác giả trên PCAP tấn công (với hai thiết lập
+  này: trùng khung ở 48/48 capture) và bản Normal so với bản trích đầy đủ của cùng PCAP. Nghiên cứu thứ nhất dùng bản trích một lượt,
+  giữ mọi gói; vòng R chạy lại nghiên cứu trên bản mới. Chi tiết và số liệu: `results/reports/data_provenance.md`, mục "Nguồn gốc dữ liệu"
+  của README.
 - **Đơn vị:** một dòng = một gói tin; 6 lớp (NORMAL, BCF, DELAYED, SYN, INVALID, WILL); chế độ 11 lớp tách DoS và DDoS.
 - **Chia tập:** train / val / test theo **nhóm capture**, nên nhóm của test không bao giờ xuất hiện khi huấn luyện; có hạn mức theo lớp;
   tập test chỉ dùng cho số cuối, mọi lựa chọn đều làm trên val.

@@ -17,8 +17,8 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `privacy_units.md` | `privacy-units` | group-level DP (stream, capture) and honest-client threshold of FedDP-Marginal |
 | `mg_nodp.md` | `mg-nodp` | FedDP-Marginal without DP, plain and through SecAgg+: the protection matrix, the cost of DP and of SecAgg+, the attack |
 | `ids_followup.md` | `ids-followup` | IDS-side options and local augmentation at each client |
-| `robustness.md` | `robustness` | FedDP-Marginal under other federations and 11 classes |
-| `sensitivity.md` | `sensitivity` | other test groups (A4) and a per-stream cap (A5) |
+| `robustness.md` | `robustness` | FedDP-Marginal under other federations and 11 classes, the CVAE in 11 classes (A3) |
+| `sensitivity.md` | `sensitivity` | other rare-class quotas (A2), other test groups (A4) and a per-stream cap (A5) |
 | `data_provenance.md` | `check-extraction` | where the raw data come from: the files against the Kaggle release, the Normal CSV extracted from PCAP (complete, reproducible), the method checked on the attack captures, the authors' export settings reproduced, their weight on the results |
 | `g1_feature_review.md` | `harmonize` | column formats and feature decisions (Gate G1) |
 | `leakage_report.md` | `check` | leakage and label-reliability checks C1-C5 (Gate G2) |
@@ -43,10 +43,10 @@ Not committed (too large, rebuilt by the runs): `runs.csv` (the run ledger: one 
 | `mg_nodp.json` | `mg-nodp` | rows and paired comparisons of round Q1 (section 9.12 of the report) |
 | `ids_followup.json` | `ids-followup` | rows of the P2 tables, per client |
 | `robustness.json` | `robustness` | federations and 11-class results |
-| `sensitivity.json` | `sensitivity` | A4 / A5 verdicts |
+| `sensitivity.json` | `sensitivity` | A2 / A4 / A5 verdicts |
 | `mia_model.json` | `mia` | membership attack on the released CVAE models, positive controls |
 | `mia_marginal.json` | `mia-marginal`, `mg-nodp` | membership attack on the released FedDP-Marginal tables, positive controls; `mg-nodp` adds the tables released without DP (round Q1) |
-| `fed_classifier.json` | `fed-baseline` | the IDS trained directly by FL (plain and protected) |
+| `fed_classifier.json` | `fed-baseline` | the IDS trained directly by FL (plain, federated SMOTE, protected) |
 | `data_provenance.json` | `check-extraction` | every number of `data_provenance.md` (counts, shares, scores, hashes; no data row) |
 
 ## Figures — `figures/`

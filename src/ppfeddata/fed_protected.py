@@ -46,8 +46,15 @@ DP_LR_GRID, DP_CLIP_GRID = (1.0e-3, 5.0e-3, 2.0e-2), (0.5, 2.0, 8.0)
 EPS_LIST = (1, 5, 10)
 TUNED = "FedMLPcwT"
 # label -> the run of the CVAE route it is compared with (the synthetic data alone train the same MLP: TSTR-MLP)
-PAIRS = {TUNED: "B3-TSTR-mlp", f"{TUNED}-sa": "M2-TSTR-mlp", f"{TUNED}-dp1": "M1d-t21-eps1-plain-TSTR-mlp", f"{TUNED}-dp5": "M1d-t21-eps5-plain-TSTR-mlp",
-         f"{TUNED}-dp10": "M1d-t21-eps10-plain-TSTR-mlp", f"{TUNED}-dp5-sa": "M3d-t21-eps5-plain-TSTR-mlp"}
+def pairs(cfg: dict[str, Any]) -> dict[str, str]:
+    """label -> the run of the CVAE route it is compared with; the DP family is the one `verify-dp` selected (configs/best_cvae_dp.yaml), so a
+    new selection (round R) is followed without editing names in the code."""
+    from ppfeddata.fl.m1 import tuned_setup
+
+    m1 = tuned_setup(cfg)[0]
+    m3 = m1.replace("M1d", "M3d", 1)
+    return {TUNED: "B3-TSTR-mlp", f"{TUNED}-sa": "M2-TSTR-mlp", f"{TUNED}-dp1": f"{m1}-eps1-plain-TSTR-mlp", f"{TUNED}-dp5": f"{m1}-eps5-plain-TSTR-mlp",
+            f"{TUNED}-dp10": f"{m1}-eps10-plain-TSTR-mlp", f"{TUNED}-dp5-sa": f"{m3}-eps5-plain-TSTR-mlp"}
 PROTECTION = {TUNED: "none", f"{TUNED}-sa": "SecAgg", f"{TUNED}-dp1": "DP eps 1", f"{TUNED}-dp5": "DP eps 5", f"{TUNED}-dp10": "DP eps 10", f"{TUNED}-dp5-sa": "DP eps 5 + SecAgg"}
 
 
@@ -187,9 +194,10 @@ def compare_pairs(cfg: dict[str, Any], y_test: np.ndarray, classes: list[str], r
     """Each protected direct classifier against the CVAE-route run with the same protection (paired bootstrap, rule of R1 / R2)."""
     k, mode = len(classes), cfg["label_mode"]
     boot = PairedBootstrap(y_test, k, n_boot, 0, "rows")
+    P = pairs(cfg)
     preds = {}
     for lab in labels:
-        for name, key in ((file_label(lab) + "-mlp", lab), (PAIRS[lab], PAIRS[lab])):
+        for name, key in ((file_label(lab) + "-mlp", lab), (P[lab], P[lab])):
             try:
                 for s in seeds:
                     preds[(key, s)] = load_predictions(cfg, run_id(name, s, mode))["y_pred"]
@@ -199,9 +207,9 @@ def compare_pairs(cfg: dict[str, Any], y_test: np.ndarray, classes: list[str], r
     rare_metric = recall_of(*[classes.index(c) for c in rare])
     out = {}
     for lab in labels:
-        ka, kb = [(lab, s) for s in seeds], [(PAIRS[lab], s) for s in seeds]
+        ka, kb = [(lab, s) for s in seeds], [(P[lab], s) for s in seeds]
         if all(x in preds for x in ka + kb):
-            out[lab] = {"against": PAIRS[lab], "macro_f1": compare_runs(boot, ka, kb), "rare_recall": compare_runs(boot, ka, kb, rare_metric)}
+            out[lab] = {"against": P[lab], "macro_f1": compare_runs(boot, ka, kb), "rare_recall": compare_runs(boot, ka, kb, rare_metric)}
     return out
 
 
@@ -262,13 +270,13 @@ def run_all(cfg: dict[str, Any], seeds: list[int] | None = None, n_boot: int | N
         import pandas as pd
         summ = pd.read_csv(Path(cfg["compute"]["runs_csv"]).parent / "summary.csv").set_index("config")
         refs = {r: {"macro_f1_mean": float(summ.loc[r, "macro_f1_mean"]), "macro_f1_std": float(summ.loc[r, "macro_f1_std"]),
-                    "rare_recall_mean": float(np.mean([summ.loc[r, f"recall_{c}_mean"] for c in rare]))} for r in PAIRS.values() if r in summ.index}
+                    "rare_recall_mean": float(np.mean([summ.loc[r, f"recall_{c}_mean"] for c in rare]))} for r in pairs(cfg).values() if r in summ.index}
     except FileNotFoundError:
         refs = {}
     res["tuning"] = {"non_dp": {"chosen": {**hp, "hidden": list(hp["hidden"])}, "trials": t1, "seed": 0, "rounds": int(cfg["fl"]["rounds"])},
                      "dp": {"chosen": {**hp_dp, "hidden": list(hp_dp["hidden"])}, "trials": t2, "seed": 0, "at_epsilon": 5.0}, "selected_on": "validation macro-F1"}
-    res["protected"] = {"classifiers": prot, "references": refs, "pairs": PAIRS, "protection": PROTECTION, "delta": float(cfg["dp"]["delta"]), "seeds": seeds,
-                        "comparisons": compare_pairs(cfg, data["test"]["y"].astype(np.int64), classes, rare, seeds, int(n_boot or cfg["eval"]["bootstrap"]), list(PAIRS))}
+    res["protected"] = {"classifiers": prot, "references": refs, "pairs": pairs(cfg), "protection": PROTECTION, "delta": float(cfg["dp"]["delta"]), "seeds": seeds,
+                        "comparisons": compare_pairs(cfg, data["test"]["y"].astype(np.int64), classes, rare, seeds, int(n_boot or cfg["eval"]["bootstrap"]), list(pairs(cfg)))}
     p.parent.mkdir(parents=True, exist_ok=True)
     p.write_text(json.dumps(to_jsonable(res), indent=1), encoding="utf-8")
     logger.info("wrote %s", p)

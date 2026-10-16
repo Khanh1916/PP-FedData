@@ -200,6 +200,7 @@ def report(cfg: dict[str, Any]) -> dict[str, Any]:
 
     from ppfeddata.interpret import to_jsonable
     from ppfeddata.privacy_units import _setting
+    from ppfeddata.tune_marginal import framework_name
     from ppfeddata.robustness import _rows
 
     res = Path(cfg["compute"]["runs_csv"]).parent
@@ -228,7 +229,7 @@ def report(cfg: dict[str, Any]) -> dict[str, Any]:
     full = {r["label"]: r for r in _full_rule(cfg, dp_pairs
                                                  + [(f"secagg|{clf}", f"{NAMES['s']}-TSTR-{clf}", f"{NAMES['p']}-TSTR-{clf}") for clf in ("rf", "mlp")]
                                                  + [(f"b3|{clf}", f"{NAMES['s']}-TSTR-{clf}", f"B3-TSTR-{clf}") for clf in ("rf", "mlp")]
-                                                 + [("r6|rf", f"{NAMES['s']}-TAug-rf", "MGs-eps5-TAug-rf")])}
+                                                 + [("r6|rf", f"{NAMES['s']}-TAug-rf", f"{framework_name(5.0)}-TAug-rf")])}
     for key, r in full.items():
         kind, tag = key.split("|")
         if kind == "secagg":

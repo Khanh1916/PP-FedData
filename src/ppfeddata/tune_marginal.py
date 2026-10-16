@@ -1,8 +1,8 @@
 """Optimisation O3: choice of the marginal generator's settings on validation, then the final runs (`MGd-eps<e>`, `MGl-eps<e>`).
 
 The generator (`models/marginal.py`) is cheap (seconds per fit), so a small grid replaces the Optuna search: coarse bins x split of the
-privacy budget, at each epsilon, with the distributed noise (seed 0, the same partition as the FL runs). Fitness as in O1/O2: validation
-macro-F1 of a RF on `tune.syn_per_class` rows per class. The chosen setting of an epsilon is then trained with every seed in two
+privacy budget, at each epsilon, with the distributed noise (the same partitions as the FL runs). Fitness as in O1/O2: validation
+macro-F1 of a RF on `tune.syn_per_class` rows per class, averaged over 3 seeds since round R (seed 0 only in the first study). The chosen setting of an epsilon is then trained with every seed in two
 variants: `MGd` (noise split over the clients, the sum via secure aggregation; epsilon also for a single honest client) and `MGl` (every
 client adds its full noise: local DP, no trust in the other clients), and `MGs` (O2: the distributed variant with Skellam noise, run through
 Flower's real SecAgg+, `fl/mg_app.py`; bytes measured, the secure sum checked against the exact one). Limitation (as before): chosen on
@@ -36,27 +36,34 @@ def _parts(cfg: dict[str, Any], y: np.ndarray, schema: dict[str, Any], seed: int
     return make_partition(cfg, y, classes, float(cfg["fl"]["dirichlet_alpha"]), seed, int(cfg["fl"]["num_clients"]))[0]
 
 
-def search(cfg: dict[str, Any], eps_list: list[float] | None = None, seed: int = 0, n_jobs: int = -1) -> dict[str, Any]:
+def search(cfg: dict[str, Any], eps_list: list[float] | None = None, seeds: tuple[int, ...] = (0, 1, 2), n_jobs: int = -1) -> dict[str, Any]:
+    """The grid at each epsilon, every setting scored by the MEAN over `seeds` (partition, noise and sampling seed) of the validation scores
+    (round R: 3 seeds; the first study used seed 0 only, the lesson of O1.9 was applied to the later searches)."""
     data, schema = load_data(cfg)
     X, y = data["train"]["X"], np.asarray(data["train"]["y"], dtype=np.int64)
-    parts, rare, delta = _parts(cfg, y, schema, seed), rare_labels(cfg, schema), float(cfg["dp"]["delta"])
+    parts = {s: _parts(cfg, y, schema, s) for s in seeds}
+    rare, delta = rare_labels(cfg, schema), float(cfg["dp"]["delta"])
     k, spc = len(schema["label_map"]), int(cfg["tune"]["syn_per_class"])
     out = yaml.safe_load(BEST_PATH.read_text(encoding="utf-8")) if BEST_PATH.exists() else {}
     for eps in [float(e) for e in (eps_list or cfg["dp"]["epsilons"])]:
         rows = []
         for bins, split in itertools.product(GRID["bins"], GRID["split"]):
-            m = mg.fit(X, y, parts, schema, eps, delta, bins=bins, split=split, seed=seed)
-            Xs, ys = mg.sample(m, schema, [spc] * k, seed)
-            r = val_scores_xy(cfg, Xs, ys, schema, data, seed, rare, n_jobs=n_jobs)
-            rows.append({"bins": bins, "split": list(split), **r, "eps": m.info["eps"], "eps_one_honest": m.info["eps_one_honest"]})
-            logger.info("MG eps %g bins %d split %s -> val macro-F1 %.4f (binary %.3f, rare recall %.3f)", eps, bins, split, r["macro_f1"], r["bin_f1"],
-                        r["rare_recall"])
+            per = []
+            for s in seeds:
+                m = mg.fit(X, y, parts[s], schema, eps, delta, bins=bins, split=split, seed=s)
+                Xs, ys = mg.sample(m, schema, [spc] * k, s)
+                per.append(val_scores_xy(cfg, Xs, ys, schema, data, s, rare, n_jobs=n_jobs))
+            r = {k2: float(np.mean([p[k2] for p in per])) for k2 in ("macro_f1", "bin_f1", "rare_recall")}
+            rows.append({"bins": bins, "split": list(split), **r, "macro_f1_std": float(np.std([p["macro_f1"] for p in per])),
+                         "eps": m.info["eps"], "eps_one_honest": m.info["eps_one_honest"]})
+            logger.info("MG eps %g bins %d split %s -> val macro-F1 %.4f ± %.4f over %d seeds (binary %.3f, rare recall %.3f)", eps, bins, split,
+                        r["macro_f1"], rows[-1]["macro_f1_std"], len(seeds), r["bin_f1"], r["rare_recall"])
         best = max(rows, key=lambda r: r["macro_f1"])
         out.setdefault("searches", {})[f"eps{eps:g}"] = {
             "epsilon": eps, "best": {"bins": best["bins"], "split": best["split"]}, "val_macro_f1": best["macro_f1"],
-            "val": {k2: float(best[k2]) for k2 in ("macro_f1", "bin_f1", "rare_recall")}, "grid": rows,
-            "fitness": "val macro-F1 of RF on syn_per_class rows per class; distributed noise, seed 0",
-            "limitation": "tuned on real non-private validation data, one seed"}
+            "val": {k2: float(best[k2]) for k2 in ("macro_f1", "bin_f1", "rare_recall", "macro_f1_std")}, "grid": rows, "seeds": list(seeds),
+            "fitness": f"mean over seeds {list(seeds)} of the val macro-F1 of RF on syn_per_class rows per class; distributed noise",
+            "limitation": "tuned on real non-private validation data"}
         BEST_PATH.write_text(yaml.safe_dump(out, sort_keys=False), encoding="utf-8")
     return out
 
@@ -159,6 +166,17 @@ def search_refine(cfg: dict[str, Any], eps_list: list[float] | None = None, seed
                                                          "rule": "mean of 3 seeds on validation; kept only when it beats alpha 1 / no fusion / root 0 by more than the seed std"}
         REFINE_PATH.write_text(yaml.safe_dump(out, sort_keys=False), encoding="utf-8")
     return out
+
+
+def framework_name(eps: float) -> str:
+    """The framework's configuration at `eps`: MGs plus the post-processing of O3.3 (MGr) wherever its search on validation kept one, MGs
+    otherwise (round R, approved 2026-10-16: one rule at every epsilon; the first study used MGr at epsilon 1 only). Read from
+    configs/best_marginal_refine.yaml, so a new search is followed without editing names in the code."""
+    e = float(eps)
+    if REFINE_PATH.exists():
+        if ((yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8")).get("searches") or {}).get(f"eps{e:g}") or {}).get("chosen") is not None:
+            return f"MGr-eps{e:g}"
+    return f"MGs-eps{e:g}"
 
 
 def final_name(variant: str, eps: float, tag: str = "") -> str:

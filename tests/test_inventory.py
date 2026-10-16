@@ -38,7 +38,7 @@ class TestInventoryHelpers:
         lm = _load_label_map()
         assert "scenarios" in lm
         assert "expected_counts" in lm
-        assert lm["expected_counts"]["total"] == 59624826
+        assert lm["expected_counts"]["total"] == 39000601          # round R: Normal extracted with the authors' settings (first study: 59,624,826)
 
     def test_verify_counts_pass(self):
         from ppfeddata.data.inventory import verify_counts

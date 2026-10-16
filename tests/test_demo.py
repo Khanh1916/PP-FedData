@@ -29,6 +29,9 @@ HP = {"latent_dim": 4, "hidden": [32, 16], "beta": 0.5, "beta_warmup_epochs": 2,
 CLASSES = ["NORMAL", "BCF", "SYN"]
 
 
+from ppfeddata.fl.m1 import tuned_setup as REAL_TUNED_SETUP          # the real one, for the tests on the real artifacts
+
+
 @pytest.fixture(autouse=True)
 def tuned_trial_21(monkeypatch):
     import ppfeddata.fl.m1 as m1
@@ -204,6 +207,8 @@ HAVE_REAL = (ROOT / "artifacts" / "B3_0" / "final_state.pt").exists() and (ROOT 
 
 @pytest.mark.skipif(not HAVE_REAL, reason="needs the trained models and data/processed")
 def test_real_models_reproduce_every_saved_synthetic_set(monkeypatch):
+    import ppfeddata.fl.m1 as m1
+    monkeypatch.setattr(m1, "tuned_setup", REAL_TUNED_SETUP)         # the DP family selected on this machine (configs/best_cvae_dp.yaml), not the fake one
     monkeypatch.chdir(ROOT)
     cfg = load_config()
     assets, n = dl.load_assets(cfg), 0

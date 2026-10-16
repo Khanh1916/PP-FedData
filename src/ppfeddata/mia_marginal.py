@@ -59,8 +59,9 @@ def run_one(X, y, schema, classes, rare, eps, delta, setting, K, seed, n: int | 
     return r
 
 
-def default_settings(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
-    """The released configurations: MGs (tree, settings of configs/best_marginal.yaml) at every epsilon, and MGb where O3(b) chose options."""
+def default_settings(cfg: dict[str, Any], eps_list: list[float] | None = None) -> dict[str, dict[str, Any]]:
+    """The released configurations: MGs (tree, settings of configs/best_marginal.yaml) at every epsilon (`eps_list`, default dp.epsilons),
+    and MGb / MGr where O3 chose options."""
     import yaml
 
     from ppfeddata.tune_marginal import BEST_PATH, BN_PATH, REFINE_PATH
@@ -69,7 +70,7 @@ def default_settings(cfg: dict[str, Any]) -> dict[str, dict[str, Any]]:
     bnb = yaml.safe_load(BN_PATH.read_text(encoding="utf-8"))["searches"] if BN_PATH.exists() else {}
     rfb = yaml.safe_load(REFINE_PATH.read_text(encoding="utf-8"))["searches"] if REFINE_PATH.exists() else {}
     out = {}
-    for e in cfg["dp"]["epsilons"]:
+    for e in (eps_list or cfg["dp"]["epsilons"]):
         b = best[f"eps{float(e):g}"]["best"]
         out[f"MGs-eps{float(e):g}"] = {"eps": float(e), "bins": int(b["bins"]), "split": list(b["split"]), "options": None}
         ref = (rfb.get(f"eps{float(e):g}") or {}).get("chosen")
@@ -99,7 +100,7 @@ def threshold_settings(cfg: dict[str, Any], ts: tuple[int, ...] = (3, 2)) -> dic
 
 
 def run_all(cfg: dict[str, Any], settings: dict[str, dict[str, Any]] | None = None, seeds: list[int] | None = None, out: str | Path | None = None,
-            controls: bool = True, merge: bool = False) -> dict[str, Any]:
+            controls: bool = True, merge: bool = False, eps_list: list[float] | None = None) -> dict[str, Any]:
     """`settings`: {label: {"eps": e (None: no DP, round Q1), "bins": b, "split": s, "options": None (tree) | dict (marginal_bn)}}.
     `merge` (round Q1): add these configurations to the existing file, keeping its other configurations; with `controls` False the
     positive controls are kept from the file instead of being run again (the attack is deterministic)."""
@@ -107,7 +108,7 @@ def run_all(cfg: dict[str, Any], settings: dict[str, dict[str, Any]] | None = No
     from ppfeddata.interpret import to_jsonable
     from ppfeddata.utils import config_hash, git_commit
 
-    settings = settings or default_settings(cfg)
+    settings = settings or default_settings(cfg, eps_list)
     seeds = [int(s) for s in (seeds if seeds is not None else cfg["seeds"])]
     d = processed_dir(cfg)
     schema = json.loads((d / "feature_schema.json").read_text(encoding="utf-8"))

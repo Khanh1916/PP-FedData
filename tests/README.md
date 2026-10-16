@@ -13,7 +13,7 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 |---|---|
 | `test_config.py`, `test_seed.py` | config loading and hashing, deterministic seeding |
 | `test_inventory.py`, `test_harmonize.py` | Phases 1-2: inventory, schema harmonisation, format audit |
-| `test_extraction_check.py` | provenance of the raw data: CSV / PCAP name pairing, the Kaggle listing match, the column comparison, the sender of a packet and the display filter, the extra TShark options, the report |
+| `test_extraction_check.py` | provenance of the raw data: CSV / PCAP name pairing, the Kaggle listing match, the column comparison, the sender of a packet and the display filter, the extra TShark options, the Normal extraction with the authors' settings against the first one, the report and the limitation |
 | `test_split_sample.py`, `test_preprocess.py` | Phases 3-4: group split, streaming sampling, multi-value parsing, preprocessing |
 | `test_leakage.py` | Phase 5: leakage checks on data with leakage planted on purpose |
 | `test_eval.py` | Phase 6: metrics, protocols, bootstrap, fidelity, privacy, overhead, run ledger, Markdown tables |
@@ -24,7 +24,7 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 | `test_experiment.py` | Phase 11: the experiment matrix, planning against the ledger, resume |
 | `test_aggregate.py`, `test_interpret.py` | Phases 11-12: summary, figures, final report, interpretation rules R1-R6 and red flags |
 | `test_demo.py`, `test_accept.py` | Phase 13: limitations, demo logic, generated README blocks and links, report links, acceptance checks |
-| `test_fed_classifier.py`, `test_mia.py` | follow-ups: the IDS trained by FL, sensitivity worlds, membership attacks with model access |
+| `test_fed_classifier.py`, `test_mia.py` | follow-ups: the IDS trained by FL, federated SMOTE, sensitivity worlds (A2, A4, A5), membership attacks with model access |
 | `test_scorecard.py`, `test_o1.py`, `test_taug_rare.py` | optimisation O0-O1: scorecard and Pareto front, DP residual statistics, TAugR |
 | `test_dpfedsgd.py` | optimisation O2: DP-FedSGD with the noise split over the clients |
 | `test_marginal.py`, `test_marginal_bn.py` | optimisation O3: FedDP-Marginal (accounting, tree, sampling) and its Bayesian-network option |
