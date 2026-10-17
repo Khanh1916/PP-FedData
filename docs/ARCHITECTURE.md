@@ -192,6 +192,7 @@ src/ppfeddata/
   mg_nodp.py             FedDP-Marginal without DP, plain and through SecAgg+ (Q1)
   robustness.py, sensitivity.py   other federations, other splits
   fed_classifier.py, fed_protected.py   the IDS itself trained by FL (alternative route)
+  fed_distributed.py     the same IDS with distributed DP (DP-FedSGD, noise split over SecAgg+)
   mia_model.py, mia_marginal.py         membership attacks on released models
   aggregate.py, interpret.py, interpret_report.py, limitations.py   results -> report
   scorecard.py, recommend.py            scorecard and per-requirement guide

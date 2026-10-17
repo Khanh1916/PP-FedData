@@ -82,6 +82,7 @@ together: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). The modules are li
 | `robustness.py` | FedDP-Marginal under other federations and 11 classes, with the CVAE in 11 classes (A3) (`robustness`) |
 | `sensitivity.py` | other rare-class quotas (A2), other test groups (A4) and a per-stream cap (A5), each world with the framework at epsilon 5 (`sensitivity`) |
 | `fed_classifier.py`, `fed_protected.py` | the IDS itself trained by FL, plain, with federated SMOTE (`FedMLPsm`) and protected (`fed-baseline`) |
+| `fed_distributed.py` | the same IDS with distributed DP: DP-FedSGD, the noise split over the clients and summed by SecAgg+ (`fed-baseline --distributed`), against FedDP-Marginal at the same epsilon |
 | `mia_model.py`, `mia_marginal.py` | membership attacks with access to the released CVAE / FedDP-Marginal model (`mia`, `mia-marginal`) |
 
 ## Analysis and reporting

@@ -594,6 +594,109 @@ def _fed_protected(R: dict[str, Any]) -> list[str]:
     return L
 
 
+def _fed_dist(R: dict[str, Any]) -> dict[str, Any] | None:
+    """The direct classifier with distributed DP (`fed-baseline --distributed`); None when not run."""
+    D = (R.get("fed_classifier") or {}).get("distributed")
+    return D if D and D.get("comparisons") else None
+
+
+def _dist_counts(D: dict[str, Any], role: str) -> dict[str, Any]:
+    v = [c[role]["macro_f1"] for c in D["comparisons"].values() if role in c]
+    return {"n": len(v), **{k: sum(x["effect"] == k for x in v) for k in ("better", "none", "worse")}, "deltas": [x["delta"] for x in v]}
+
+
+def _fed_dist_clause(R: dict[str, Any]) -> str | None:
+    D = _fed_dist(R)
+    if not D:
+        return None
+    c = _dist_counts(D, "framework")
+    return (f"With distributed DP (DP-FedSGD, the noise split over the clients as in FedDP-Marginal), the directly federated MLP is above FedDP-Marginal (TSTR-MLP, same epsilon) in "
+            f"{c['better']} of {c['n']} epsilons, not different in {c['none']} and below in {c['worse']} (delta {min(c['deltas']):+.3f} to {max(c['deltas']):+.3f}).")
+
+
+def _fed_distributed(R: dict[str, Any]) -> list[str]:
+    """The direct classifier with the noise split over the clients (distributed DP), against FedDP-Marginal at the same epsilon (`fed-baseline --distributed`)."""
+    D = _fed_dist(R)
+    if not D:
+        return []
+    cl, cmpx, refs, tun = D["classifiers"], D["comparisons"], D.get("references") or {}, D.get("tuning") or {}
+    per = tun.get("per_eps") or {}
+    sr = tun.get("search") or {}
+    n_trials = sorted({len(v.get("trials") or []) for v in per.values()})
+    grid = (f"learning rate {{{', '.join(f'{x:g}' for x in sr['lr'])}}} x clipping bound {{{', '.join(f'{x:g}' for x in sr['clip'])}}} x schedule {{{', '.join(sr['sched'])}}}, "
+            f"expected batch {', '.join(str(x) for x in sr['batch'])}" if {"lr", "clip", "sched", "batch"} <= set(sr) else "a small grid")
+    L = ["**The same detector with distributed DP (`ppfeddata fed-baseline --distributed`).** In the table above every client adds the full DP-SGD noise to its own update, while "
+         "FedDP-Marginal splits its noise over the clients and lets SecAgg+ hide the shares, so that comparison mixed the generator route with the noise split. Here the class-weighted "
+         "MLP gets the noise split too: DP-FedSGD, one gradient step per round, every client clips the gradient of each sampled row, sums them and adds its share 1/K of the Gaussian "
+         "noise; SecAgg+ returns only the sum (emulated in process with its quantisation), which is the noise of central DP-SGD (accounting: RDP of the subsampled Gaussian, delta "
+         f"{D['delta']:g}). As for FedDP-Marginal, the setting is chosen on validation at every epsilon, seed 0 ({grid}; {'/'.join(map(str, n_trials)) or '?'} trials per epsilon, "
+         f"{tun.get('epochs')} passes over the data; the cosine schedule decays the learning rate to 0). Each row is compared with TSTR-MLP of FedDP-Marginal at the same epsilon (the "
+         "framework configuration; MGd, its Gaussian noise split simulated in process, the same mechanism family as here) and with the direct classifier with DP at each client "
+         "(tuned at epsilon 5 only, so that column mixes the noise split with the tuning).", ""]
+    rows = []
+    for lab, c in cmpx.items():
+        v, dp = cl[lab], cl[lab]["dp"]
+        ch = (per.get(f"{dp['target_eps']:g}") or {}).get("chosen") or {}
+        row = {"ε": f"{dp['target_eps']:g}", "setting (lr, C, schedule)": f"{ch['lr']:g}, {ch['clip']:g}, {ch.get('sched', 'const')}" if ch else "-",
+               "direct MLP, distributed DP": f"{v['macro_f1_mean']:.3f} ± {v['macro_f1_std']:.3f}", "rare-class recall": f"{v['rare_recall_mean']:.3f}",
+               "ε with one honest client": f"{dp['eps_one_honest']:.1f}", "rounds": f"{dp['rounds']:,}"}
+        for role, head in (("framework", "FedDP-Marginal (framework)"), ("MGd", "MGd"), ("local DP", "direct MLP, DP at each client")):
+            x = c.get(role)
+            r = refs.get(x["against"]) if x else None
+            row[head] = f"{r['macro_f1_mean']:.3f}" if r else "-"
+            row[f"direct minus {role} [95% CI]"] = f"{x['macro_f1']['delta']:+.3f} [{x['macro_f1']['lo']:+.3f}, {x['macro_f1']['hi']:+.3f}] {WORD[x['macro_f1']['effect']]}" if x else "-"
+        rows.append(row)
+    L += [_table(rows), ""]
+    fw, mgd, loc = _dist_counts(D, "framework"), _dist_counts(D, "MGd"), _dist_counts(D, "local DP")
+    mg_bytes = [r["bytes_total"] for lab, c in cmpx.items() if (r := refs.get((c.get("framework") or {}).get("against"))) and r.get("bytes_total")]
+    rounds = sorted({cl[lab]["dp"]["rounds"] for lab in cmpx})
+    comm = (f"Communication: {', '.join(f'{x:,}' for x in rounds)} rounds, about {D['bytes_total_est'] / 1e9:.1f} GB in total over the clients (an estimate: the bytes per parameter and round "
+            "measured for M2 through Flower's SecAgg+), against three rounds and "
+            + (f"{min(mg_bytes) / 1e6:.2f}-{max(mg_bytes) / 1e6:.2f} MB measured for FedDP-Marginal." if mg_bytes else "well under 1 MB for FedDP-Marginal.")) if D.get("bytes_total_est") else ""
+    honest = [(cl[lab]["dp"]["eps_one_honest"], (refs.get((c.get("framework") or {}).get("against")) or {}).get("eps_one_honest")) for lab, c in cmpx.items()]
+    hon = (f" With a single honest client its epsilon grows to {' / '.join(f'{a:.1f}' for a, _ in honest)} (one release per round), against "
+           f"{' / '.join(f'{b:.1f}' for _, b in honest)} for FedDP-Marginal (framework)." if honest and all(b for _, b in honest) else "")
+    at_edge: dict[str, list[str]] = {}                              # a value chosen at the edge of a grid of 3 or more values (a grid of two has only edges)
+    for e, v in per.items():
+        ch, trials = v.get("chosen") or {}, [t["hp"] for t in v.get("trials") or [] if "hp" in t]
+        for w, k in (("learning rate", "lr"), ("clipping bound", "clip")):
+            vals = sorted({t[k] for t in trials})
+            if len(vals) > 2 and ch.get(k) in (vals[0], vals[-1]):
+                at_edge.setdefault(w, []).append(e)
+    edge = [f"the {w} at {'every epsilon' if len(es) == len(per) > 1 else 'epsilon ' + ', '.join(es)}" for w, es in at_edge.items()]
+    nn, prot = cl.get("FedMLPddp-nonoise"), ((R.get("fed_classifier") or {}).get("protected") or {}).get("classifiers") or {}
+    nc = D.get("nonoise_comparison") or {}
+    ref0 = refs.get(nc.get("against")) if nc else None
+    nonoise = ""
+    if nn:
+        eps_txt = " / ".join(f"{cl[lab]['dp']['target_eps']:g}" for lab in cmpx)
+        cost_direct = " / ".join(f"{nn['macro_f1_mean'] - cl[lab]['macro_f1_mean']:.3f}" for lab in cmpx)
+        fw_refs = [refs[c["framework"]["against"]] for c in cmpx.values() if c.get("framework") and c["framework"]["against"] in refs]
+        cost_fw = " / ".join(f"{ref0['macro_f1_mean'] - r['macro_f1_mean']:.3f}" for r in fw_refs) if ref0 else ""
+        m = nc.get("macro_f1") or {}
+        nonoise = (f" Without noise (the setting of epsilon 5, clipping kept) the same recipe reaches {nn['macro_f1_mean']:.3f} ± {nn['macro_f1_std']:.3f}"
+                   + (f", against {ref0['macro_f1_mean']:.3f} for FedDP-Marginal without DP (TSTR-MLP; delta {m['delta']:+.3f} [{m['lo']:+.3f}, {m['hi']:+.3f}] "
+                      f"{WORD[m['effect']]})" if ref0 and m else "")
+                   + f". DP costs the direct classifier {cost_direct}" + (f" and FedDP-Marginal {cost_fw}" if cost_fw else "") + f" at epsilon {eps_txt}")
+        fa = (prot.get("FedMLPcwT") or {}).get("macro_f1_mean")
+        if fa is not None:
+            nonoise += (f"; the recipe itself (one clipped gradient step per round, no client drift) is {abs(fa - nn['macro_f1_mean']):.3f} "
+                        f"{'below' if fa > nn['macro_f1_mean'] else 'above'} FedAvg of the same MLP without DP ({fa:.3f})")
+        nonoise += "."
+    cp = (D.get("compact") or {}).get("classifiers") or {}
+    compact = (" A first, compact search at epsilon 5 only, applied to every epsilon, gave " + " / ".join(f"{cp[lab]['macro_f1_mean']:.3f}" for lab in cmpx if lab in cp)
+               + " (SPEC_DEVIATIONS R.7)." if cp and all(lab in cp for lab in cmpx) else "")
+    L += [f"**Reading.** Against FedDP-Marginal (framework) the direct classifier with distributed DP is above in {fw['better']}, not different in {fw['none']} and below in {fw['worse']} of "
+          f"{fw['n']} epsilons (delta {min(fw['deltas']):+.3f} to {max(fw['deltas']):+.3f}); against MGd above in {mgd['better']}, not different in {mgd['none']}, below in {mgd['worse']}. "
+          + (f"Splitting the noise (and tuning per epsilon) changes the direct classifier by {min(loc['deltas']):+.3f} to {max(loc['deltas']):+.3f} against DP at each client. " if loc["n"] else "")
+          + comm + hon + nonoise + compact + " Limits: the accounting is that of the continuous Gaussian sum while each share is quantised by SecAgg+ (FedDP-Marginal's MGs uses the discrete Skellam "
+          "mechanism, exact through the modular arithmetic of SecAgg+); like MGs it assumes honest clients (epsilon with one honest client in the table); one MLP, a small grid on one seed"
+          + (f" ({', '.join(edge)} chosen at the edge of the grid, so a wider grid might do better)" if edge else "") + ", the "
+          "choice of the evaluation point and of the hyper-parameters on non-private validation data; the comparison is MLP against MLP, while the synthetic data of FedDP-Marginal can "
+          "train any classifier (its rows in 9.9b use the classifier chosen on validation), and the direct route produces a detector only, no data to share.", ""]
+    return L
+
+
 def _fed_paragraph(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     f = _fed_facts(R)
     if not f:
@@ -626,7 +729,7 @@ def _fed_paragraph(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                  "So the federated CVAE route is above the direct federated classifier in this comparison, which keeps part of the case for it when raw data cannot be pooled."), ""]
     L += ["Limits of this comparison: one MLP architecture, untuned in this first comparison (the CVAE was tuned on validation data; the tuned version follows), 3 seeds, the class-weighted variant needs the class counts of every client, "
           + ("" if _fed_prot(R) else "no DP or SecAgg version of the direct classifier was run, ") + "and the CVAE route might use class balance too if its synthetic data were used differently (not tested).", ""]
-    return L + _fed_protected(R)
+    return L + _fed_protected(R) + _fed_distributed(R)
 
 
 PROTECTS = {"gen": "nothing (no protection layer)", "ref": "nothing (epsilon = infinity, plain decoder)", "secagg": "each client's update, from the aggregation server",
@@ -866,7 +969,7 @@ def _pivot_bullet(f: dict[str, Any]) -> str:
             "the CVAE stays as the baseline. Not an algorithmic novelty (FLAIM, MST, AIM); see 9.9b.")
 
 
-def _pivot(cfg: dict[str, Any]) -> list[str]:
+def _pivot(cfg: dict[str, Any], R: dict[str, Any] | None = None) -> list[str]:
     f = _pivot_facts(cfg)
     if not f:
         return []
@@ -898,8 +1001,10 @@ def _pivot(cfg: dict[str, Any]) -> list[str]:
          "HeteroFedSyn (2026 preprint), built on MST / AIM / PrivBayes / PrivSyn. What this study adds is the combination and the evidence: exact distributed DP with Skellam "
          "noise through a real secure-aggregation implementation with measured bytes and the epsilon per number of honest clients, a systematic comparison with a CVAE under "
          "the same FL / DP / SecAgg for an MQTT intrusion-detection dataset, and a requirement-driven configuration guide (9.10b).",
-         "- **Not tested:** FLAIM or AIM themselves (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation, a classifier trained by FL "
-         "with distributed DP.", ""]
+         *([f"- **Against the detector trained by FL with distributed DP.** {_fed_dist_clause(R)} The direct route needs hundreds to thousands of model rounds instead of three "
+             "small releases and produces a detector only; details and limits in 9.9."] if R and _fed_dist(R) else []),
+         "- **Not tested:** FLAIM or AIM themselves (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation"
+         + (", a discrete mechanism (Skellam) for the classifier trained by FL with distributed DP." if R and _fed_dist(R) else ", a classifier trained by FL with distributed DP."), ""]
     return L
 
 
@@ -1330,7 +1435,7 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
           ("- Not tested: " + ("" if _fed_smote_clause(R) else "federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); ")
            + ("" if _fed_prot(R) else "a DP or SecAgg version of the direct federated classifier; ") + "other generators (the optional WGAN-GP, "
            "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)"
-           + (", with federated SMOTE (round R)." if _fed_smote_clause(R) else ".")
+           + (", with federated SMOTE (round R)" if _fed_smote_clause(R) else "") + (" and with distributed DP (after round R)." if _fed_dist(R) else ".")
            if _fed_facts(R) else
            "- Not tested: federated training of the IDS classifier itself (for example FedAvg on the MLP), the obvious alternative when raw data cannot be pooled and no synthetic data have to be shared; federated "
            "versions of class weighting or SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); other generators (the optional WGAN-GP, TVAE or CTGAN-type models, diffusion); "
@@ -1356,6 +1461,6 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
          f"(the macro-F1 recomputed from the predictions equals the ledger's to {m['integrity_max_abs_diff_vs_ledger']:.0e}); `results/interpretation.json` holds the same numbers in machine-readable form.", ""]
     L += _how_judged(R)
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
-    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg) + _guide(R, cfg) + _followup(cfg)
+    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg, R) + _guide(R, cfg) + _followup(cfg)
     L += _q1(R, cfg)
     return L

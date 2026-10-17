@@ -335,11 +335,14 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         "the hyper-parameters or the data sampling.", "section 9")
     fc = (_read(Path(cfg["compute"]["runs_csv"]).parent / "fed_classifier.json") or {}) if (cfg.get("compute") or {}).get("runs_csv") else {}
     smote = "FedMLPsm" in (fc.get("classifiers") or {})
+    ddp = bool((fc.get("distributed") or {}).get("comparisons"))
     add("What was not compared",
         "The CVAE was the premise of the spec; the optimisation round compared it with one other generator, FedDP-Marginal, which the framework now uses (section 9.9b). "
-        "Training the classifier itself by FL was tested with and without the protections" + (", and with federated SMOTE (round R)" if smote else "") + " (section 9.9). "
-        "Not tested: FLAIM / AIM (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation, " + ("" if smote else "federated SMOTE, ")
-        + "a classifier trained by FL with distributed DP.", "sections 9.9, 9.9b; SPEC_DEVIATIONS 12.10, O3.2" + (", R.6" if smote else ""))
+        "Training the classifier itself by FL was tested with and without the protections" + (", and with federated SMOTE (round R)" if smote else "")
+        + (", and with distributed DP (DP-FedSGD with the noise split over the clients, Gaussian accounting)" if ddp else "") + " (section 9.9). "
+        "Not tested: FLAIM / AIM (Private-PGM was not installed), DP-CTGAN or other deep generators in the federation" + ("" if smote else ", federated SMOTE")
+        + (", a discrete (Skellam) mechanism for the classifier trained with distributed DP." if ddp else ", a classifier trained by FL with distributed DP."),
+        "sections 9.9, 9.9b; SPEC_DEVIATIONS 12.10, O3.2" + (", R.6" if smote else "") + (", R.7" if ddp else ""))
     # optimisation round (spec v1.5): FedDP-Marginal
     add("Distributed DP assumes honest clients",
         "The distributed variant of FedDP-Marginal splits the noise over the clients: its epsilon holds when every client adds its share. If only h of the K clients do (the others "

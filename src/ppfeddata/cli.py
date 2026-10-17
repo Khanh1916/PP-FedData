@@ -133,6 +133,8 @@ def build_parser() -> argparse.ArgumentParser:
     p_fc.add_argument("--only", nargs="+", default=None, help="subset of FedMLP FedMLPcw CentMLP CentMLPcw, or FedMLPsm (federated SMOTE, round R)")
     p_fc.add_argument("--merge", action="store_true", help="add the classifiers to results/fed_classifier.json and keep the rest of it")
     p_fc.add_argument("--protected", action="store_true", help="instead: tune the class-weighted FedAvg MLP on validation and run it with SecAgg numerics, DP (eps 1, 5, 10) and both -> adds `tuning` and `protected` to results/fed_classifier.json (run after the plain baseline)")
+    p_fc.add_argument("--distributed", action="store_true", help="instead: the class-weighted MLP by DP-FedSGD with the noise split over the clients and summed by SecAgg+ (distributed DP, eps 1, 5, 10), "
+                      "tuned on validation at eps 5 -> adds `distributed` to results/fed_classifier.json (run after --protected)")
     p_mi = sub.add_parser("mia", help="Membership inference with access to the released model (loss-based, calibrated by a reference model) with positive controls: B3 and M1 on random halves of the train pool -> results/mia_model.json")
     p_mi.add_argument("--label-mode", choices=["6class", "11class"], default=None)
     p_mi.add_argument("--seeds", nargs="+", type=int, default=None)
@@ -449,6 +451,14 @@ def main(argv: list[str] | None = None) -> None:
             for n, v in r["protected"]["classifiers"].items():
                 logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f%s", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"],
                             f", epsilon max {v['dp']['eps_max_over_seeds']:.3f}" if "dp" in v else "")
+            return
+        if a.distributed:
+            from ppfeddata.fed_distributed import run_all as run_distributed
+            r = run_distributed(c, seeds=a.seeds)
+            for n, v in r["distributed"]["classifiers"].items():
+                d = v["dp"]
+                logger.info("%s: macro-F1 %.4f +- %.4f, recall of the rare classes %.3f, %s, %d rounds", n, v["macro_f1_mean"], v["macro_f1_std"], v["rare_recall_mean"],
+                            "no noise" if d["eps_max_over_seeds"] is None else f"epsilon max {d['eps_max_over_seeds']:.3f} (one honest client {d['eps_one_honest']:.1f})", d["rounds"])
             return
         r = run_all(c, seeds=a.seeds, names=tuple(a.only) if a.only else NAMES, merge=a.merge)
         for n, v in r["classifiers"].items():

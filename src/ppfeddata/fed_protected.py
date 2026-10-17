@@ -217,8 +217,8 @@ class Cache:
     """Finished tuning and runs of this command in `artifacts/fed_protected_cache.json`, so that a crash (or an interrupted session) resumes instead of starting again.
     The key includes the config hash, so a changed config never reuses old numbers."""
 
-    def __init__(self, cfg: dict[str, Any]):
-        self.path = Path(cfg["compute"]["artifacts_dir"]) / "fed_protected_cache.json"
+    def __init__(self, cfg: dict[str, Any], name: str = "fed_protected_cache.json"):
+        self.path = Path(cfg["compute"]["artifacts_dir"]) / name
         self.key = config_hash(cfg)
         d = json.loads(self.path.read_text(encoding="utf-8")) if self.path.exists() else {}
         self.d = d if d.get("config_hash") == self.key else {"config_hash": self.key}

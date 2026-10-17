@@ -37,7 +37,7 @@ One directory per run, named by its run id (`eval/runs.py`, `run_id`): the confi
 | `b3_sanity_6class.json`, `m1_sanity_6class.json` | `b3`, `m1` | sanity checks of B3 and M1 |
 | `compute_benchmark_6class.json` | `benchmark` | measured times, the raw data of `results/reports/compute_budget.md` |
 | `secagg_checks_6class.json`, `secagg_checks_ledger_6class.csv` | `secagg-check` | checks T-SA1-3 (secure against plain aggregation per round) and their own ledger |
-| `fed_protected_cache.json` | `fed-baseline --protected` | finished tuning and runs, so that an interrupted run resumes; keyed by the config hash |
+| `fed_protected_cache.json`, `fed_distributed_cache.json` | `fed-baseline --protected`, `fed-baseline --distributed` | finished tuning trials and runs, so that an interrupted run resumes; keyed by the config hash |
 
 ## Sub-folders starting with `_`
 

@@ -192,6 +192,7 @@ src/ppfeddata/
   mg_nodp.py             FedDP-Marginal không DP, thường và qua SecAgg+ (Q1)
   robustness.py, sensitivity.py   liên kết khác, cách chia khác
   fed_classifier.py, fed_protected.py   chính IDS huấn luyện bằng FL (hướng thay thế)
+  fed_distributed.py     cùng IDS đó với DP phân tán (DP-FedSGD, nhiễu chia qua SecAgg+)
   mia_model.py, mia_marginal.py         tấn công suy luận thành viên lên mô hình công bố
   aggregate.py, interpret.py, interpret_report.py, limitations.py   kết quả -> báo cáo
   scorecard.py, recommend.py            bảng điểm và hướng dẫn theo yêu cầu

@@ -25,6 +25,7 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 | `test_aggregate.py`, `test_interpret.py` | Phases 11-12: summary, figures, final report, interpretation rules R1-R6 and red flags |
 | `test_demo.py`, `test_accept.py` | Phase 13: limitations, demo logic, generated README blocks and links, report links, acceptance checks |
 | `test_fed_classifier.py`, `test_mia.py` | follow-ups: the IDS trained by FL, federated SMOTE, sensitivity worlds (A2, A4, A5), membership attacks with model access |
+| `test_fed_distributed.py` | the IDS trained by FL with distributed DP: per-sample clipping, the noise shares adding up to central DP-SGD, the epsilon spent, the comparison block |
 | `test_scorecard.py`, `test_o1.py`, `test_taug_rare.py` | optimisation O0-O1: scorecard and Pareto front, DP residual statistics, TAugR |
 | `test_dpfedsgd.py` | optimisation O2: DP-FedSGD with the noise split over the clients |
 | `test_marginal.py`, `test_marginal_bn.py` | optimisation O3: FedDP-Marginal (accounting, tree, sampling) and its Bayesian-network option |
