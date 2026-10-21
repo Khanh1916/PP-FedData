@@ -422,7 +422,7 @@ def test_readme_results_and_limitations_are_what_the_generators_write_from_the_c
     def block(key):
         b, e = rg.markers(key)
         return t[t.index(b) + len(b):t.index(e)].strip("\n")
-    assert block("results") == rg.results_block(R, cfg).strip("\n"), f"{name} results block is stale: run `ppfeddata aggregate`"
+    assert block("results") == rg.results_block(R, cfg, rg.lang_of(name)).strip("\n"), f"{name} results block is stale: run `ppfeddata aggregate`"
     assert block("limitations") == rg.limitations_block(lim.limitations(cfg, R, None)).strip("\n"), f"{name} limitations block is stale: run `ppfeddata aggregate`"
     assert "**Why a CVAE at all?**" in block("results") and "Not tested" in block("results") and "**Which of M1, M2, M3 for which requirement?**" in block("results")
 
@@ -438,6 +438,18 @@ def test_results_block_reports_the_numbers_of_the_json(tmp_path):
     for c in r6["candidates"]:
         assert re.search(rf"\| {re.escape(c['label'])} \| {c['taug_f1']:.4f} \| {c['tstr_f1']:.4f} \|", b)
     assert f"{R['meta']['n_runs']} runs" in b
+    assert "### Main result" in b and "### Short answers" in b and b.count("<details>") == 2 and b.count("</details>") == 2
+    vi = rg.results_block(R, cfg, "vi")
+    assert "### Kết quả chính" in vi and f"{R['meta']['n_runs']} lần chạy" in vi and f"{R['why']['b0']['rf']:.3f}".replace(".", ",") in vi
+    assert vi.split("<details>")[1] == b.split("<details>")[1].replace("Full answers (section 9.0 of the report)", "Câu trả lời đầy đủ (mục 9.0 của báo cáo, tiếng Anh)")
+
+
+def test_short_answers_follow_the_facts():
+    f = {"R1": {"rf": {"better": 2, "n": 13, "best": 0.0012, "smote": 0.0571}}}
+    assert rg._n(-0.118, 3, "vi", True) == "−0,118" and rg._n(0.448, 3, "en") == "0.448" and rg._int(30000, "vi") == "30.000" and rg._int(2593, "en") == "2,593"
+    assert rg.lang_of("README.vi.md") == "vi" and rg.lang_of("README.md") == "en"
+    part = rg.TEXT["en"]["r1_part"].format(clf="RF", b=f["R1"]["rf"]["better"], n=13, best=rg._n(0.0012, 3, "en", True), smote=rg._n(0.0571, 3, "en", True))
+    assert part == "RF: 2 of 13 generators help, by at most +0.001 (SMOTE +0.057)"
 
 
 def test_times_block_from_a_trial_session(tmp_path):

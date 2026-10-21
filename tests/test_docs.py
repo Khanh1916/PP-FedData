@@ -13,7 +13,7 @@ PKG = ROOT / "src" / "ppfeddata"
 DOCS = [ROOT / "docs" / "ARCHITECTURE.md", ROOT / "docs" / "ARCHITECTURE.vi.md", PKG / "README.md", ROOT / "configs" / "README.md",
         ROOT / "results" / "README.md", ROOT / "tests" / "README.md", ROOT / "demo" / "README.md", ROOT / "artifacts" / "README.md",
         ROOT / "notebooks" / "README.md", ROOT / ".streamlit" / "README.md"]
-HISTORY = [ROOT / "docs" / "PP-FedData_Implementation_Spec.md", ROOT / "docs" / "SPEC_DEVIATIONS.md"]   # links only: they name past files too
+HISTORY = [ROOT / "docs" / f"{name}{lang}.md" for name in ("PP-FedData_Implementation_Spec", "SPEC_DEVIATIONS") for lang in ("", ".vi")]   # links only: they name past files too
 NOT_COMMITTED = ("data/", "artifacts/", "configs/local.yaml", "results/runs.csv", "results/summary.csv")
 COMMANDS = set(build_parser()._subparsers._group_actions[0].choices)
 
