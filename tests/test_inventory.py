@@ -76,7 +76,7 @@ class TestInventoryIntegration:
         return run_inventory(cfg)
 
     def test_total_rows(self, inventory_result):
-        """Total rows must be exactly 59,624,826."""
+        """Total rows must equal expected_counts.total exactly (39,000,601 after round R)."""
         lm = _load_label_map()
         total = int(inventory_result["class_counts_df"]["total_rows"].sum())
         assert total == lm["expected_counts"]["total"], (

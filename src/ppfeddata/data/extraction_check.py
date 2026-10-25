@@ -43,7 +43,8 @@ logger = logging.getLogger("ppfeddata.extraction_check")
 KAGGLE_DATASET = "alaaalatram/dosddos-mqtt-iot"
 # display filters tried in this order for the authors' export (`{broker}` = the broker's address)
 AUTHOR_FILTERS = ("ip.dst=={broker}", "ip")
-# configurations shown in the report of the impact check (all are in the JSON)
+# configurations shown in the report of the impact check (all are in the JSON); the names are those of the first study, whose saved
+# predictions the impact check scored (section 5 of the report); round R has no broker-sent rows to weigh
 HEADLINE = r"^((B0|B1a|B1b)-(rf|mlp)|(B3|M2|M1-eps5|MGs-eps5|MGs-eps10|MGr-eps1|MGs-nodp|MGp-nodp)-TSTR-(rf|mlp))$"
 META = ("Label", "Capture_ID")
 # columns the pipeline drops but that are numbers / flags (compared as such); the rest of the 33 follow feature_decisions.yaml

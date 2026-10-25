@@ -50,11 +50,9 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-
-BAO_CAO_THAY_DOI_SO_VOI_MUC_TIEU.md
-HUONG_DAN_VIET_CHAPTER_3_METHODOLOGY.md
-HUONG_DAN_CAP_NHAT_CH1_CH2.md
-mg_architecture.md
+# The team's own working files, kept out of the public repository: an explainer of FedDP-Marginal, the supervisor report,
+# the paper (its own git repository)
+/mg_architecture.md
 /mg_architecture_files
 /bao_cao_gvhd
 /Latex_FinalCapstone
