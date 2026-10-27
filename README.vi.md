@@ -346,7 +346,8 @@ PP-FedData/
 
 README (tiếng Anh) của từng thư mục liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),
 [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md),
-[.streamlit](.streamlit/README.md), [notebooks](notebooks/README.md), [artifacts](artifacts/README.md) (những gì các lần chạy để lại trên đĩa). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
+[.streamlit](.streamlit/README.md), [notebooks](notebooks/README.md), [artifacts](artifacts/README.md) (những gì các lần chạy để lại trên đĩa), [data](data/README.md) (dữ liệu làm việc: kiểm kê,
+dòng đã lấy mẫu, đặc trưng đã mã hoá, phân hoạch client). Các phần phối hợp với nhau thế nào: [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md).
 
 ## Thời gian chạy tham khảo
 

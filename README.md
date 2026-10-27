@@ -348,7 +348,8 @@ PP-FedData/
 
 The README of each folder lists its files and how they are produced: [src/ppfeddata](src/ppfeddata/README.md),
 [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md),
-[.streamlit](.streamlit/README.md), [notebooks](notebooks/README.md), [artifacts](artifacts/README.md) (what the runs leave on disk). How the pieces work together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
+[.streamlit](.streamlit/README.md), [notebooks](notebooks/README.md), [artifacts](artifacts/README.md) (what the runs leave on disk), [data](data/README.md) (the working data: inventory, sampled rows,
+encoded features, client partitions). How the pieces work together: [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Reference run times
 

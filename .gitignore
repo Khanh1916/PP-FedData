@@ -4,6 +4,7 @@ configs/local.yaml
 # Data (large, not committed): everything under data/, including the sensitivity worlds (_sens) and the MIA runs (_mia)
 data/*
 !data/.gitkeep
+!data/README.md
 
 # Round R: the outputs of the first study (Normal extracted without the authors' filter), kept as a backup
 /data_v1/
@@ -56,3 +57,4 @@ Thumbs.db
 /mg_architecture_files
 /bao_cao_gvhd
 /Latex_FinalCapstone
+/ghi_chu_hoc
