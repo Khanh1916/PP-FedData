@@ -213,6 +213,30 @@ def test_sensitivity_bullet_and_the_a4_limitation_use_the_worlds():
     t = lim.a4_text({"sensitivity": S}, None)
     assert "A4 was run with 1 other choices" in t and "shared with the main study: 1" in t and "0 of 1 comparisons" in t                    # A5 is not an A4 world
     assert "was not run" in lim.a4_text(None, None)
+    S2 = {"worlds": S["worlds"] + [world("A2-r10", "none")]}
+    b2 = ir._sensitivity_bullet({"sensitivity": S2})
+    assert "the rare-class quotas or the sampling?" in b2 and "other datasets and client counts is not covered" in b2
+    assert "the test groups or the sampling?" in b and "other datasets, quotas and client counts is not covered" in b
+
+
+def test_not_tested_line_moves_what_a_later_round_ran(tmp_path):
+    from ppfeddata import interpret_report as ir
+    cfg = {"compute": {"runs_csv": str(tmp_path / "runs.csv")}, "fl": {"num_clients": 5}}
+    before = ir._not_tested({}, cfg)[0]                                      # nothing ran: the list of the main study
+    assert "extension A2 was not run" in before and "M3 with an epsilon other than 5" in before and "a classifier trained by FL (9.9)" in before
+    assert "a number of clients other than 5;" in before and "Run in a later round" not in before and "T-SA3" not in before
+    (tmp_path / "robustness.json").write_text(json.dumps({"federation_distributed": [{"config": "MGs-eps5", "num_clients": 5.0}, {"config": "MGs-k10-eps5", "num_clients": 10.0},
+                                                                                     {"config": "MGs-k20-eps5", "num_clients": 20.0}]}), encoding="utf-8")
+    (tmp_path / "scorecard.json").write_text(json.dumps({"rows": [{"label": lab, "method": "M3", "eps_target": e, "valid": True} for lab, e in
+                                                                  (("M3-eps5", 5.0), ("M3o-eps1", 1.0), ("M3o-eps10", 10.0))]}), encoding="utf-8")
+    (tmp_path / "reports").mkdir()
+    (tmp_path / "reports" / "m2_m3_secagg.md").write_text("## T-SA3 dropout (optional gate)\n", encoding="utf-8")
+    R = {"sensitivity": {"worlds": [{"tag": "main"}, {"tag": "A2-r10"}, {"tag": "A2-r200"}]}, "fed_classifier": fake_fed()}
+    after = ir._not_tested(R, cfg)[0]
+    assert "A2 was not run" not in after and "M3 with an epsilon" not in after and "a classifier trained by FL (9.9)." not in after.split("**Run")[0]
+    assert "a number of clients other than 5 for the CVAE route" in after and "T-SA3" in after
+    assert "other rare-class quotas (A2-r10, A2-r200, section 8c)" in after and "FedDP-Marginal with 10 and 20 clients (9.10b)" in after
+    assert "M3 at epsilon 1 and 10 (re-tuned" in after and "a classifier trained by FL" in after.split("**Run in a later round:**")[1]
 
 
 def test_readme_check_reads_the_clean_install_record():

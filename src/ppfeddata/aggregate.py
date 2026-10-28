@@ -634,7 +634,9 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
     if sens and sens.get("worlds"):
         from ppfeddata import sensitivity
         body = sensitivity.render(sens)
-        L += ["## 8c. Extensions A4 and A5: which test groups, how many packets per stream", ""]
+        what = {"A2": "rare-class quotas", "A4": "which test groups", "A5": "how many packets per stream"}
+        fams = sorted({w["tag"].split("-")[0] for w in sens["worlds"] if w["tag"] != "main"})
+        L += [f"## 8c. Extensions {' and '.join([', '.join(fams[:-1]), fams[-1]] if len(fams) > 1 else fams)}: " + ", ".join(what.get(f, f) for f in fams), ""]
         L += [("### " + ln[3:]) if ln.startswith("## ") else ln for ln in body[1:]] + [""]
 
     if interp is not None:

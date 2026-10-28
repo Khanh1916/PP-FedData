@@ -194,13 +194,15 @@ def _how_judged(R: dict[str, Any]) -> list[str]:
     m = R["meta"]
     groups = f"{m['n_groups']} capture groups" if m.get("n_groups") else "a handful of capture groups"
     streams = f" ({m['n_streams']:,} streams)" if m.get("n_streams") else ""
+    a4 = [w for w in (R.get("sensitivity") or {}).get("worlds", []) if w["tag"].startswith("A4")]
+    a4_note = f"extension A4 re-ran the study with {len(a4)} other choices of them, section 8c" if a4 else "sensitivity A4 was not run"
     return ["**How a difference is judged.** Every comparison is a difference of test macro-F1 (or of recall) between two configurations, averaged over the "
             f"{len(m['seeds'])} seeds (delta = first minus second). A difference *has an effect* only if (i) its 95 % paired-bootstrap interval excludes 0 and (ii) |delta| is larger "
             "than the seed-to-seed std of the two configurations (the larger of the two, ddof = 0, as in every table). The bootstrap draws the "
             f"{m['n_test_rows']:,} real test rows with replacement, stratified by class, with the same {m['n_boot']} resamples for every run, so the differences are paired. "
             f"Packets of one TCP stream are correlated, which makes that interval too narrow; every verdict is therefore repeated with a bootstrap over whole streams{streams} "
             "and marked **†** when the verdict changes. Neither interval reflects which capture files form the test split "
-            f"({groups}; sensitivity A4 was not run) or training randomness beyond the seeds that were run, so a verdict is a statement about this test split and these seeds.", ""]
+            f"({groups}; {a4_note}) or training randomness beyond the seeds that were run, so a verdict is a statement about this test split and these seeds.", ""]
 
 
 def _r1(R: dict[str, Any]) -> list[str]:
@@ -765,7 +767,7 @@ def _guide_facts(R: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _sensitivity_bullet(R: dict[str, Any]) -> str | None:
-    """Do the verdicts survive another choice of test groups (A4) and a cap on packets per stream (A5)? From `ppfeddata sensitivity`."""
+    """Do the verdicts survive another choice of test groups (A4), a cap on packets per stream (A5) and other rare-class quotas (A2)? From `ppfeddata sensitivity`."""
     S = R.get("sensitivity")
     if not S or len(S.get("worlds", [])) < 2:
         return None
@@ -773,11 +775,12 @@ def _sensitivity_bullet(R: dict[str, Any]) -> str | None:
     V = verdicts(S)
     changed = [v for v in V if not v["same_everywhere"]]
     tags = [w["tag"] for w in S["worlds"][1:]]
-    s = (f"**Do the answers depend on the test groups or the sampling?** Extensions {', '.join(tags)} re-ran the study from Phase 3 with one setting changed: {len(V) - len(changed)} of {len(V)} comparisons "
+    a2 = any(t.startswith("A2") for t in tags)
+    s = (f"**Do the answers depend on the test groups{', the rare-class quotas' if a2 else ''} or the sampling?** Extensions {', '.join(tags)} re-ran the study from Phase 3 with one setting changed: {len(V) - len(changed)} of {len(V)} comparisons "
          f"(R1, synthetic-only against real data, DP cost) keep their verdict in every world")
     if changed:
         s += "; those that change: " + "; ".join(f"{v['what']} ({', '.join(f'{t} {e}' for t, e in v['verdicts'].items())})" for v in changed)
-    return s + ". Section 8c has the numbers; the choice of other datasets, quotas and client counts is not covered."
+    return s + ". Section 8c has the numbers; the choice of other datasets" + (" and client counts" if a2 else ", quotas and client counts") + " is not covered."
 
 
 def _guide_bullet(R: dict[str, Any], cfg: dict[str, Any] | None = None) -> str | None:
@@ -922,11 +925,41 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
           + ("did not pass its positive control, while the attack with access to the released model did and still finds no leakage in the non-private CVAE, so there is nothing for DP to reduce at this scale (R4)."
              if (_mia_facts(R) or {}).get("passes") else "did not pass its positive control (R4).")
           + (f" FedDP-Marginal differs: {qa}." if qa else ""), ""]
+    return L + _not_tested(R, cfg) + _guide_o4(cfg)
+
+
+def _not_tested(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
+    """The closing line of 9.10: what no run covers, and what a later round ran instead, read from the results (sensitivity worlds,
+    results/robustness.json, results/scorecard.json, the FL classifier) so that a new round moves an item instead of leaving it stale."""
+    import json as _json
+    from pathlib import Path as _P
+
+    res = _P(cfg["compute"]["runs_csv"]).parent if (cfg.get("compute") or {}).get("runs_csv") else None
+    read = lambda name: _json.loads((res / name).read_text(encoding="utf-8")) if res and (res / name).exists() else None   # noqa: E731
     nc = cfg.get("fl", {}).get("num_clients")
-    L += ["**Not tested here:** real devices or a real network; clients that drop out during SecAgg; "
-          + (f"a number of clients other than {nc}" if nc else "a different number of clients") + "; M3 with an epsilon other than 5; a deployment whose rare classes are rarer or less rare than the quotas of this study (extension A2 was not run); "
-          "a classifier trained by FL (9.9).", ""]
-    return L + _guide_o4(cfg)
+    ks = sorted({int(r["num_clients"]) for r in (read("robustness.json") or {}).get("federation_distributed", [])
+                 if r.get("num_clients") is not None and r["num_clients"] == r["num_clients"]} - {nc})
+    m3 = [r for r in (read("scorecard.json") or {}).get("rows", []) if r.get("valid") and not r.get("reference") and r.get("method") == "M3" and r.get("eps_target") is not None]
+    m3_main = sorted({float(r["eps_target"]) for r in m3 if r["label"].startswith("M3-")}) or [5.0]
+    m3_more = sorted({float(r["eps_target"]) for r in m3} - set(m3_main))
+    a2 = [w["tag"] for w in (R.get("sensitivity") or {}).get("worlds", []) if w["tag"].startswith("A2")]
+    tsa3 = bool(res) and (res / "reports" / "m2_m3_secagg.md").exists() and "T-SA3" in (res / "reports" / "m2_m3_secagg.md").read_text(encoding="utf-8")
+    fed = _fed_facts(R)
+    untested = ["real devices or a real network",
+                "a client that drops out in the middle of an experiment (a missing client stops the run, which resumes from its checkpoint"
+                + ("; only the SecAgg+ protocol test T-SA3 completes a round without one client, m2_m3_secagg.md)" if tsa3 else ")"),
+                (f"a number of clients other than {nc}" if nc else "a different number of clients") + (" for the CVAE route" if ks else "")]
+    if not m3_more:
+        untested.append("M3 with an epsilon other than " + ", ".join(f"{e:g}" for e in m3_main))
+    if not a2:
+        untested.append("a deployment whose rare classes are rarer or less rare than the quotas of this study (extension A2 was not run)")
+    if not fed:
+        untested.append("a classifier trained by FL (9.9)")
+    since = ([f"other rare-class quotas ({', '.join(a2)}, section 8c)"] if a2 else []) \
+        + ([f"FedDP-Marginal with {' and '.join(map(str, ks))} clients (9.10b)"] if ks else []) \
+        + ([f"M3 at epsilon {' and '.join(f'{e:g}' for e in m3_more)} (re-tuned at full scale as M3o in the optimisation round, `scorecard.md`)"] if m3_more else []) \
+        + (["a classifier trained by FL" + (", also with SecAgg or DP" if _fed_prot(R) else "") + (" and with distributed DP" if _fed_dist(R) else "") + " (9.9)"] if fed else [])
+    return ["**Not tested here:** " + "; ".join(untested) + "." + (" **Run in a later round:** " + "; ".join(since) + "." if since else ""), ""]
 
 
 def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
