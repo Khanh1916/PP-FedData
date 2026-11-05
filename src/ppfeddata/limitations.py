@@ -227,6 +227,37 @@ def a4_text(interp: dict[str, Any] | None, summ: pd.DataFrame | None) -> str:
     return "Sensitivity A4 (other choices of test groups) was not run, so how far the conclusions depend on these groups is untested."
 
 
+MG_SEARCH = Path("./configs/best_marginal.yaml")   # the search file of FedDP-Marginal, written by `tune_marginal` (BEST_PATH)
+
+
+def tuning_text(cfg: dict[str, Any], path: Path = MG_SEARCH) -> str:
+    """The limitation on non-private tuning: the CVAE and FedDP-Marginal, and the epsilons where the two best FedDP-Marginal candidates on val differ by less than
+    the weight of one validation packet in the macro-F1 (1 / (classes x val rows per class)), so that one packet can decide the published choice."""
+    head = "The hyper-parameters of the CVAE (and of the DP variant) were tuned on real, non-private validation data"
+    if not path.exists():
+        return head + "; tuning is not covered by epsilon."
+    import yaml
+    searches = (yaml.safe_load(path.read_text(encoding="utf-8")) or {}).get("searches") or {}
+    s0 = next(iter(searches.values()), {})
+    mg = (f", and so were those of FedDP-Marginal (coarse bins and the split of epsilon: {len(s0.get('grid') or [])} candidates per epsilon chosen by the "
+          f"{len(s0.get('seeds') or [])}-seed mean val macro-F1, then the post-processing options)") if s0 else ""
+    q = cfg.get(f"quota_{cfg.get('label_mode')}") or cfg.get("quota") or {}
+    w = 1 / (len(q) * min(v[1] for v in q.values())) if q else None
+    ties = []
+    for s in searches.values():
+        f1 = sorted((g["macro_f1"] for g in s.get("grid") or []), reverse=True)
+        if w and len(f1) > 1 and f1[0] - f1[1] < w:
+            ties.append((float(s["epsilon"]), f1[0] - f1[1]))
+    ties.sort()
+    tie = ""
+    if ties:
+        n_val = min(v[1] for v in q.values())
+        tie = (f" At epsilon {' and '.join(f'{e:g}' for e, _ in ties)} the two best FedDP-Marginal candidates differ by {' and '.join(f'{d:.6f}' for _, d in ties)} on val, "
+               f"less than the weight of one validation packet in the macro-F1 (1 / ({len(q)} classes x {n_val:,} packets) = {w:.5f}): whether one packet is in the "
+               "validation set can decide the published choice.")
+    return head + mg + "; tuning is not covered by epsilon." + tie
+
+
 def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ: pd.DataFrame | None = None) -> list[dict[str, str]]:
     """The list, in the order of the spec's Definition of Done; each item is {id, topic, text, source}."""
     man, sch = load_manifest(cfg), load_schema(cfg)
@@ -258,8 +289,7 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
     add("Time features and independent packets",
         "The time features (gap to the previous frame, time since the first frame of the stream, round-trip time) depend on how the capture was exported, and the CVAE generates "
         "every packet independently: a generated packet has no stream context, so the temporal structure of a session is not reproduced.", "spec Definition of Done; leakage_report.md (ablation without the time columns)")
-    add("Non-private tuning",
-        "The hyper-parameters of the CVAE (and of the DP variant) were tuned on real, non-private validation data; tuning is not covered by epsilon.", "SPEC_DEVIATIONS 7.3, 9.5, 9.14")
+    add("Non-private tuning", tuning_text(cfg), "SPEC_DEVIATIONS 7.3, 9.5, 9.14, R.5, R.10; configs/best_marginal.yaml")
     add("Single-machine simulation",
         "Federated training is simulated on one machine (Flower simulation, the clients are Ray actors sharing the same CPU): no network latency is measured, so the times per round "
         "are compute time on this machine, neither the sum of the clients' times nor what a deployment would see. Ray on Windows was unstable (SPEC_DEVIATIONS 9.8).",

@@ -119,6 +119,20 @@ def test_limitations_must_be_in_the_list_the_report_and_the_readme(tmp_path):
     assert r.status == "FAIL" and "missing: ['protocol filter']" in r.evidence
 
 
+def test_tuning_limitation_names_feddp_marginal_and_its_near_ties(tmp_path):
+    import yaml
+    cfg = {"label_mode": "6class", "quota": {c: [100, 2000, 5000] for c in "ABCDEF"}}      # one val packet weighs 1 / 12,000 = 0.00008
+    grid = lambda a, b: [{"bins": 8, "macro_f1": a}, {"bins": 16, "macro_f1": b}, {"bins": 32, "macro_f1": 0.1}]   # noqa: E731
+    p = tmp_path / "best_marginal.yaml"
+    p.write_text(yaml.safe_dump({"searches": {"eps1": {"epsilon": 1.0, "seeds": [0, 1, 2], "grid": grid(0.378, 0.365)},
+                                              "eps5": {"epsilon": 5.0, "seeds": [0, 1, 2], "grid": grid(0.42420, 0.42419)}}}), encoding="utf-8")
+    t = lim.tuning_text(cfg, p)
+    assert "tuned on real" in t and "FedDP-Marginal" in t and "3 candidates per epsilon chosen by the 3-seed mean" in t
+    assert "At epsilon 5 the two best" in t and "0.000010" in t and "6 classes x 2,000 packets" in t and "epsilon 1 " not in t
+    assert lim.tuning_text(cfg, tmp_path / "none.yaml") == ("The hyper-parameters of the CVAE (and of the DP variant) were tuned on real, non-private "
+                                                           "validation data; tuning is not covered by epsilon.")
+
+
 def test_readme_check_lists_what_is_missing():
     def readme(heads, cmds):
         return "\n".join(heads) + "\nrequirements-lock.txt\n" + "".join(f"`python -m ppfeddata.cli {c} --x`\n" for c in cmds)
