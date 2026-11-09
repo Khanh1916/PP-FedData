@@ -13,6 +13,7 @@ backrefs==5.9
 beautifulsoup4==4.14.2
 bleach==6.4.0
 Brotli==1.1.0
+# ppfeddata (this repository) is installed with `pip install -e .`
 certifi==2025.10.5
 cffi==2.0.0
 charset-normalizer==3.4.4
@@ -104,7 +105,6 @@ pefile==2024.8.26
 pillow==11.3.0
 platformdirs==4.5.0
 pluggy==1.6.0
-# ppfeddata (this repository) is installed with `pip install -e .`
 prompt_toolkit==3.0.53
 protobuf==6.33.6
 psutil==7.2.2

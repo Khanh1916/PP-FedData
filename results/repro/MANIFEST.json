@@ -1,6 +1,6 @@
 {
   "label_mode": "6class",
-  "git_commit": "eafa6a277e15489ac0371c6a487369810d64241d",
+  "git_commit": "52950b663d0c9b8d37ee1ab26e051d6aef45b7fc",
   "files": {
     "results/runs.csv": {
       "sha256": "6c38d20f5e289cc9163c7d7fafa90193462fd1984d19f3da0961119f787d5193",
@@ -15,8 +15,8 @@
       "bytes": 485114
     },
     "results/reports/final_report.md": {
-      "sha256": "fc587499c766064215f0147bf00006ca7444a748acf2eb060a474341f84f16d6",
-      "bytes": 116039
+      "sha256": "cabd44e803aba1b7af1f8b89a562b2f90c0e6bdf3377cfd618d9ea1e150c24e6",
+      "bytes": 123537
     },
     "results/manifests/split_manifest_6class.json": {
       "sha256": "482b5eae0af79b449b9e96d49d8cc8e9c2e45947c2403ac327cf817628f2609c",
@@ -27,16 +27,16 @@
       "bytes": 16669
     },
     "requirements-lock.txt": {
-      "sha256": "1771fccb8622df15f4e9ef5a4bea34264ec46a9efdd2716aa29e7f355ee554fc",
+      "sha256": "a26314038311b22909731b7d881f50e5f2de1f667383b0c5719fa8967f17d88c",
       "bytes": 3796
     },
     "results/repro/pip_freeze.txt": {
-      "sha256": "1771fccb8622df15f4e9ef5a4bea34264ec46a9efdd2716aa29e7f355ee554fc",
+      "sha256": "a26314038311b22909731b7d881f50e5f2de1f667383b0c5719fa8967f17d88c",
       "bytes": 3796
     },
     "results/repro/environment.json": {
-      "sha256": "becccc349982b3738064df9940a2bd6c69cf88d1ade4c2de7ebbe78b0af8b6f0",
-      "bytes": 807
+      "sha256": "897200e01b6462bb19117da9e6ba9ffa34c6708b5a046f534cfe02af47329962",
+      "bytes": 806
     },
     "results/repro/configs/best_cvae.yaml": {
       "sha256": "4602f7179181b5fe4b4b5b73e6f6d08f58edb636f11b09b03611b0debb7acb66",
@@ -81,6 +81,10 @@
     "results/repro/configs/label_map.yaml": {
       "sha256": "4ea6c88a7701353a0011aef950a76bf485fc43b261164f2bd29a6ac88c75aef9",
       "bytes": 1366
+    },
+    "results/repro/configs/published_results.yaml": {
+      "sha256": "fc4421d72c707282011fc22eac582c82bcd65ec25f279fc5508dda13429eb667",
+      "bytes": 5612
     },
     "results/repro/configs/exp/A1-a0.1.yaml": {
       "sha256": "ca37ccbc7945f29d3d557840aac4ce1776803cb524c9f3969129abbbb23ea734",
