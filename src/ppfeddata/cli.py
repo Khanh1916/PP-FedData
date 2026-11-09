@@ -194,6 +194,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_xn.add_argument("--extractor", default="tools/extract_normal_pcap.py")
     p_xn.add_argument("--broker", default=None, help="the broker's address; default the one found by check-extraction (results/data_provenance.json)")
     p_xn.add_argument("--out-dir", default=None, help="folder under NormalData, default CSV_Authors_Settings")
+    sub.add_parser("compare-published", help="Section 9.13: published results on this dataset (configs/published_results.yaml), the study's saved predictions scored on their binary tasks, and how much the split and the identifier columns move the real-data IDS -> results/compare_published.json, results/reports/compare_published.md (no ledger row)")
     p_nd = sub.add_parser("mg-nodp", help="Round Q1: FedDP-Marginal without DP, through Flower SecAgg+ (MGs-nodp) and in plain Flower rounds (MGp-nodp); bins chosen on validation (3 seeds), 3 seeds each, membership attack -> configs/best_marginal_nodp.yaml, results/runs.csv, results/mia_marginal.json, results/reports/mg_nodp.md")
     p_nd.add_argument("--stage", choices=["all", "search", "final", "mia", "report"], default="all")
     p_if = sub.add_parser("ids-followup", help="Follow-up round P2: IDS-side options on synthetic data (all rows, class-probability weights chosen on validation) and local augmentation at each client -> results/ids_followup.json, results/reports/ids_followup.md")
@@ -597,6 +598,11 @@ def main(argv: list[str] | None = None) -> None:
         out = nd.report(c)
         logger.info("Q1: bins %s, SecAgg+ cost %s, same release %s", out["bins"], out["secagg_cost"], out["same_release"])
 
+    def cmd_compare_published(a):
+        from ppfeddata.compare_published import run
+        out = run(load_config(a.config))
+        logger.info("compare-published: macro-F1 %s", {f"{r['split']}/{r['identifiers']}": round(r["macro_f1"], 3) for r in out["protocol"]})
+
     def cmd_ids_followup(a):
         from ppfeddata.ids_followup import run
         out = run(load_config(a.config), tuple(a.items))
@@ -672,6 +678,7 @@ def main(argv: list[str] | None = None) -> None:
         "ids-followup": cmd_ids_followup,
         "privacy-units": cmd_privacy_units,
         "mg-nodp": cmd_mg_nodp,
+        "compare-published": cmd_compare_published,
         "check-extraction": cmd_check_extraction,
         "extract-normal": cmd_extract_normal,
         "robustness": cmd_robustness,

@@ -1496,4 +1496,6 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
     L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg, R) + _guide(R, cfg) + _followup(cfg)
     L += _q1(R, cfg)
+    from ppfeddata.compare_published import section_for
+    L += section_for(cfg)
     return L

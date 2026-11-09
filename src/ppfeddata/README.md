@@ -78,6 +78,7 @@ together: [docs/ARCHITECTURE.md](../../docs/ARCHITECTURE.md). The modules are li
 | `tune_marginal.py` | settings of FedDP-Marginal chosen on validation (3 seeds), final runs, options and post-processing (`tune-marginal`); `framework_name`: the framework's configuration at each epsilon |
 | `privacy_units.py` | group-level DP and honest-client threshold (`privacy-units`) |
 | `mg_nodp.py` | FedDP-Marginal without DP, through SecAgg+ and in plain Flower rounds (`mg-nodp`, round Q1) |
+| `compare_published.py` | section 9.13: published results on this dataset, binary scores from saved predictions, effect of the split and of the identifier columns (`compare-published`) |
 | `ids_followup.py` | IDS-side options and local augmentation (`ids-followup`) |
 | `robustness.py` | FedDP-Marginal under other federations and 11 classes, with the CVAE in 11 classes (A3) (`robustness`) |
 | `sensitivity.py` | other rare-class quotas (A2), other test groups (A4) and a per-stream cap (A5), each world with the framework at epsilon 5 (`sensitivity`) |

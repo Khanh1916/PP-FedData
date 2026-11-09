@@ -1,0 +1,75 @@
+# Published results on the DoS/DDoS-MQTT-IoT dataset (section 9.13 of the report, `compare-published`).
+# Typed by hand from the papers: every value says what the paper states, and where it was read. A study enters `included` only if it
+# trains or tests on this dataset and its full text was read at the source, so that its task, input, split and metric come from the paper.
+snapshot:
+  date: "2026-11-09"
+  index: "OpenAlex, works citing doi:10.1016/j.comnet.2023.109809"
+  citing: 103
+  no_abstract: 21
+  mqtt_and_detection: 36
+
+included:
+  - key: alatram2023
+    name: "Alatram et al. 2023"
+    role: "the dataset's own authors, the reference every later paper starts from"
+    citation: "Alatram, Sikos, Johnstone, Szewczyk, Kang. Computer Networks 231:109809, 2023"
+    url: "https://doi.org/10.1016/j.comnet.2023.109809"
+    read: "full text, published version (CC BY, figshare copy)"
+    task: "attack / normal (labels 1 / 0, assigned from the source IP); Table 10 is captioned for the Sub_DDoS set"
+    input: "packets; the 30-feature list (Table 6) has ip.src, tcp.stream, frame.time_epoch, frame.time_relative; the paper does not say which columns the classifiers received"
+    split: "not described; 3,654,560 records used (2.3 %)"
+    result: "accuracy, Random Forest 92.69 to 100.00 %, XGBoost 92.72 to 100.00 % over the five unlabelled blocks of Table 10; no F1"
+  - key: zhang2026
+    name: "Zhang et al. 2026"
+    role: "the highest F1 read, obtained from a different input (packet payload)"
+    citation: "Zhang, Cui, Cui, Huang, Li, Shi, Lan. Cybersecurity 9:65, 2026"
+    url: "https://doi.org/10.1186/s42400-025-00495-x"
+    read: "full text (open access), Tables 4, 5, 6"
+    task: "binary, each attack against benign; DDoS variants of BF, Delay, Sub, WILL only; SYN excluded because it has no payload"
+    input: "packet payload: keywords of 7-14 bytes found in windows of 30 packets grouped by IP addresses and protocol, hashed (MD5) to 8 integers"
+    split: "a contiguous part of the captures, balanced by selection (Table 4); the train / test ratio is not stated"
+    result: "F1 (RF): BF 1.0000, Delay 1.0000, Sub 0.9928, WILL 0.9988 (Table 5); 99.88 % in Table 6"
+  - key: parra2026
+    name: "Parra & Bayas 2026"
+    role: "the setup closest to this study: no payload and a statistical view of the traffic"
+    citation: "Parra, Bayas. Technologies 14(5):253, 2026"
+    url: "https://doi.org/10.3390/technologies14050253"
+    read: "full text (open access), Tables 3, 4"
+    task: "binary, normal against flooding_basic and flooding_delayed"
+    input: "TCP flows in windows of 1 s; 4 statistics: inter-arrival time, packet rate, byte rate, frame length"
+    split: "stratified 70 / 30 and stratified 5-fold; no separation by capture stated; at most 300,000 records per category"
+    result: "F1 0.846, accuracy 0.802, AUC 0.876 (hold-out, Table 3); 5-fold F1 0.842, Random Forest 0.839 (Table 4)"
+
+# Use the dataset, but their full text could not be read: no task, input or split can be stated, so no score is quoted.
+uses_dataset_not_read:
+  - name: "Dandapat & Mondal 2026"
+    citation: "Evolutionary Intelligence 19:138, 2026"
+    url: "https://doi.org/10.1007/s12065-026-01256-6"
+    why: "behind a paywall; the abstract names the dataset as a second validation set and gives accuracy and precision, but no task, features or split"
+  - name: "Swain et al. 2025"
+    citation: "Computers & Security 157:104526, 2025"
+    url: "https://doi.org/10.1016/j.cose.2025.104526"
+    why: "full text not reachable; its score is known only second-hand, from the comparison table of Zhang et al. 2026, which does not give its task or split"
+  - name: "Saiyed & Al-Anbagi 2023 (FLUID)"
+    citation: "Internet of Things 24:100976, 2023"
+    url: "https://doi.org/10.1016/j.iot.2023.100976"
+    why: "full text not reachable; its score is known only second-hand, from the comparison table of Zhang et al. 2026, which does not give its task or split"
+
+# Opened because they looked relevant, and found not to evaluate on this dataset.
+checked_other_data:
+  - {name: "Swain et al. 2026, Cluster Computing 29:495", data: "MQTTSET, MQTT-IoT-IDS2020, MQTTEEB-D (abstract); federated"}
+  - {name: "Federated hybrid IDS, CCIC 2026 (doi:10.1109/CCIC68129.2026.11486056)", data: "MQTT-IoT-IDS2020 (abstract); federated"}
+  - {name: "Solanki & Gupta 2026, Ann. Math. Artif. Intell. 94:395", data: "MQTT-IoT-IDS2020 (abstract)"}
+  - {name: "Drozdev et al. 2026, ICIEAM", data: "MQTTset (abstract)"}
+  - {name: "KouhiRonaghi et al. 2026, J. Supercomputing 82:334", data: "their own BCCC-IoT-MQTT-IDS-Augmented-2025 (abstract)"}
+  - {name: "ICITCOM 2026 (doi:10.1109/ICITCOM70739.2026.11714330)", data: "their own testbed (abstract)"}
+  - {name: "Putro et al. 2025, IEEE OJCOMS 6:7855", data: "names this dataset in its related-work discussion only"}
+  - {name: "Reddy & Kumar 2026, Frontiers in Big Data 9", data: "a review: cites this dataset, trains no model on it"}
+
+# The published F1 next to which this study's predictions are scored, on the closest binary task.
+closest_task:
+  - {name: "Normal / BCF + DELAYED", attacks: [BCF, DELAYED], study: "Parra & Bayas 2026", f1: 0.846}
+  - {name: "Normal / BCF", attacks: [BCF], study: "Zhang et al. 2026", f1: 1.0}
+  - {name: "Normal / DELAYED", attacks: [DELAYED], study: "Zhang et al. 2026", f1: 1.0}
+  - {name: "Normal / INVALID", attacks: [INVALID], study: "Zhang et al. 2026", f1: 0.9928}
+  - {name: "Normal / WILL", attacks: [WILL], study: "Zhang et al. 2026", f1: 0.9988}

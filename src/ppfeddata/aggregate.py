@@ -651,7 +651,7 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
     L += limitations.render_md(limitations.limitations(cfg, interp, summ)) + [""]
     L += ["## 11. Sources", "",
           "`results/runs.csv` (ledger), `results/summary.csv`, `results/interpretation.json` (section 9), `artifacts/<run>/preds/test.npz` (test predictions), `artifacts/<run>/rounds.jsonl` (round logs), `results/manifests/split_manifest_<mode>.json` and `feature_schema.json` (section 10), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, "
-          "and the phase reports in `results/reports/` (g3_baseline, b2_cvae, b3_fl, m1_dp, m1_dp_tuned, m2_m3_secagg, g4_trial).", ""]
+          "the phase reports in `results/reports/` (g3_baseline, b2_cvae, b3_fl, m1_dp, m1_dp_tuned, m2_m3_secagg, g4_trial), and, for section 9.13, `results/compare_published.json` and `configs/published_results.yaml`.", ""]
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text("\n".join(L), encoding="utf-8")
     return out

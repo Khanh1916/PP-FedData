@@ -190,6 +190,7 @@ src/ppfeddata/
   privacy_units.py       group-level DP and honest-client threshold (P1)
   ids_followup.py        IDS-side options, local augmentation (P2)
   mg_nodp.py             FedDP-Marginal without DP, plain and through SecAgg+ (Q1)
+  compare_published.py   published results on this dataset, effect of the evaluation protocol (section 9.13)
   robustness.py, sensitivity.py   other federations, other splits
   fed_classifier.py, fed_protected.py   the IDS itself trained by FL (alternative route)
   fed_distributed.py     the same IDS with distributed DP (DP-FedSGD, noise split over SecAgg+)
