@@ -890,6 +890,22 @@ The tasks are close, not identical: the papers train a binary model, this study 
 - **A split by capture does not stop this leak** (0.842 with all identifiers). The likely reason: the test rows of 8 of 11 sub-classes are a block of the same capture as their train rows.
 - **What this does not show:** that any published score is inflated. Alatram et al. list these columns but do not say which ones the classifiers received; Zhang et al. use the payload, which this measurement does not touch; Parra & Bayas give their classifier four traffic statistics, none of these columns. It covers one classifier and the sampled packets of the study.
 
+### 9.14 How much testing on the same capture moves the score
+
+Only 3 of 11 sub-classes have several captures and are split by whole capture (NORMAL 49; BCF_DoS 19; BCF_DDoS 21 captures). The other 8, which make up the classes DELAYED, INVALID, SYN, WILL, come from one capture each, so their test rows are a block of the capture their training rows come from, usually with training blocks before and after it. This section measures what such a block split does to a score, on the classes where both splits are possible (NORMAL, BCF): their sampled rows are pooled and drawn again by whole capture or by block of the same capture (one contiguous stretch at a random position of every capture, with training rows before and after it and the straddling TCP streams dropped, as in the study's block split), with the class sizes of the study, while the other classes keep the rows of the study. IDS of B0 (RF, 3 seeds). Both redrawn splits use the same number of training rows per sub-class: the quota, or fewer where the block split drops the TCP streams that straddle its boundary (NORMAL 55,186 to 55,448 of 60,000). No number above changes (`split-check`, SPEC_DEVIATIONS R.12; details in `results/reports/split_check.md`). The row of the study is exactly the ledger's B0.
+
+| Split | Macro-F1 | F1 NORMAL | F1 BCF | F1 DELAYED | F1 SYN | F1 INVALID | F1 WILL |
+|---|---|---|---|---|---|---|---|
+| split of the study | 0.448 ± 0.000 | 0.521 | 0.559 | 0.362 | 0.560 | 0.256 | 0.428 |
+| group-split classes redrawn by whole capture | 0.448 ± 0.001 | 0.521 | 0.555 | 0.365 | 0.565 | 0.257 | 0.428 |
+| group-split classes redrawn by block of the same capture | 0.447 ± 0.001 | 0.517 | 0.559 | 0.362 | 0.561 | 0.258 | 0.426 |
+
+- **NORMAL:** F1 0.521 by whole capture against 0.517 by block of the same capture (-0.004); recall 0.952 against 0.950.
+- **BCF:** F1 0.555 by whole capture against 0.559 by block of the same capture (+0.003); recall 0.780 against 0.784.
+- **Reading:** the largest difference in class F1 is 0.004, within twice the largest seed-to-seed standard deviation of the two splits (0.009). For NORMAL, BCF, testing on a block of the same capture scores about as testing on unseen captures, once the identifier columns are removed; the block split does not inflate these scores measurably.
+- **Macro-F1:** 0.448 against 0.447 (-0.001); the classes DELAYED, INVALID, SYN, WILL are the same rows in both arms, so the difference comes from NORMAL, BCF and from how they are confused with the rest.
+- **What it means for the study:** the test scores of DELAYED, INVALID, SYN, WILL are measured on other traffic of the capture the model was trained on. The difference above estimates, for the classes where it can be measured, how much such a test differs from a test on unseen captures; it is not a correction for DELAYED, INVALID, SYN, WILL, whose single capture leaves no unseen capture to test on. All configurations of the study share the same split, so comparisons between them are affected alike; the absolute level of a score is what may not carry over to new captures.
+
 ## 10. Limitations that apply to every number above
 
 The list is written once (`limitations.py`) and also used by the README and the demo; numbers come from the split manifest, the feature schema, the config and `interpretation.json`.
@@ -924,4 +940,4 @@ The list is written once (`limitations.py`) and also used by the README and the 
 
 ## 11. Sources
 
-`results/runs.csv` (ledger), `results/summary.csv`, `results/interpretation.json` (section 9), `artifacts/<run>/preds/test.npz` (test predictions), `artifacts/<run>/rounds.jsonl` (round logs), `results/manifests/split_manifest_<mode>.json` and `feature_schema.json` (section 10), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, the phase reports in `results/reports/` (g3_baseline, b2_cvae, b3_fl, m1_dp, m1_dp_tuned, m2_m3_secagg, g4_trial), and, for section 9.13, `results/compare_published.json` and `configs/published_results.yaml`.
+`results/runs.csv` (ledger), `results/summary.csv`, `results/interpretation.json` (section 9), `artifacts/<run>/preds/test.npz` (test predictions), `artifacts/<run>/rounds.jsonl` (round logs), `results/manifests/split_manifest_<mode>.json` and `feature_schema.json` (section 10), `configs/default.yaml`, `configs/best_cvae.yaml`, `configs/best_cvae_dp.yaml`, the phase reports in `results/reports/` (g3_baseline, b2_cvae, b3_fl, m1_dp, m1_dp_tuned, m2_m3_secagg, g4_trial), for section 9.13, `results/compare_published.json` and `configs/published_results.yaml`, and, for section 9.14, `results/split_check.json`.

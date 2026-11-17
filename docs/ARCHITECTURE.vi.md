@@ -191,6 +191,7 @@ src/ppfeddata/
   ids_followup.py        tuỳ chọn phía IDS, tăng cường cục bộ (P2)
   mg_nodp.py             FedDP-Marginal không DP, thường và qua SecAgg+ (Q1)
   compare_published.py   kết quả đã công bố trên bộ dữ liệu này, ảnh hưởng của cách đánh giá (mục 9.13)
+  split_check.py         kiểm tra trên cùng capture so với capture chưa thấy (mục 9.14)
   robustness.py, sensitivity.py   liên kết khác, cách chia khác
   fed_classifier.py, fed_protected.py   chính IDS huấn luyện bằng FL (hướng thay thế)
   fed_distributed.py     cùng IDS đó với DP phân tán (DP-FedSGD, nhiễu chia qua SecAgg+)

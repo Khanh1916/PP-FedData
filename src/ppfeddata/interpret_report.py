@@ -1498,4 +1498,6 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     L += _q1(R, cfg)
     from ppfeddata.compare_published import section_for
     L += section_for(cfg)
+    from ppfeddata import split_check
+    L += split_check.section_for(cfg)
     return L

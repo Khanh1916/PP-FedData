@@ -191,6 +191,7 @@ src/ppfeddata/
   ids_followup.py        IDS-side options, local augmentation (P2)
   mg_nodp.py             FedDP-Marginal without DP, plain and through SecAgg+ (Q1)
   compare_published.py   published results on this dataset, effect of the evaluation protocol (section 9.13)
+  split_check.py         testing on the same capture against unseen captures (section 9.14)
   robustness.py, sensitivity.py   other federations, other splits
   fed_classifier.py, fed_protected.py   the IDS itself trained by FL (alternative route)
   fed_distributed.py     the same IDS with distributed DP (DP-FedSGD, noise split over SecAgg+)

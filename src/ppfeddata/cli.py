@@ -195,6 +195,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_xn.add_argument("--broker", default=None, help="the broker's address; default the one found by check-extraction (results/data_provenance.json)")
     p_xn.add_argument("--out-dir", default=None, help="folder under NormalData, default CSV_Authors_Settings")
     sub.add_parser("compare-published", help="Section 9.13: published results on this dataset (configs/published_results.yaml), the study's saved predictions scored on their binary tasks, and how much the split and the identifier columns move the real-data IDS -> results/compare_published.json, results/reports/compare_published.md (no ledger row)")
+    sub.add_parser("split-check", help="Section 9.14: the real-data IDS with the classes that have several captures redrawn by whole capture or by block of the same capture, to measure how much testing on the same capture moves the score -> results/split_check.json, results/reports/split_check.md (no ledger row)")
     p_nd = sub.add_parser("mg-nodp", help="Round Q1: FedDP-Marginal without DP, through Flower SecAgg+ (MGs-nodp) and in plain Flower rounds (MGp-nodp); bins chosen on validation (3 seeds), 3 seeds each, membership attack -> configs/best_marginal_nodp.yaml, results/runs.csv, results/mia_marginal.json, results/reports/mg_nodp.md")
     p_nd.add_argument("--stage", choices=["all", "search", "final", "mia", "report"], default="all")
     p_if = sub.add_parser("ids-followup", help="Follow-up round P2: IDS-side options on synthetic data (all rows, class-probability weights chosen on validation) and local augmentation at each client -> results/ids_followup.json, results/reports/ids_followup.md")
@@ -603,6 +604,11 @@ def main(argv: list[str] | None = None) -> None:
         out = run(load_config(a.config))
         logger.info("compare-published: macro-F1 %s", {f"{r['split']}/{r['identifiers']}": round(r["macro_f1"], 3) for r in out["protocol"]})
 
+    def cmd_split_check(a):
+        from ppfeddata.split_check import run
+        out = run(load_config(a.config))
+        logger.info("split-check: macro-F1 %s", {k: round(v["macro_f1"], 3) for k, v in out["arms"].items()})
+
     def cmd_ids_followup(a):
         from ppfeddata.ids_followup import run
         out = run(load_config(a.config), tuple(a.items))
@@ -679,6 +685,7 @@ def main(argv: list[str] | None = None) -> None:
         "privacy-units": cmd_privacy_units,
         "mg-nodp": cmd_mg_nodp,
         "compare-published": cmd_compare_published,
+        "split-check": cmd_split_check,
         "check-extraction": cmd_check_extraction,
         "extract-normal": cmd_extract_normal,
         "robustness": cmd_robustness,
