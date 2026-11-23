@@ -144,6 +144,16 @@ def test_mg_rows_in_the_scorecard():
     assert r["secagg"] and r["dp_mode"] == "distributed" and r["valid"]
 
 
+def test_recon_threshold_follows_honest_t():
+    """Review R03: with n_col = K - t colluders the masks stay hidden only if n_col < T_recon, so t = 2 of K = 5 needs T_recon = 4;
+    t = 3 and every client honest keep the configured 3, and the spec of those runs is unchanged (resume)."""
+    from ppfeddata.fl import mg_app
+    cfg = {"fl": {"num_clients": 5}, "secagg": {"reconstruction_threshold": 3}}
+    assert [mg_app.recon_threshold(cfg, t) for t in (None, 5, 3, 2)] == [3, 3, 3, 4]
+    assert mg_app.secagg_params(cfg, 2)["params"]["reconstruction_threshold"] == 4
+    assert mg_app.secagg_params(cfg, 3) == mg_app.secagg_params(cfg) == mg_app.secagg_params(cfg, None)
+
+
 def test_flower_encoding_keeps_integers_exact():
     from ppfeddata.fl import mg_app
     p = mg_app.secagg_params({"fl": {"num_clients": 5}, "secagg": {}})["params"]

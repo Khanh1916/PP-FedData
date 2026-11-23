@@ -39,10 +39,24 @@ SPEC_ENV = "PPFEDDATA_MG_SPEC"
 CLIP = float(2 ** 20)
 
 
-def secagg_params(cfg: dict[str, Any]) -> dict[str, Any]:
+def recon_threshold(cfg: dict[str, Any], honest_t: int | None) -> int:
+    """Shamir reconstruction threshold for a run calibrated for `honest_t` honest clients. With n_col = K - t colluders the masks of
+    an honest client stay hidden only if n_col < T_recon, so T_recon = max(configured, K - t + 1): t = 3 keeps the configured 3, t = 2
+    needs 4 (review R03, SPEC_DEVIATIONS R.13). Without a threshold (every client honest) the configured value is kept."""
+    base = int(cfg.get("secagg", {}).get("reconstruction_threshold", 3))
+    if not honest_t:
+        return base
+    return max(base, int(cfg["fl"]["num_clients"]) - int(honest_t) + 1)
+
+
+def secagg_params(cfg: dict[str, Any], honest_t: int | None = None) -> dict[str, Any]:
     from ppfeddata.fl import secagg
 
-    return secagg.secagg_spec(cfg, compact=True, clipping_range=CLIP, quantization_range=int(2 * CLIP), modulus_range=2 ** 32)
+    kw = {}
+    t = recon_threshold(cfg, honest_t)
+    if t != int(cfg.get("secagg", {}).get("reconstruction_threshold", 3)):          # only then, so the specs of the earlier runs stay equal (resume)
+        kw["reconstruction_threshold"] = t
+    return secagg.secagg_spec(cfg, compact=True, clipping_range=CLIP, quantization_range=int(2 * CLIP), modulus_range=2 ** 32, **kw)
 
 
 @lru_cache(maxsize=1)
@@ -285,7 +299,7 @@ def run(cfg: dict[str, Any], seed: int, name: str, eps: float | None, bins: int,
     sp = {"run_id": rid, "seed": int(seed), "eps": None if eps is None else float(eps), "delta": float(cfg["dp"]["delta"]), "bins": int(bins),
           "split": list(split), "mechanism": mechanism, "noise_share": 1.0 / (honest_t or K), "num_clients": K, "data_dir": str(ddir),
           "partition_path": str(parts_path or partition_path(cfg, alpha, seed)), "artifacts_dir": str(cfg["compute"]["artifacts_dir"]),
-          "secagg": secagg_params(cfg), "label_mode": cfg["label_mode"]}
+          "secagg": secagg_params(cfg, honest_t), "label_mode": cfg["label_mode"]}
     if rows != 1 or honest_t or unit:                         # only then, so the specs of the earlier runs stay equal (resume)
         sp.update(rows=int(rows), honest_t=honest_t, unit=unit)
     if not secure:                                            # round Q1, same rule

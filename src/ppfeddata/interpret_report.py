@@ -964,15 +964,24 @@ def _not_tested(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
 
 def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
     """Numbers behind 9.9b: the best valid CVAE route and FedDP-Marginal per epsilon, from results/scorecard.json (TSTR on the real test split,
-    classifier chosen on validation, mean over seeds)."""
+    classifier chosen on validation, mean over seeds). The CVAE route is chosen by the validation macro-F1 of its chosen classifier
+    (results/summary.csv), never by the test score; the test score is only reported (review R01, SPEC_DEVIATIONS R.13)."""
     import json as _json
     import math as _math
     from pathlib import Path as _P
 
+    import pandas as _pd
+
     p = _P(cfg["compute"]["runs_csv"]).parent / "scorecard.json"
-    if not p.exists():
+    sp = _P(cfg["compute"]["runs_csv"]).parent / "summary.csv"
+    if not p.exists() or not sp.exists():
         return None
+    summ = _pd.read_csv(sp)
+    val = dict(zip(summ["config"], summ["val_macro_f1_mean"]))
     rows = [r for r in _json.loads(p.read_text(encoding="utf-8"))["rows"] if r.get("valid") and not r.get("reference")]
+    for r in rows:
+        v = val.get(r.get("tstr_config"))
+        r["val_f1"] = float(v) if v is not None and v == v else -_math.inf
     by = {r["label"]: r for r in rows}
     cvae = lambda e: [r for r in rows if r.get("dp") and r.get("method") in ("M1", "M3") and abs(float(r.get("eps_target") or 0) - e) < 1e-9]   # noqa: E731
     mg = lambda e: [r for r in rows if r.get("method") == "MG" and r.get("dp_mode") == "distributed" and abs(float(r.get("eps_target") or 0) - e) < 1e-9]  # noqa: E731
@@ -983,7 +992,7 @@ def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
         main = (framework_name(e), f"MGs-eps{e:g}")                     # the framework's configuration (round R: chosen on validation), not the best variant
         m = [by[x] for x in main if x in by] or m
         if c and m:
-            bc, bm = max(c, key=lambda r: r["tstr_f1"]), m[0]
+            bc, bm = max(c, key=lambda r: r["val_f1"]), m[0]          # chosen on validation, not on test (R01)
             out["eps"][e] = {"cvae": bc, "mg": bm}
     if not out["eps"]:
         return None
@@ -992,13 +1001,13 @@ def _pivot_facts(cfg: dict[str, Any]) -> dict[str, Any] | None:
 
 
 def _pivot_bullet(f: dict[str, Any]) -> str:
-    parts = [f"ε {e:g}: {v['mg']['label']} {v['mg']['tstr_f1']:.3f} against the best CVAE route {v['cvae']['label']} {v['cvae']['tstr_f1']:.3f}" for e, v in f["eps"].items()]
+    parts = [f"ε {e:g}: {v['mg']['label']} {v['mg']['tstr_f1']:.3f} against the CVAE route best on validation {v['cvae']['label']} {v['cvae']['tstr_f1']:.3f}" for e, v in f["eps"].items()]
     b3, mn = f.get("b3"), f.get("mg_nodp")
     return ("**Why FedDP-Marginal and not the CVAE?** Under DP the CVAE route stays far from its non-DP version even after re-tuning per epsilon at full scale "
             "(O1), while the federated DP marginal generator does not (TSTR macro-F1, test, mean over seeds: " + "; ".join(parts)
             + (f"; B3, the CVAE without DP: {b3['tstr_f1']:.3f}" if b3 else "") + (f"; FedDP-Marginal without DP: {mn['tstr_f1']:.3f}" if mn else "")
             + "). It also sends three small rounds instead of tens of model rounds, "
-            "and its noise can be split over the clients through secure aggregation with exact accounting. The framework therefore uses FedDP-Marginal; "
+            "and its noise can be split over the clients through secure aggregation, with the epsilon of the nominal mechanism accounted (secret noise assumed). The framework therefore uses FedDP-Marginal; "
             "the CVAE stays as the baseline. Not an algorithmic novelty (FLAIM, MST, AIM); see 9.9b.")
 
 

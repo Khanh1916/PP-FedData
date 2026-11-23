@@ -195,7 +195,7 @@
    "eps_one_honest": 1.46072813,
    "num_clients": 5.0,
    "alpha": 0.5,
-   "mb_per_run": 0.530924,
+   "mb_per_run": 0.530925,
    "t": 2,
    "eps_all_honest": 0.60809903
   },
@@ -242,7 +242,7 @@
    "eps_one_honest": 7.62655386,
    "num_clients": 5.0,
    "alpha": 0.5,
-   "mb_per_run": 0.51120133,
+   "mb_per_run": 0.51128033,
    "t": 2,
    "eps_all_honest": 2.94047962
   },
@@ -289,7 +289,7 @@
    "eps_one_honest": 15.89394826,
    "num_clients": 5.0,
    "alpha": 0.5,
-   "mb_per_run": 0.47532933,
+   "mb_per_run": 0.47531433,
    "t": 2,
    "eps_all_honest": 5.58762896
   }
