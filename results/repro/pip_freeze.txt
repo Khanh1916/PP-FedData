@@ -21,6 +21,7 @@ bleach==6.4.0
 Brotli==1.1.0
 # Editable install with no version control (cantfail==0.1.0)
 # ppfeddata (this repository) is installed with `pip install -e .`
+capstone==5.0.9
 certifi==2025.10.5
 cffi==2.0.0
 charset-normalizer==3.4.4
