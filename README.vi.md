@@ -178,7 +178,7 @@ Macro-F1 của bộ phân loại RF, trung bình các seed:
 
 ![Macro-F1 trên test của mọi cấu hình](results/figures/f1_by_config.png)
 
-*Macro-F1 trên test của mọi cấu hình, trung bình ± độ lệch chuẩn qua ba seed (do `aggregate` vẽ; hàng dưới: chỉ dữ liệu sinh). Bảng ở trên dùng, với mỗi cấu hình, classifier được chọn trên val, nên con số có thể khác với từng ô của hình.*
+*Macro-F1 trên test của mọi cấu hình, trung bình ± độ lệch chuẩn qua ba seed (do `aggregate` vẽ; hàng dưới: chỉ dữ liệu sinh). Màu thể hiện cách bảo vệ, không phải bộ sinh: xám là dữ liệu thật, xanh dương là bộ sinh không bảo vệ (B2, B3), cam là chỉ DP (M1, MGl), xanh lá là chỉ SecAgg (M2), tím là DP và SecAgg (M3, MG). Bảng ở trên dùng, với mỗi cấu hình, classifier được chọn trên val, nên con số có thể khác với từng ô của hình.*
 
 ## Demo
 

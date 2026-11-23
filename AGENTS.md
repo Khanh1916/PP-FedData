@@ -24,7 +24,7 @@ Where to read first:
 python -m pip install -r requirements.txt   # or requirements-lock.txt for the exact versions of the runs
 python -m pip install -e .
 python -m ppfeddata.cli --help
-python -m pytest -q                          # whole suite, about 10 minutes, needs no raw data
+python -m pytest -q                          # whole suite, about 15 minutes, needs no raw data
 python -m pytest -q tests/test_marginal.py   # one file
 ```
 
@@ -93,8 +93,11 @@ python -m pytest -q tests/test_marginal.py   # one file
   turns off the commit attribution); personal settings go in `.claude/settings.local.json` and `CLAUDE.local.md`, which are
   git-ignored.
 - After a committed change to code or results, the reproducibility package follows the change: run
-  `python -m ppfeddata.cli package` from a clean tree (add `--no-update-lock` when the libraries of the runs did not change)
-  and commit `results/repro/` on its own.
+  `python -m ppfeddata.cli package --no-update-lock` from a clean tree and commit `results/repro/` on its own. Always pass
+  `--no-update-lock`: without it the lock gets the versions installed now, which may differ from those of the runs (idna and
+  click already do, SPEC_DEVIATIONS R.14). Drop it only when the libraries were changed on purpose and the study was run
+  again with them. If `environment.json` records `git_dirty: true` (the command rewrites `pip_freeze.txt` first when the
+  installed libraries changed), commit that and run the command once more.
 - The maintainers write in Vietnamese: answer them in Vietnamese unless they ask otherwise. Repository files stay in the
   language of their pair (English `.md`, Vietnamese `.vi.md`).
 

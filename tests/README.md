@@ -4,7 +4,7 @@
 python -m pytest -q
 ```
 
-The whole suite takes about 10 minutes on a laptop CPU and needs no raw data: the tests build small synthetic datasets with the real
+The whole suite takes about 15 minutes on a laptop CPU and needs no raw data: the tests build small synthetic datasets with the real
 column layout, and a few read the committed results (`results/*.json`) to check that the reports and READMEs match them. Some tests start
 real Flower simulations with Ray; on Windows a Ray worker can occasionally hang (the progress stops and the CPU stays idle): stop the run
 and start it again. Run one file with `python -m pytest -q tests/test_marginal.py`.

@@ -178,7 +178,7 @@ For reference (trained and tested on real data): B0 real data only: RF 0.448, ML
 
 ![Test macro-F1 of every configuration](results/figures/f1_by_config.png)
 
-*Test macro-F1 of every configuration, mean ± std over three seeds (drawn by `aggregate`; bottom row: synthetic data only). The table above uses, for each configuration, the classifier chosen on validation, so its numbers can differ from a single panel.*
+*Test macro-F1 of every configuration, mean ± std over three seeds (drawn by `aggregate`; bottom row: synthetic data only). The colour is the protection, not the generator: grey real data, blue a generator without protection (B2, B3), orange DP only (M1, MGl), green SecAgg only (M2), purple DP and SecAgg (M3, MG). The table above uses, for each configuration, the classifier chosen on validation, so its numbers can differ from a single panel.*
 
 ## Demo
 
