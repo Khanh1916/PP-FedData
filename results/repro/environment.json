@@ -22,8 +22,8 @@
     "pytest": "9.1.1",
     "psutil": "7.2.2"
   },
-  "git_commit": "ec773b2115afab399e4efc61cc106946d12d0e26",
-  "git_dirty": true,
+  "git_commit": "fee8ad92b7cc94ff88c31b26b49d857ad0e4cff8",
+  "git_dirty": false,
   "config_hash": "8c86c0b143d4",
   "label_mode": "6class",
   "seeds": [
