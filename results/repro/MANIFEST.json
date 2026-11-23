@@ -1,6 +1,6 @@
 {
   "label_mode": "6class",
-  "git_commit": "329e24074f70e020c31190d33d29067d0984b2b0",
+  "git_commit": "fb5de70605f97bcd27e61634e3d0ba48bdafe6da",
   "files": {
     "results/runs.csv": {
       "sha256": "0a340e9a93b779b703c1923b71dfffb6e1a8f61be290ad1efa23cc80923d7ff3",
@@ -35,7 +35,7 @@
       "bytes": 4891
     },
     "results/repro/environment.json": {
-      "sha256": "7c6563752ff802f961f1d1aacdb329408bab676a926062be2ebf533819fbc503",
+      "sha256": "8122f2c6e9ebb11b20a1bbef912c17168c7132a3ee89734a696cb0d86ce8cd92",
       "bytes": 807
     },
     "results/repro/configs/best_cvae.yaml": {
