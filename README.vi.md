@@ -382,7 +382,7 @@ PP-FedData/
 ├── .githooks/            pre-commit: chặn dữ liệu và đầu ra của các lần chạy (bật bằng `git config core.hooksPath .githooks`)
 ├── .claude/              settings.json: cấu hình Claude Code dùng chung (hỏi trước khi push, commit không ghi tác giả AI)
 ├── AGENTS.md             hướng dẫn cho AI coding agent (chỉ tiếng Anh); CLAUDE.md và GEMINI.md chỉ import file này
-└── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
+└── README.md, README.vi.md, LICENSE, CITATION.cff, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
 README (tiếng Anh) của từng thư mục liệt kê các tệp và cách chúng được tạo: [src/ppfeddata](src/ppfeddata/README.md),
@@ -448,6 +448,28 @@ Danh sách đầy đủ, dùng chung với báo cáo cuối (mục 10) và trang
 
 </details>
 <!-- END GENERATED: limitations -->
+
+## Trích dẫn
+
+Nếu dùng code này, hãy trích dẫn như dưới đây. Nút "Cite this repository" của GitHub cũng đưa ra tham chiếu này (dạng APA và
+BibTeX), đọc từ [`CITATION.cff`](CITATION.cff). Nếu dùng dữ liệu, hãy trích dẫn thêm bài báo của bộ dữ liệu ([Dữ liệu](#dữ-liệu)).
+
+```bibtex
+@misc{nguyen2026ppfeddata,
+  title        = {Privacy-Preserving Federated Synthetic Data Generation for Intrusion Detection in {MQTT}-Based {IoT} Gateways},
+  author       = {Nguyen, Nam-Khanh},
+  year         = {2026},
+  howpublished = {\url{https://github.com/Khanh1916/PP-FedData}},
+  note         = {Source code}
+}
+```
+
+## Tác giả và lời cảm ơn
+
+Code của repo này do Nam-Khanh Nguyen viết. Đề tài là đồ án capstone ngành An toàn Thông tin tại Trường Đại học FPT (Hà Nội),
+do Nam-Khanh Nguyen, Son-Truong-Giang Nguyen, Tri-Dung Nguyen, Duc-Lam Vu và Trong-Hoang-Dat Nguyen thực hiện; các thành viên
+còn lại làm phần khảo sát tài liệu, cơ sở lý luận và slide trình bày. Nhóm cảm ơn các thầy hướng dẫn Anh-Nhat Nguyen,
+Thanh-Tuan Nguyen và Minh-Tri Luu (Trường Đại học FPT) đã hướng dẫn nhóm.
 
 ## Giấy phép
 

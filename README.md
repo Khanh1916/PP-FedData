@@ -384,7 +384,7 @@ PP-FedData/
 ├── .githooks/            pre-commit: refuses data and run outputs (turn on with `git config core.hooksPath .githooks`)
 ├── .claude/              settings.json: shared Claude Code settings (ask before push, no commit attribution)
 ├── AGENTS.md             instructions for AI coding agents; CLAUDE.md and GEMINI.md only import it
-└── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
+└── README.md, README.vi.md, LICENSE, CITATION.cff, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
 The README of each folder lists its files and how they are produced: [src/ppfeddata](src/ppfeddata/README.md),
@@ -450,6 +450,28 @@ The full list, shared with the final report (section 10) and page 5 of the demo:
 
 </details>
 <!-- END GENERATED: limitations -->
+
+## Citation
+
+If you use this code, cite it as below. GitHub's "Cite this repository" button gives the same reference (APA and BibTeX),
+read from [`CITATION.cff`](CITATION.cff). If you use the data, also cite the dataset paper ([Data](#data)).
+
+```bibtex
+@misc{nguyen2026ppfeddata,
+  title        = {Privacy-Preserving Federated Synthetic Data Generation for Intrusion Detection in {MQTT}-Based {IoT} Gateways},
+  author       = {Nguyen, Nam-Khanh},
+  year         = {2026},
+  howpublished = {\url{https://github.com/Khanh1916/PP-FedData}},
+  note         = {Source code}
+}
+```
+
+## Authors and acknowledgements
+
+The code of this repository was written by Nam-Khanh Nguyen. The study is a capstone project in Information Assurance at
+FPT University (Hanoi), carried out by Nam-Khanh Nguyen, Son-Truong-Giang Nguyen, Tri-Dung Nguyen, Duc-Lam Vu and
+Trong-Hoang-Dat Nguyen; the other members worked on the literature survey, the theoretical background and the presentation
+slides. We thank our supervisors Anh-Nhat Nguyen, Thanh-Tuan Nguyen and Minh-Tri Luu (FPT University) for their guidance.
 
 ## License
 

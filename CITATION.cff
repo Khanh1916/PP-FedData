@@ -1,0 +1,52 @@
+# Citation metadata of this repository (Citation File Format 1.2.0). GitHub reads it for the "Cite this repository" button;
+# the README section "Citation" gives the same reference in BibTeX. Keep the two in step.
+cff-version: 1.2.0
+message: "If you use this code, please cite it as below. If you use the data, also cite the DoS/DDoS-MQTT-IoT dataset paper."
+type: software
+title: "Privacy-Preserving Federated Synthetic Data Generation for Intrusion Detection in MQTT-Based IoT Gateways"
+abstract: >-
+  Code, configurations and results of PP-FedData, a study of privacy-preserving federated synthetic data generation for an
+  intrusion detection system on the DoS/DDoS-MQTT-IoT dataset. It compares a CVAE trained by FedAvg with DP-SGD, SecAgg+ or
+  both, and FedDP-Marginal, a generator built from per-class tables that the clients noise with their share of DP noise and
+  sum by secure aggregation, against baselines trained on real data.
+authors:
+  - given-names: Nam-Khanh
+    family-names: Nguyen
+    affiliation: "FPT University, Hanoi, Vietnam"
+repository-code: "https://github.com/Khanh1916/PP-FedData"
+license: MIT
+keywords:
+  - federated learning
+  - differential privacy
+  - secure aggregation
+  - synthetic data
+  - intrusion detection
+  - MQTT
+  - IoT
+preferred-citation:
+  type: software
+  title: "Privacy-Preserving Federated Synthetic Data Generation for Intrusion Detection in MQTT-Based IoT Gateways"
+  authors:
+    - given-names: Nam-Khanh
+      family-names: Nguyen
+      affiliation: "FPT University, Hanoi, Vietnam"
+  year: 2026
+  url: "https://github.com/Khanh1916/PP-FedData"
+references:
+  - type: article
+    title: "DoS/DDoS-MQTT-IoT: A dataset for evaluating intrusions in IoT networks using the MQTT protocol"
+    authors:
+      - given-names: Abdulmohsen
+        family-names: Alatram
+      - given-names: Leslie F.
+        family-names: Sikos
+      - given-names: Michael
+        family-names: Johnstone
+      - given-names: Peter
+        family-names: Szewczyk
+      - given-names: James J.
+        family-names: Kang
+    journal: "Computer Networks"
+    volume: 231
+    year: 2023
+    doi: "10.1016/j.comnet.2023.109809"
