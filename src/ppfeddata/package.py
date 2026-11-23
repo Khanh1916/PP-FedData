@@ -1,7 +1,8 @@
 """Phase 13: the reproducibility bundle (`ppfeddata package`).
 
 Spec: "save `pip freeze`, `configs/`, `split_manifest.json`, `feature_schema.json` together with the results". Written to `results/repro/`:
-- `pip_freeze.txt`    the installed libraries after a comment header (the same text is written to `requirements-lock.txt`, which is what the README tells a reader to install);
+- `pip_freeze.txt`    every installed library after a comment header (`pip freeze`, unrelated packages of the machine included); `requirements-lock.txt`, which is what the README
+                      tells a reader to install, keeps only the libraries of `requirements.txt` and everything they require (`dependency_closure`, `keep_only`);
 - `environment.json`  Python, platform, versions of the libraries the study depends on, git commit and whether the tree was clean, label mode and seeds;
 - `configs/`          a copy of `configs/*.yaml` (not `local.yaml`, which holds the machine's raw-data path) and `configs/exp/*.yaml`;
 - `MANIFEST.json`     SHA-256 and size of the ledger, summary, interpretation, final report, the split manifest, the feature schema, the configs and the lock file.
@@ -18,7 +19,10 @@ import subprocess
 import sys
 from importlib import metadata
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Iterable
+
+from packaging.requirements import Requirement
+from packaging.utils import canonicalize_name
 
 from ppfeddata.utils import config_hash, git_commit
 
@@ -26,10 +30,12 @@ KEY_LIBS = ("numpy", "pandas", "pyarrow", "scikit-learn", "scipy", "imbalanced-l
             "pytest", "psutil")
 ROOT = Path(__file__).resolve().parents[2]
 EDITABLE_NOTE = "# ppfeddata (this repository) is installed with `pip install -e .`"
-# first lines of the lock file (and of its copy pip_freeze.txt): the file is rewritten by every `package`, so the comment is written here, not by hand
-LOCK_HEADER = ("# Exact versions of every library installed on the machine that produced the results (`pip freeze`), written by\n"
-               "# `python -m ppfeddata.cli package`: do not edit by hand. `pip install -r requirements-lock.txt` reproduces that environment;\n"
-               "# requirements.txt gives the version ranges the code was written for.\n")
+# first lines of the lock file and of pip_freeze.txt: both are rewritten by `package`, so the comments are written here, not by hand
+LOCK_HEADER = ("# Exact versions of the libraries the study needs, as installed on the machine that produced the results: the packages of\n"
+               "# requirements.txt and everything they require (`pip freeze` cut to that set by `python -m ppfeddata.cli package`; do not edit\n"
+               "# by hand). `pip install -r requirements-lock.txt` reproduces them; requirements.txt gives the version ranges of the code.\n")
+FREEZE_HEADER = ("# `pip freeze` of the machine that produced the results, written by `python -m ppfeddata.cli package`: every installed library,\n"
+                 "# including packages the study does not use. requirements-lock.txt keeps only the libraries the study needs.\n")
 
 
 def sha256(path: Path) -> str:
@@ -56,6 +62,62 @@ def sanitize_freeze(lines: list[str]) -> list[str]:
                 seen = True
             continue
         out.append(ln)
+    return out
+
+
+def requirement_names(path: Path) -> list[str]:
+    """Names of the packages a requirements file lists (comments and blank lines skipped)."""
+    names = []
+    for line in Path(path).read_text(encoding="utf-8").splitlines():
+        line = line.split("#", 1)[0].strip()
+        if line:
+            names.append(Requirement(line).name)
+    return names
+
+
+def _installed_requires(name: str) -> list[str] | None:
+    try:
+        return list(metadata.distribution(name).requires or [])
+    except metadata.PackageNotFoundError:
+        return None
+
+
+def dependency_closure(top: Iterable[str], requires: Callable[[str], list[str] | None] = _installed_requires) -> set[str]:
+    """Normalised names of the installed packages `top` needs: themselves and everything they require, recursively, read from the installed
+    metadata. A requirement whose environment marker is false on this machine, or that belongs to an extra nobody asked for, is not followed;
+    an extra that is asked for (`pkg[x]`) is. A package that is not installed is left out (it cannot be pinned)."""
+    seen: set[tuple[str, str]] = set()
+    out: set[str] = set()
+    stack = [(n, "") for n in top]
+    while stack:
+        name, extra = stack.pop()
+        key = canonicalize_name(name)
+        if (key, extra) in seen:
+            continue
+        seen.add((key, extra))
+        reqs = requires(name)
+        if reqs is None:
+            continue
+        out.add(key)
+        for spec in reqs:
+            req = Requirement(spec)
+            if req.marker is not None and not req.marker.evaluate({"extra": extra}):
+                continue
+            stack.append((req.name, ""))
+            stack.extend((req.name, e) for e in req.extras)
+    return out
+
+
+def keep_only(lines: list[str], keep: set[str]) -> list[str]:
+    """The lines of a `pip freeze` whose package is in `keep` (normalised names), in pip's order; comment lines are kept."""
+    out = []
+    for ln in lines:
+        if ln.startswith("#"):
+            out.append(ln)
+            continue
+        name = ln.split("==", 1)[0].split(" @ ", 1)[0].strip()
+        if canonicalize_name(name) in keep:
+            out.append(ln)
     return out
 
 
@@ -104,8 +166,10 @@ def _rel(p: Path, root: Path) -> str:
     return str(p).replace("\\", "/")
 
 
-def package(cfg: dict[str, Any], out_dir: str | Path | None = None, update_lock: bool = True, root: Path = ROOT, freeze: list[str] | None = None) -> dict[str, Any]:
-    """Write the bundle; returns what was written and what was missing (a missing input is reported, not invented)."""
+def package(cfg: dict[str, Any], out_dir: str | Path | None = None, update_lock: bool = True, root: Path = ROOT, freeze: list[str] | None = None,
+            keep: set[str] | None = None) -> dict[str, Any]:
+    """Write the bundle; returns what was written and what was missing (a missing input is reported, not invented). `keep`: normalised names the
+    lock file keeps; by default the dependency closure of `root/requirements.txt` (no cut when that file is absent)."""
     results = Path(cfg["compute"]["runs_csv"]).parent
     out = Path(out_dir) if out_dir else results / "repro"
     out.mkdir(parents=True, exist_ok=True)
@@ -113,11 +177,13 @@ def package(cfg: dict[str, Any], out_dir: str | Path | None = None, update_lock:
     missing: list[str] = []
 
     lines = sanitize_freeze(pip_freeze() if freeze is None else freeze)
-    text = LOCK_HEADER + "\n".join(lines) + "\n"
-    (out / "pip_freeze.txt").write_text(text, encoding="utf-8")
+    (out / "pip_freeze.txt").write_text(FREEZE_HEADER + "\n".join(lines) + "\n", encoding="utf-8")
+    if keep is None and (root / "requirements.txt").exists():
+        keep = dependency_closure(requirement_names(root / "requirements.txt"))
+    lock_lines = lines if keep is None else keep_only(lines, keep)
     lock = root / "requirements-lock.txt"
     if update_lock:
-        lock.write_text(text, encoding="utf-8")
+        lock.write_text(LOCK_HEADER + "\n".join(lock_lines) + "\n", encoding="utf-8")
     (out / "environment.json").write_text(json.dumps(environment(cfg), indent=2), encoding="utf-8")
     cfgs = copy_configs(out, root)
 
@@ -140,4 +206,5 @@ def package(cfg: dict[str, Any], out_dir: str | Path | None = None, update_lock:
             missing.append(_rel(p, root))
     manifest = {"label_mode": mode, "git_commit": git_commit(), "files": files, "missing": missing}
     (out / "MANIFEST.json").write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-    return {"out_dir": str(out), "libraries": len(lines), "configs": len(cfgs), "files_hashed": len(files), "missing": missing, "lock_updated": bool(update_lock)}
+    return {"out_dir": str(out), "libraries": len(lines), "lock_libraries": sum(not ln.startswith("#") for ln in lock_lines), "configs": len(cfgs),
+            "files_hashed": len(files), "missing": missing, "lock_updated": bool(update_lock)}

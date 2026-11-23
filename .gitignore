@@ -51,11 +51,7 @@ Thumbs.db
 # Jupyter
 .ipynb_checkpoints/
 
-# The team's own working files, kept out of the public repository: an explainer of FedDP-Marginal, the supervisor report,
-# the paper (its own git repository)
-/mg_architecture.md
-/mg_architecture_files
-/bao_cao_gvhd
+# The team's own working files, kept out of the public repository: the paper (its own git repository) and study notes
 /Latex_FinalCapstone
 /ghi_chu_hoc
 

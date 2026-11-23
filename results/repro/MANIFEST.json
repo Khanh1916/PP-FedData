@@ -1,6 +1,6 @@
 {
   "label_mode": "6class",
-  "git_commit": "fee8ad92b7cc94ff88c31b26b49d857ad0e4cff8",
+  "git_commit": "79b85f1745ea377948c9790c40cd39c8a35a515a",
   "files": {
     "results/runs.csv": {
       "sha256": "0a340e9a93b779b703c1923b71dfffb6e1a8f61be290ad1efa23cc80923d7ff3",
@@ -27,16 +27,16 @@
       "bytes": 16669
     },
     "requirements-lock.txt": {
-      "sha256": "a26314038311b22909731b7d881f50e5f2de1f667383b0c5719fa8967f17d88c",
-      "bytes": 3796
+      "sha256": "466a9157e939e7b1ecf371f0515c223a20444b5264f78f33794fd417dfa96ef4",
+      "bytes": 2337
     },
     "results/repro/pip_freeze.txt": {
-      "sha256": "d872372ee8946e9b61aa48e98749073f4ae4c704dedfa989e63cad1bb0732cb4",
-      "bytes": 4963
+      "sha256": "7676e70bbda39849435c50983261a6471367c7cf7ceb141bfa0267d29ec07f87",
+      "bytes": 4891
     },
     "results/repro/environment.json": {
-      "sha256": "82d6172ce6be233333fcde1fdf964c5d55ed3ce29d8d1e67b66e1fd2500e3ab1",
-      "bytes": 807
+      "sha256": "c27652be7ec86dd0fb953bcae932c32bdc5fb5e1db01dc88104c1613fd2e6fd4",
+      "bytes": 806
     },
     "results/repro/configs/best_cvae.yaml": {
       "sha256": "4602f7179181b5fe4b4b5b73e6f6d08f58edb636f11b09b03611b0debb7acb66",

@@ -2,6 +2,8 @@
 
 [English](README.md) | **Tiếng Việt**
 
+[![Python ≥ 3.10](https://img.shields.io/badge/python-%E2%89%A5%203.10-blue)](pyproject.toml) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Dữ liệu sinh bảo toàn quyền riêng tư cho học liên kết (FL): các gateway IoT / MQTT không được chia sẻ lưu lượng thô cùng tạo một tập dữ liệu sinh, dưới quyền riêng tư vi sai (DP) và tổng hợp bảo mật, để huấn luyện hệ phát hiện xâm nhập (IDS) cho tấn công MQTT DoS / DDoS.
 
 ## Tóm tắt
@@ -9,12 +11,27 @@ Dữ liệu sinh bảo toàn quyền riêng tư cho học liên kết (FL): các
 | | |
 |---|---|
 | **Bài toán** | IDS cần lưu lượng tấn công có nhãn từ nhiều gateway, nhưng gói tin thô là dữ liệu riêng và mỗi gateway chỉ thấy một số lớp tấn công (dữ liệu non-IID). |
+| **Dữ liệu** | DoS/DDoS-MQTT-IoT ([Alatram và cộng sự, 2023](https://doi.org/10.1016/j.comnet.2023.109809)): 39,0 triệu dòng gói tin MQTT được dùng, sáu lớp; repo không phân phối lại dữ liệu ([Dữ liệu](#dữ-liệu)). |
 | **Cách làm** | **FedDP-Marginal**: mỗi gateway (client FL) đếm gói tin của mình vào các bảng theo lớp và thêm phần nhiễu DP của mình; các bảng được cộng bằng tổng hợp bảo mật (Flower SecAgg+), nên máy chủ chỉ thấy tổng đã có nhiễu. Tập dữ liệu sinh được lấy mẫu từ đó để huấn luyện IDS (Random Forest, MLP). |
 | **Đối chứng** | Thiết kế ban đầu của spec: CVAE có điều kiện nhãn huấn luyện bằng FL với DP-SGD và/hoặc SecAgg+ (M1, M2, M3). |
 | **Kết quả chính** | IDS chỉ học trên dữ liệu sinh đạt macro-F1 trên test 0,37 / 0,43 / 0,43 ở ε 1 / 5 / 10, so với 0,18-0,28 của CVAE có DP và 0,41 của CVAE không DP, trong 3 vòng và dưới 1 MB lưu lượng (mục 9.9b của báo cáo). Không có DP, chính FedDP-Marginal đạt 0,46, tức DP tốn của nó khoảng 0,1 ở ε 1 và tối đa 0,03 ở ε 5 và 10 (mục 9.12). |
 | **Mô hình đe dọa** | Máy chủ tổng hợp honest-but-curious. Mặc định ε bảo vệ một gói tin; có tuỳ chọn để ε bảo vệ cả một TCP stream, hoặc vẫn đúng khi chỉ còn t gateway trung thực (mục 9.11). |
 | **Bạn nhận được** | Khung sinh dữ liệu và CLI, đánh giá đầy đủ (utility, độ trung thực, tấn công suy luận thành viên, chi phí), hướng dẫn chọn cấu hình theo yêu cầu triển khai (`recommend`), báo cáo sinh tự động và demo Streamlit. |
 | **Tính mới** | Sinh dữ liệu DP dựa trên biên không mới (MST, AIM, FLAIM). Nghiên cứu này thêm DP phân tán chính xác qua một cài đặt tổng hợp bảo mật thật, phép so sánh với CVAE dưới cùng FL / DP / SecAgg cho phát hiện tấn công MQTT, và hướng dẫn chọn cấu hình theo yêu cầu. |
+
+Số mục (9.x) là mục của [báo cáo cuối](results/reports/final_report.md); Phase, các vòng (O, P, Q1, R) và cổng duyệt (G1-G4) là các bước trong spec của nghiên cứu, liệt kê ở [Thuật ngữ](#thuật-ngữ).
+
+## Bắt đầu nhanh
+
+```bash
+git clone https://github.com/Khanh1916/PP-FedData.git
+cd PP-FedData
+python -m pip install -r requirements.txt
+python -m pip install -e .
+python -m pytest -q    # 10-15 phút trên CPU laptop; không cần dữ liệu thô
+```
+
+Mọi kết quả đều đọc được mà không cần dữ liệu thô: [báo cáo cuối](results/reports/final_report.md), [hướng dẫn chọn cấu hình](results/reports/recommend.md) và các hình trong `results/figures/`. Muốn chạy lại nghiên cứu thì cần bộ dữ liệu ([Dữ liệu](#dữ-liệu)) và đủ các bước [Cài đặt](#cài-đặt).
 
 ## Cách hoạt động
 
@@ -62,7 +79,7 @@ Các hướng CVAE (B2, B3, M1-M3) đi qua cùng các bước 1, 2, 4 và 5. Sơ
 | **MIA, C2ST** | AUC của tấn công suy luận thành viên (0,5 = kẻ tấn công không biết gì); kiểm định bộ phân loại thật hay sinh (0,5 = không phân biệt được) |
 | **SecAgg+** | tổng hợp bảo mật của Flower: máy chủ chỉ nhận được tổng các vector của client |
 | **K, α, h, t** | số client (5); tham số non-IID Dirichlet (0,5); số client trung thực; số client trung thực mà nhiễu được hiệu chỉnh cho |
-| **Phase 0-13, O0-O5, P1-P2, G1-G4** | các bước của spec, vòng tối ưu, vòng tiếp theo, các cổng duyệt của người dùng |
+| **Phase 0-13, O0-O5, P1-P2, Q1, R, G1-G4** | các bước của spec, vòng tối ưu, vòng tiếp theo, FedDP-Marginal không DP (Q1), trích lại lưu lượng Normal và chạy lại toàn bộ (R), các cổng duyệt của người dùng |
 
 ## Đọc gì để biết gì
 
@@ -159,6 +176,10 @@ Macro-F1 của bộ phân loại RF, trung bình các seed:
 </details>
 <!-- END GENERATED: results -->
 
+![Macro-F1 trên test của mọi cấu hình](results/figures/f1_by_config.png)
+
+*Macro-F1 trên test của mọi cấu hình, trung bình ± độ lệch chuẩn qua ba seed (do `aggregate` vẽ; hàng dưới: chỉ dữ liệu sinh). Bảng ở trên dùng, với mỗi cấu hình, classifier được chọn trên val, nên con số có thể khác với từng ô của hình.*
+
 ## Demo
 
 ```bash
@@ -178,11 +199,12 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate     Linux/macOS: source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -e .
+git config core.hooksPath .githooks   # một lần cho mỗi bản clone: bước kiểm tra trước commit, chặn dữ liệu và đầu ra của các lần chạy
 python -m ppfeddata.cli --help
 python -m pytest -q
 ```
 
-Để có đúng các phiên bản đã dùng cho kết quả: `python -m pip install -r requirements-lock.txt` (bản `pip freeze`, cũng có ở `results/repro/pip_freeze.txt`).
+Để có đúng các phiên bản đã dùng cho kết quả: `python -m pip install -r requirements-lock.txt` (các thư viện trong `requirements.txt` và mọi thứ chúng cần, đúng phiên bản lúc chạy; toàn bộ `pip freeze` của máy đó, kể cả gói không liên quan, ở `results/repro/pip_freeze.txt`).
 
 Flower mô phỏng FL bằng **Ray** (`ray` có trong `requirements.txt`; extra `flwr[simulation]` không cài Ray trên Windows với Python 3.13). Trên Windows Ray là thử nghiệm với Flower: ở đây vẫn chạy được, nhưng có hai lần actor chết giữa chừng
 (SPEC_DEVIATIONS 8.1, 9.8), nên một vòng FL thiếu phản hồi của client sẽ dừng ngay và `run_fl` tự chạy lại từ checkpoint tối đa 2 lần. Với PyTorch, nếu cần bản CPU: `python -m pip install torch --index-url https://download.pytorch.org/whl/cpu`.
@@ -190,7 +212,7 @@ Flower mô phỏng FL bằng **Ray** (`ray` có trong `requirements.txt`; extra 
 ### Phiên bản thư viện
 
 <!-- BEGIN GENERATED: libraries -->
-Python 3.13.5 on Windows 11. Versions installed when `ppfeddata aggregate` last wrote this block; the exact lock is `requirements-lock.txt` (a copy is in `results/repro/pip_freeze.txt`).
+Python 3.13.5 on Windows 11. Versions installed when `ppfeddata aggregate` last wrote this block; the exact lock is `requirements-lock.txt` (the full `pip freeze` of the machine is `results/repro/pip_freeze.txt`).
 
 | library | version |
 |---|---|
@@ -226,8 +248,8 @@ paths:
 
 ### Nguồn gốc dữ liệu
 
-Bộ dữ liệu là DoS/DDoS-MQTT-IoT ([Alatram và cộng sự, Computer Networks, 2023](https://www.sciencedirect.com/science/article/pii/S1389128623002542)),
-lấy từ bản chính các tác giả phát hành trên Kaggle (`alaaalatram/dosddos-mqtt-iot`: 362 tệp PCAP và 49 tệp CSV). Các dòng có hai
+Bộ dữ liệu là DoS/DDoS-MQTT-IoT ([Alatram và cộng sự, Computer Networks, 2023](https://doi.org/10.1016/j.comnet.2023.109809)),
+lấy từ bản chính các tác giả phát hành trên Kaggle ([`alaaalatram/dosddos-mqtt-iot`](https://www.kaggle.com/datasets/alaaalatram/dosddos-mqtt-iot): 362 tệp PCAP và 49 tệp CSV). Các dòng có hai
 nguồn, và lệnh `python -m ppfeddata.cli check-extraction` kiểm chứng cả hai ([results/reports/data_provenance.md](results/reports/data_provenance.md)):
 
 - **Dòng tấn công: CSV của chính tác giả, dùng nguyên như bản phát hành** (48 capture; tệp thứ 49 rỗng ngay trên Kaggle). Vì vậy dữ liệu
@@ -247,6 +269,20 @@ nguồn, và lệnh `python -m ppfeddata.cli check-extraction` kiểm chứng c�
 Nghiên cứu thứ nhất (tới commit `a4c4601`) dùng bản trích một lượt, giữ mọi gói Normal: 44 % dòng Normal là gói do broker gửi, loại gói
 không có trong CSV tấn công. Vòng R trích lại Normal như trên và chạy lại toàn bộ nghiên cứu; kết quả lần đầu vẫn ở lịch sử git
 ([docs/SPEC_DEVIATIONS.vi.md](docs/SPEC_DEVIATIONS.vi.md), Phase 17 và 18).
+
+Repo không phân phối lại dữ liệu. Nếu dùng dữ liệu này, hãy trích dẫn bài báo của bộ dữ liệu:
+
+```bibtex
+@article{alatram2023,
+  title   = {{DoS/DDoS-MQTT-IoT}: A dataset for evaluating intrusions in {IoT} networks using the {MQTT} protocol},
+  author  = {Alatram, Abdulmohsen and Sikos, Leslie F. and Johnstone, Michael and Szewczyk, Peter and Kang, James J.},
+  journal = {Computer Networks},
+  volume  = {231},
+  pages   = {109809},
+  year    = {2023},
+  doi     = {10.1016/j.comnet.2023.109809}
+}
+```
 
 Được commit: `results/manifests/split_manifest_<mode>.json` (mã nhóm, số lượng, hash, phiên bản thư viện; không có dòng dữ liệu) và `results/manifests/feature_schema_<mode>.json` (tham số mã hoá, đếm).
 Không commit: `data/`, `artifacts/`, `results/*.csv`, `configs/local.yaml`.

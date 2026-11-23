@@ -42,15 +42,16 @@ python -m pytest -q tests/test_marginal.py   # one file
 
 - `.githooks/pre-commit` refuses data, run outputs, data or model file types, files over 5 MB and the local working folders.
   Turn it on once per clone with `git config core.hooksPath .githooks`. Never bypass it with `git commit --no-verify` unless a
-  person has looked at the refused file and said so.
+  person has looked at the refused file and said so. `tests/test_repo_hygiene.py` runs the same hook on every tracked file, so
+  `python -m pytest` catches a forbidden file even on a clone where the hook is off. Change the rules in the hook only.
 - The raw data (about 12 GB of CSV) are not in the repository and must never be. The path goes in `configs/local.yaml`
   (git-ignored) or in the environment variable `PPFEDDATA_RAW_ROOT`.
 - `data/`, `artifacts/`, `data_v1/`, `artifacts_v1/`, `results/runs.csv` and the CSV/JSON intermediates are git-ignored on purpose.
   Never force-add them. The repository is public.
 - Never edit the raw data. `tools/extract_normal_pcap.py` is kept byte for byte as it was run (`-text` in `.gitattributes`,
   SHA-256 in `tools/README.md`): do not reformat or touch it.
-- The other git-ignored folders in the root (`Latex_FinalCapstone`, `bao_cao_gvhd`, `ghi_chu_hoc`, `mg_architecture*`) are the
-  team's local working files (the paper is its own git repository). Never add them to this repository.
+- The other git-ignored folders in the root (`Latex_FinalCapstone`, `ghi_chu_hoc`) are the team's local working files (the paper
+  is its own git repository). Never add them to this repository.
 
 ## Generated files: regenerate, do not hand-edit
 

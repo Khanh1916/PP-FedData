@@ -2,6 +2,8 @@
 
 **English** | [Tiếng Việt](README.vi.md)
 
+[![Python ≥ 3.10](https://img.shields.io/badge/python-%E2%89%A5%203.10-blue)](pyproject.toml) [![License: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
+
 Privacy-preserving synthetic data for federated learning (FL): IoT / MQTT gateways that cannot share their raw traffic build a synthetic dataset together, under differential privacy (DP) and secure aggregation, to train an intrusion-detection system (IDS) for MQTT DoS / DDoS attacks.
 
 ## At a glance
@@ -9,12 +11,27 @@ Privacy-preserving synthetic data for federated learning (FL): IoT / MQTT gatewa
 | | |
 |---|---|
 | **Problem** | An IDS needs labelled attack traffic from many gateways, but the raw packets are private and each gateway sees only some of the attack classes (non-IID data). |
+| **Data** | DoS/DDoS-MQTT-IoT ([Alatram et al., 2023](https://doi.org/10.1016/j.comnet.2023.109809)): 39.0 M MQTT packet rows in use, six classes; the data are not redistributed here ([Data](#data)). |
 | **Approach** | **FedDP-Marginal**: every gateway (FL client) counts its own packets into per-class tables and adds its share of DP noise; the tables are summed by secure aggregation (Flower SecAgg+), so the server sees only a noisy total. A synthetic dataset is sampled from it and trains the IDS (Random Forest, MLP). |
 | **Baseline** | The design the spec started from: a label-conditional CVAE trained by FL with DP-SGD and/or SecAgg+ (M1, M2, M3). |
 | **Main result** | An IDS trained on the synthetic data only reaches test macro-F1 0.37 / 0.43 / 0.43 at ε 1 / 5 / 10, against 0.18-0.28 for the CVAE with DP and 0.41 for the CVAE without DP, in 3 rounds and under 1 MB of traffic (report section 9.9b). Without DP FedDP-Marginal itself reaches 0.46, so DP costs it about 0.1 at ε 1 and up to 0.03 at ε 5 and 10 (section 9.12). |
 | **Threat model** | Honest-but-curious aggregation server. ε protects one packet by default; options make it cover a whole TCP stream, or hold with a minimum number t of honest gateways (section 9.11). |
 | **What you get** | The framework and its CLI, a full evaluation (utility, fidelity, membership attacks, cost), a configuration guide per deployment requirement (`recommend`), a generated report and a Streamlit demo. |
 | **Novelty** | Marginal-based DP synthesis is not new (MST, AIM, FLAIM). This work adds exact distributed DP through a real secure-aggregation implementation, a comparison with a CVAE under the same FL / DP / SecAgg for MQTT intrusion detection, and the requirement-driven guide. |
+
+Section numbers (9.x) point to the [final report](results/reports/final_report.md); Phases, rounds (O, P, Q1, R) and gates (G1-G4) are stages of the study's spec, listed in the [Glossary](#glossary).
+
+## Quick start
+
+```bash
+git clone https://github.com/Khanh1916/PP-FedData.git
+cd PP-FedData
+python -m pip install -r requirements.txt
+python -m pip install -e .
+python -m pytest -q    # 10-15 minutes on a laptop CPU; needs no raw data
+```
+
+Every result can be read without the raw data: the [final report](results/reports/final_report.md), the [configuration guide](results/reports/recommend.md) and the figures in `results/figures/`. Re-running the study needs the dataset ([Data](#data)) and the full [Installation](#installation) steps.
 
 ## How it works
 
@@ -62,7 +79,7 @@ The CVAE routes (B2, B3, M1-M3) go through the same steps 1, 2, 4 and 5. Diagram
 | **MIA, C2ST** | membership-inference attack AUC (0.5 = the attacker learns nothing); classifier test real vs synthetic (0.5 = indistinguishable) |
 | **SecAgg+** | Flower's secure aggregation: the server obtains only the sum of the clients' vectors |
 | **K, α, h, t** | number of clients (5); Dirichlet non-IID parameter (0.5); number of honest clients; number of honest clients the noise is calibrated for |
-| **Phases 0-13, O0-O5, P1-P2, G1-G4** | stages of the spec, the optimisation round, the follow-up round, the user's approval gates |
+| **Phases 0-13, O0-O5, P1-P2, Q1, R, G1-G4** | stages of the spec, the optimisation round, the follow-up round, FedDP-Marginal without DP (Q1), the re-extraction of the Normal traffic and full re-run (R), the user's approval gates |
 
 ## Where to read what
 
@@ -159,6 +176,10 @@ For reference (trained and tested on real data): B0 real data only: RF 0.448, ML
 </details>
 <!-- END GENERATED: results -->
 
+![Test macro-F1 of every configuration](results/figures/f1_by_config.png)
+
+*Test macro-F1 of every configuration, mean ± std over three seeds (drawn by `aggregate`; bottom row: synthetic data only). The table above uses, for each configuration, the classifier chosen on validation, so its numbers can differ from a single panel.*
+
 ## Demo
 
 ```bash
@@ -179,11 +200,12 @@ python -m venv .venv
 # Windows: .venv\Scripts\activate     Linux/macOS: source .venv/bin/activate
 python -m pip install -r requirements.txt
 python -m pip install -e .
+git config core.hooksPath .githooks   # once per clone: the pre-commit check that refuses data and run outputs
 python -m ppfeddata.cli --help
 python -m pytest -q
 ```
 
-To get exactly the versions the results were produced with: `python -m pip install -r requirements-lock.txt` (a `pip freeze`; a copy is in `results/repro/pip_freeze.txt`).
+To get exactly the versions the results were produced with: `python -m pip install -r requirements-lock.txt` (the libraries of `requirements.txt` and everything they require, at the versions of the runs; the full `pip freeze` of that machine, unrelated packages included, is `results/repro/pip_freeze.txt`).
 
 Flower simulates FL with **Ray** (`ray` is in `requirements.txt`; the `flwr[simulation]` extra does not install Ray on Windows with Python 3.13). On Windows, Ray is experimental with Flower: it works here, but an actor died
 twice mid-run (SPEC_DEVIATIONS 8.1, 9.8), so a round that lacks a client's reply stops at once and `run_fl` restarts from the checkpoint at most twice. For PyTorch, if you need the CPU build:
@@ -192,7 +214,7 @@ twice mid-run (SPEC_DEVIATIONS 8.1, 9.8), so a round that lacks a client's reply
 ### Library versions
 
 <!-- BEGIN GENERATED: libraries -->
-Python 3.13.5 on Windows 11. Versions installed when `ppfeddata aggregate` last wrote this block; the exact lock is `requirements-lock.txt` (a copy is in `results/repro/pip_freeze.txt`).
+Python 3.13.5 on Windows 11. Versions installed when `ppfeddata aggregate` last wrote this block; the exact lock is `requirements-lock.txt` (the full `pip freeze` of the machine is `results/repro/pip_freeze.txt`).
 
 | library | version |
 |---|---|
@@ -228,8 +250,8 @@ paths:
 
 ### Where the data come from
 
-The dataset is DoS/DDoS-MQTT-IoT ([Alatram et al., Computer Networks, 2023](https://www.sciencedirect.com/science/article/pii/S1389128623002542)),
-as released by its authors on Kaggle (`alaaalatram/dosddos-mqtt-iot`: 362 PCAP and 49 CSV files). Its rows have two origins, and
+The dataset is DoS/DDoS-MQTT-IoT ([Alatram et al., Computer Networks, 2023](https://doi.org/10.1016/j.comnet.2023.109809)),
+as released by its authors on Kaggle ([`alaaalatram/dosddos-mqtt-iot`](https://www.kaggle.com/datasets/alaaalatram/dosddos-mqtt-iot): 362 PCAP and 49 CSV files). Its rows have two origins, and
 `python -m ppfeddata.cli check-extraction` verifies both ([results/reports/data_provenance.md](results/reports/data_provenance.md)):
 
 - **Attack rows: the authors' own CSV, used as published** (48 captures; the 49th file is empty in the release). The attack data are
@@ -249,6 +271,20 @@ as released by its authors on Kaggle (`alaaalatram/dosddos-mqtt-iot`: 362 PCAP a
 The first study (up to commit `a4c4601`) used a one-pass extraction of every Normal packet: 44 % of its Normal rows were packets sent by the
 broker, which the attack CSV do not contain. Round R re-extracted the Normal traffic as above and re-ran the whole study; the first results
 stay in the git history ([docs/SPEC_DEVIATIONS.md](docs/SPEC_DEVIATIONS.md), Phases 17 and 18).
+
+The data are not redistributed here. If you use them, cite the dataset paper:
+
+```bibtex
+@article{alatram2023,
+  title   = {{DoS/DDoS-MQTT-IoT}: A dataset for evaluating intrusions in {IoT} networks using the {MQTT} protocol},
+  author  = {Alatram, Abdulmohsen and Sikos, Leslie F. and Johnstone, Michael and Szewczyk, Peter and Kang, James J.},
+  journal = {Computer Networks},
+  volume  = {231},
+  pages   = {109809},
+  year    = {2023},
+  doi     = {10.1016/j.comnet.2023.109809}
+}
+```
 
 Committed: `results/manifests/split_manifest_<mode>.json` (group ids, counts, hashes, library versions; no data row) and `results/manifests/feature_schema_<mode>.json` (encoding parameters, counts).
 Not committed: `data/`, `artifacts/`, `results/*.csv`, `configs/local.yaml`.

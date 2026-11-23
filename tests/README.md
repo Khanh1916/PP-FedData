@@ -35,3 +35,4 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 | `test_split_check.py` | section 9.14: no capture shared by the group draw, one contiguous stretch per capture and no straddling stream in the block draw, the verdict read from the JSON |
 | `test_mg_nodp.py` | round Q1: FedDP-Marginal without DP (exact sums, no epsilon), the plain Flower releases, the grid tap, the round report |
 | `test_docs.py` | the folder READMEs, the architecture documents and `AGENTS.md` name only modules, files and commands that exist |
+| `test_repo_hygiene.py` | no tracked file breaks the rules of `.githooks/pre-commit` (the hook itself is run on every tracked file), and the hook refuses data, run outputs, local files and files over 5 MB |

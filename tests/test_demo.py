@@ -547,6 +547,23 @@ def test_sanitize_freeze_hides_the_local_install_in_place_and_keeps_pips_order()
     assert not any("file:" in x or "git+" in x for x in out) and pk.sanitize_freeze(["a==1"]) == ["a==1"]
 
 
+def test_dependency_closure_follows_requirements_markers_and_extras():
+    fake = {"a": ["b>=1", "c; extra == 'x'", "D_d[y]", "w; sys_platform == 'no-such-os'", "gone"], "b": ["a"], "c": [], "d-d": ["e; extra == 'y'", "f"],
+            "e": [], "f": [], "w": []}
+    closure = pk.dependency_closure(["A"], requires=lambda n: fake.get(pk.canonicalize_name(n)))
+    assert closure == {"a", "b", "d-d", "e", "f"}       # c: extra not asked for; w: marker false here; gone: not installed; the a <-> b cycle ends
+
+
+def test_keep_only_cuts_a_freeze_to_the_kept_packages_in_pips_order():
+    lines = ["Flask==3.0", "numpy==2.3.2", pk.EDITABLE_NOTE, "Torch==2.1+cpu", "typing_extensions==4.0", "pkg @ file:///x"]
+    assert pk.keep_only(lines, {"numpy", "torch", "typing-extensions", "pkg"}) == lines[1:]
+
+
+def test_requirement_names_reads_the_real_requirements():
+    names = pk.requirement_names(ROOT / "requirements.txt")
+    assert "torch" in names and "flwr" in names and "packaging" in names and not any(n.startswith("#") for n in names)
+
+
 def test_manifest_paths_are_relative_to_the_repository(tmp_path):
     root = tmp_path / "repo"
     (root / "results").mkdir(parents=True)
@@ -573,10 +590,14 @@ def make_repo(tmp):
 
 def test_package_writes_the_bundle(tmp_path):
     root, cfg, res = make_repo(tmp_path)
-    r = pk.package(cfg, root=root, freeze=FREEZE)
+    r = pk.package(cfg, root=root, freeze=FREEZE, keep={"torch", "numpy"})
     out = res / "repro"
-    assert (out / "pip_freeze.txt").read_text(encoding="utf-8") == (root / "requirements-lock.txt").read_text(encoding="utf-8") and r["lock_updated"]
-    assert (root / "requirements-lock.txt").read_text(encoding="utf-8").startswith(pk.LOCK_HEADER) and pk.LOCK_HEADER.count("\n") == sum(ln.startswith("#") for ln in pk.LOCK_HEADER.splitlines())
+    freeze, lock = (out / "pip_freeze.txt").read_text(encoding="utf-8"), (root / "requirements-lock.txt").read_text(encoding="utf-8")
+    assert r["lock_updated"] and r["libraries"] == 4 and r["lock_libraries"] == 2
+    assert freeze.startswith(pk.FREEZE_HEADER) and "Flask==3.0" in freeze                       # the full pip freeze, unrelated packages included
+    assert lock.startswith(pk.LOCK_HEADER) and "Flask" not in lock and "torch==2.14.1" in lock and "numpy==2.3.2" in lock and pk.EDITABLE_NOTE in lock
+    for head in (pk.LOCK_HEADER, pk.FREEZE_HEADER):
+        assert head.count("\n") == sum(ln.startswith("#") for ln in head.splitlines())
     assert (out / "configs" / "default.yaml").exists() and (out / "configs" / "exp" / "B0.yaml").exists() and not (out / "configs" / "local.yaml").exists()
     env = json.loads((out / "environment.json").read_text(encoding="utf-8"))
     assert env["label_mode"] == "6class" and env["seeds"] == [0, 1, 2] and env["libraries"]["numpy"] and env["python"]

@@ -309,7 +309,7 @@ def libraries_block() -> str:
 
     rows = [f"| {k} | {v} |" for k, v in lib_versions().items() if v]
     head = (f"Python {platform.python_version()} on {platform.system()} {platform.release()}. Versions installed when `ppfeddata aggregate` last wrote this block; "
-            "the exact lock is `requirements-lock.txt` (a copy is in `results/repro/pip_freeze.txt`).")
+            "the exact lock is `requirements-lock.txt` (the full `pip freeze` of the machine is `results/repro/pip_freeze.txt`).")
     return "\n".join([head, "", "| library | version |", "|---|---|"] + rows)
 
 

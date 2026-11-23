@@ -3,6 +3,8 @@
 # file types, very large files, the team's local working folders, personal agent files).
 # Turn it on once per clone:   git config core.hooksPath .githooks
 # Only a person who has looked at a refused file may bypass a false alarm:   git commit --no-verify
+# With file paths as arguments it checks those files on disk instead of the staged ones (tests/test_repo_hygiene.py runs it so on
+# every tracked file, which also covers a clone where the hook was never turned on).
 
 max_bytes=5000000
 bad=0
@@ -12,32 +14,54 @@ refuse() {
     bad=1
 }
 
-# Added, copied, modified or renamed files only: deleting a file is always allowed.
-staged=$(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACMR)
+if [ "$#" -gt 0 ]; then
+    from_index=0
+    files=$(printf '%s\n' "$@")
+else
+    # Added, copied, modified or renamed files only: deleting a file is always allowed.
+    from_index=1
+    files=$(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACMR)
+fi
 
+# Rules on the path only (no subprocess per file, so a check of every tracked file stays fast).
 while IFS= read -r path; do
     [ -z "$path" ] && continue
     case "$path" in
         data/README.md|data/.gitkeep|artifacts/README.md|artifacts/.gitkeep) ;;
         data/*|artifacts/*|data_v1/*|artifacts_v1/*) refuse "$path" "data or run output"; continue ;;
         configs/local.yaml) refuse "$path" "machine-specific config"; continue ;;
-        Latex_FinalCapstone/*|bao_cao_gvhd/*|ghi_chu_hoc/*|mg_architecture.md|mg_architecture_files/*)
-            refuse "$path" "local working file of the team"; continue ;;
+        Latex_FinalCapstone/*|ghi_chu_hoc/*) refuse "$path" "local working file of the team"; continue ;;
         CLAUDE.local.md|.claude/settings.local.json|.claude/worktrees/*) refuse "$path" "personal agent file"; continue ;;
-    esac
-    lower=$(printf '%s' "$path" | tr 'A-Z' 'a-z')
-    case "$lower" in
-        *.csv|*.npz|*.npy|*.db|*.sqlite|*.joblib|*.pkl|*.pickle|*.pt|*.pth|*.ckpt|*.parquet|*.pcap|*.pcapng|*.zip|*.7z|*.gz)
+        *.[cC][sS][vV]|*.[nN][pP][zZ]|*.[nN][pP][yY]|*.[dD][bB]|*.[sS][qQ][lL][iI][tT][eE]|*.[jJ][oO][bB][lL][iI][bB]|\
+        *.[pP][kK][lL]|*.[pP][iI][cC][kK][lL][eE]|*.[pP][tT]|*.[pP][tT][hH]|*.[cC][kK][pP][tT]|*.[pP][aA][rR][qQ][uU][eE][tT]|\
+        *.[pP][cC][aA][pP]|*.[pP][cC][aA][pP][nN][gG]|*.[zZ][iI][pP]|*.7[zZ]|*.[gG][zZ])
             refuse "$path" "data or model file type"; continue ;;
     esac
-    size=$(git cat-file -s ":$path" 2>/dev/null || echo 0)
-    if [ "$size" -gt "$max_bytes" ]; then
-        refuse "$path" "$size bytes, over the $max_bytes byte limit"
+    if [ "$from_index" -eq 1 ]; then
+        size=$(git cat-file -s ":$path" 2>/dev/null || echo 0)
+        if [ "$size" -gt "$max_bytes" ]; then
+            refuse "$path" "$size bytes, over the $max_bytes byte limit"
+        fi
     fi
 done <<EOF
-$staged
+$files
 EOF
 
+# Size of files on disk: one find for all of them.
+if [ "$from_index" -eq 0 ]; then
+    big=$(find "$@" -maxdepth 0 -type f -size +"$max_bytes"c 2>/dev/null)
+    while IFS= read -r path; do
+        [ -z "$path" ] && continue
+        refuse "$path" "over the $max_bytes byte limit"
+    done <<EOF
+$big
+EOF
+fi
+
+if [ "$bad" -ne 0 ] && [ "$from_index" -eq 0 ]; then
+    echo "pre-commit: remove the files above from the repository. See AGENTS.md, section 'Data: never commit it'." >&2
+    exit 1
+fi
 if [ "$bad" -ne 0 ]; then
     echo "pre-commit: unstage the files above (git restore --staged <file>). See AGENTS.md, section 'Data: never commit it'." >&2
     exit 1
