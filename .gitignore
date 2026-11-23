@@ -58,3 +58,8 @@ Thumbs.db
 /bao_cao_gvhd
 /Latex_FinalCapstone
 /ghi_chu_hoc
+
+# Personal files of AI coding agents. The shared ones are tracked: AGENTS.md, CLAUDE.md, GEMINI.md, .claude/settings.json
+CLAUDE.local.md
+.claude/settings.local.json
+.claude/worktrees/

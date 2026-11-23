@@ -1,5 +1,8 @@
-# Git attributes per path. Only one file needs a rule; every other file follows Git's defaults and the core.autocrlf setting of the
-# machine that checks it out.
+# Git attributes per path. Only the files below need a rule; every other file follows Git's defaults and the core.autocrlf setting
+# of the machine that checks it out.
 
 # The extraction script is kept byte for byte as it was run (tools/README.md gives its SHA-256): no line-ending conversion.
 tools/extract_normal_pcap.py -text
+
+# The git hooks are shell scripts: always LF, also on a Windows checkout with core.autocrlf=true (a CR breaks the shell).
+.githooks/* text eol=lf

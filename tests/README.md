@@ -34,4 +34,4 @@ and start it again. Run one file with `python -m pytest -q tests/test_marginal.p
 | `test_compare_published.py` | section 9.13: the redrawn split, binary scoring of saved predictions, only studies read at the source in the table, no second-hand score, no claim that published scores are inflated |
 | `test_split_check.py` | section 9.14: no capture shared by the group draw, one contiguous stretch per capture and no straddling stream in the block draw, the verdict read from the JSON |
 | `test_mg_nodp.py` | round Q1: FedDP-Marginal without DP (exact sums, no epsilon), the plain Flower releases, the grid tap, the round report |
-| `test_docs.py` | the folder READMEs and the architecture documents name only modules, files and commands that exist |
+| `test_docs.py` | the folder READMEs, the architecture documents and `AGENTS.md` name only modules, files and commands that exist |

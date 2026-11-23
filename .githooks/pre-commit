@@ -1,0 +1,45 @@
+#!/bin/sh
+# Pre-commit check of PP-FedData: refuses files that must never reach the public repository (data, run outputs, data or model
+# file types, very large files, the team's local working folders, personal agent files).
+# Turn it on once per clone:   git config core.hooksPath .githooks
+# Only a person who has looked at a refused file may bypass a false alarm:   git commit --no-verify
+
+max_bytes=5000000
+bad=0
+
+refuse() {
+    echo "pre-commit: refused $1 ($2)" >&2
+    bad=1
+}
+
+# Added, copied, modified or renamed files only: deleting a file is always allowed.
+staged=$(git -c core.quotepath=off diff --cached --name-only --diff-filter=ACMR)
+
+while IFS= read -r path; do
+    [ -z "$path" ] && continue
+    case "$path" in
+        data/README.md|data/.gitkeep|artifacts/README.md|artifacts/.gitkeep) ;;
+        data/*|artifacts/*|data_v1/*|artifacts_v1/*) refuse "$path" "data or run output"; continue ;;
+        configs/local.yaml) refuse "$path" "machine-specific config"; continue ;;
+        Latex_FinalCapstone/*|bao_cao_gvhd/*|ghi_chu_hoc/*|mg_architecture.md|mg_architecture_files/*)
+            refuse "$path" "local working file of the team"; continue ;;
+        CLAUDE.local.md|.claude/settings.local.json|.claude/worktrees/*) refuse "$path" "personal agent file"; continue ;;
+    esac
+    lower=$(printf '%s' "$path" | tr 'A-Z' 'a-z')
+    case "$lower" in
+        *.csv|*.npz|*.npy|*.db|*.sqlite|*.joblib|*.pkl|*.pickle|*.pt|*.pth|*.ckpt|*.parquet|*.pcap|*.pcapng|*.zip|*.7z|*.gz)
+            refuse "$path" "data or model file type"; continue ;;
+    esac
+    size=$(git cat-file -s ":$path" 2>/dev/null || echo 0)
+    if [ "$size" -gt "$max_bytes" ]; then
+        refuse "$path" "$size bytes, over the $max_bytes byte limit"
+    fi
+done <<EOF
+$staged
+EOF
+
+if [ "$bad" -ne 0 ]; then
+    echo "pre-commit: unstage the files above (git restore --staged <file>). See AGENTS.md, section 'Data: never commit it'." >&2
+    exit 1
+fi
+exit 0

@@ -345,6 +345,9 @@ PP-FedData/
 ├── notebooks/            empty on purpose; reserved for view-only notebooks (no logic)
 ├── data/                 written by the runs: processed data, partitions (not committed)
 ├── artifacts/            written by the runs: models, synthetic data, predictions, Optuna studies, logs (not committed)
+├── .githooks/            pre-commit: refuses data and run outputs (turn on with `git config core.hooksPath .githooks`)
+├── .claude/              settings.json: shared Claude Code settings (ask before push, no commit attribution)
+├── AGENTS.md             instructions for AI coding agents; CLAUDE.md and GEMINI.md only import it
 └── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 

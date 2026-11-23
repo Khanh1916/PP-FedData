@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "ask": [
+      "Bash(git push *)",
+      "Bash(git * --no-verify*)"
+    ]
+  },
+  "attribution": {
+    "commit": "",
+    "sessionUrl": false
+  }
+}

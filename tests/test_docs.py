@@ -1,4 +1,4 @@
-"""The orientation documents (docs/ARCHITECTURE*.md and the README of each folder) name only modules, files and commands that exist, and the
+"""The orientation documents (docs/ARCHITECTURE*.md, AGENTS.md and the README of each folder) name only modules, files and commands that exist, and the
 folder READMEs list every module, configuration file and committed result, so they cannot silently fall behind the code."""
 import re
 import subprocess
@@ -12,7 +12,7 @@ ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "src" / "ppfeddata"
 DOCS = [ROOT / "docs" / "ARCHITECTURE.md", ROOT / "docs" / "ARCHITECTURE.vi.md", PKG / "README.md", ROOT / "configs" / "README.md",
         ROOT / "results" / "README.md", ROOT / "tests" / "README.md", ROOT / "demo" / "README.md", ROOT / "artifacts" / "README.md",
-        ROOT / "notebooks" / "README.md", ROOT / ".streamlit" / "README.md", ROOT / "data" / "README.md"]
+        ROOT / "notebooks" / "README.md", ROOT / ".streamlit" / "README.md", ROOT / "data" / "README.md", ROOT / "AGENTS.md"]
 HISTORY = [ROOT / "docs" / f"{name}{lang}.md" for name in ("PP-FedData_Implementation_Spec", "SPEC_DEVIATIONS") for lang in ("", ".vi")]   # links only: they name past files too
 NOT_COMMITTED = ("data/", "artifacts/", "configs/local.yaml", "results/runs.csv", "results/summary.csv")
 COMMANDS = set(build_parser()._subparsers._group_actions[0].choices)

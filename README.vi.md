@@ -343,6 +343,9 @@ PP-FedData/
 ├── notebooks/            cố ý để trống; dành cho notebook chỉ để xem (không chứa logic)
 ├── data/                 do các lần chạy ghi: dữ liệu đã xử lý, phân hoạch (không commit)
 ├── artifacts/            do các lần chạy ghi: mô hình, dữ liệu sinh, dự đoán, nghiên cứu Optuna, log (không commit)
+├── .githooks/            pre-commit: chặn dữ liệu và đầu ra của các lần chạy (bật bằng `git config core.hooksPath .githooks`)
+├── .claude/              settings.json: cấu hình Claude Code dùng chung (hỏi trước khi push, commit không ghi tác giả AI)
+├── AGENTS.md             hướng dẫn cho AI coding agent (chỉ tiếng Anh); CLAUDE.md và GEMINI.md chỉ import file này
 └── README.md, README.vi.md, LICENSE, pyproject.toml, requirements.txt, requirements-lock.txt
 ```
 
