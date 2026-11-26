@@ -2,8 +2,9 @@
 
 Run from the repository root:   python -m ppfeddata.cli demo        (or: streamlit run demo/app.py -- --config configs/default.yaml)
 
-Everything shown is read from `results/` and `artifacts/`, which the experiments wrote; the only computation here is sampling from the trained CVAEs
-(`ppfeddata.demo_lib.sample`, the code path of the evaluation). The logic lives in `src/ppfeddata/demo_lib.py` and `limitations.py`, where it is tested.
+Everything shown is read from `results/` and `artifacts/`, which the experiments wrote; the only computation here is sampling from the trained generators,
+FedDP-Marginal (the framework's generator) or a CVAE (the spec's baseline), through `ppfeddata.demo_lib.sample`, the code path of the evaluation.
+The logic lives in `src/ppfeddata/demo_lib.py` and `limitations.py`, where it is tested.
 """
 from __future__ import annotations
 
@@ -28,10 +29,11 @@ PAGES = ["1. Dữ liệu", "2. Kết quả", "3. Đánh đổi và khuyến ngh�
 VARIANT_LABELS = {"residual": "Bộ giải mã + nhiễu dư theo lớp (biến thể của B2, B3, M2 trong báo cáo)", "plain": "Bộ giải mã thuần"}
 FIG_TABS = [("Macro-F1 theo cấu hình", "f1_by_config.png", "Macro-F1 trên tập test thật (thanh lỗi = độ lệch chuẩn giữa các seed)."),
             ("Recall lớp hiếm", "recall_rare_classes.png", "Recall của các lớp hiếm (DELAYED, SYN, INVALID, WILL), bộ phân loại RF."),
-            ("Utility - privacy", "utility_privacy.png", "Macro-F1 và MIA AUC theo ε (ε = ∞ là B3 không DP)."),
-            ("Độ trung thực", "fidelity_vs_eps.png", "Wasserstein và C2ST của dữ liệu sinh theo ε."),
-            ("Chi phí", "overhead.png", "Thời gian mỗi vòng FL và số byte mỗi vòng."),
-            ("Pareto", "pareto.png", "Macro-F1 so với MIA AUC; kích thước điểm theo overhead.")]
+            ("Utility - privacy", "utility_privacy.png", "Macro-F1, MIA AUC và DCR theo ε của FedDP-Marginal (MG, MGl) và CVAE (M1, M3). "
+             "ε = ∞ là bản phát hành không DP của từng bộ sinh: MGs-nodp cho FedDP-Marginal, B3-plain cho CVAE."),
+            ("Độ trung thực", "fidelity_vs_eps.png", "Wasserstein và C2ST của dữ liệu sinh theo ε, FedDP-Marginal và CVAE."),
+            ("Chi phí", "overhead.png", "Thời gian và số byte mỗi vòng FL của đường CVAE. FedDP-Marginal không huấn luyện theo vòng mà chỉ gửi ba lần phát hành (mục 9.9b, 9.12)."),
+            ("Pareto", "pareto.png", "Macro-F1 so với MIA AUC; kích thước điểm theo overhead. FedDP-Marginal là ô vuông cỡ cố định (không có vòng huấn luyện).")]
 
 
 # --------------------------------------------------------------------------------------------------
@@ -90,6 +92,10 @@ def show_md(md: str, base: Path) -> None:
 
 def protections_vi(cfg: dict, g: dl.Generator) -> str:
     fl, dp = cfg.get("fl", {}), cfg.get("dp", {})
+    if g.kind == "mg":
+        return (f"liên kết ({fl.get('num_clients', '?')} client non-IID), mỗi client gửi bảng đếm đã cộng phần nhiễu Skellam của mình, máy chủ chỉ nhận tổng qua SecAgg+ "
+                f"(DP phân tán, ε mục tiêu {g.eps_target:g}, đúng khi các client trung thực)"
+                + ("; cộng hậu xử lý chọn trên validation, không tốn thêm ngân sách riêng tư" if g.run_name.startswith("MGr") else ""))
     parts = [f"huấn luyện liên kết (FedAvg, {fl.get('num_clients', '?')} client non-IID)" if g.federated else "huấn luyện tập trung (không FL)"]
     if g.dp:
         parts.append(f"DP-SGD ở client (ε mục tiêu {g.eps_target:g}, δ = {dp.get('delta', '?'):g})")
@@ -206,45 +212,60 @@ def page_tradeoff(cfg: dict, path: str | None) -> None:
     if R is None:
         st.warning("Chưa có `results/interpretation.json`. Chạy `python -m ppfeddata.cli aggregate` (Phase 12).")
         return
-    note = dl.why_cvae_note(R, cfg)
-    if note:
-        st.warning("Trước khi đọc khuyến nghị:\n\n" + note)
     md = get_report(path, _stamp(dl.report_path(cfg)))
     secs = dl.split_markdown(md, 3) if md else {}
     base = dl.report_path(cfg).parent
-    rec = dl.recommendation(R)
-    if rec:
-        st.subheader("Cấu hình khuyến nghị theo quy tắc R6")
-        rule = rec["rule"]
-        st.markdown(f"Quy tắc (ngưỡng ở `thresholds` trong config): MIA AUC ≤ {rule.get('mia_auc_max')}, ε ≤ {rule.get('eps_max')} nếu có DP, thời gian mỗi vòng ≤ "
-                    f"{rule.get('overhead_ratio_max')} × FL thường (B3); trong các cấu hình thoả, chọn macro-F1 TAug (RF) cao nhất.")
-        if rec["recommended"]:
-            extra = f" Quy tắc theo đúng chữ chọn **{rec['literal']}**; các cấu hình hoà trong nhiễu: {', '.join(rec['tied'])}; hoà được phá theo mức bảo vệ." if rec["tie_break_used"] else ""
-            st.success(f"Khuyến nghị: **{rec['recommended']}**." + extra)
-        else:
-            st.info("Không cấu hình nào thoả cả ba điều kiện; xem bảng và hình Pareto.")
-        if rec["dp_alternative"]:
-            st.markdown(f"Nếu cần bảo đảm DP hình thức, lựa chọn DP mà quy tắc sẽ chọn nếu bỏ điều kiện overhead là **{rec['dp_alternative']}**.")
-        st.dataframe(rec["table"], hide_index=True, width="stretch")
-        st.caption("Khuyến nghị xếp hạng các bộ sinh có bảo vệ (CVAE và FedDP-Marginal) với nhau; nó không nói rằng dữ liệu sinh tốt hơn dữ liệu thật khi dữ liệu thật gộp được "
-                   "(xem cảnh báo ở đầu trang và mục 9.6, 9.9, 9.9b của báo cáo).")
+    why_mg = dl.why_mg_note(R, cfg)
+    if why_mg:
+        st.success("**Khung dùng FedDP-Marginal**: bộ sinh dữ liệu liên kết dựa trên bảng đếm có DP, nhiễu chia cho các client và cộng qua SecAgg+. "
+                   "CVAE của spec (M1, M2, M3) là đường cơ sở để so sánh. Đoạn dưới sinh từ mục 9.0 của báo cáo (tiếng Anh):\n\n" + why_mg)
     page_requirement(cfg)
     guide = next((k for k in secs if k.split()[0] == "9.10"), None)
-    if guide:
-        st.subheader("Cấu hình nào cho yêu cầu nào (M1, M2, M3)")
-        st.caption("Utility không phân biệt được các cấu hình (R6), nên lựa chọn dựa trên cái mà mỗi cấu hình bảo vệ và chi phí đo được, kèm các đặc thù của dữ liệu IoT/MQTT. "
-                   "Nội dung sinh từ mục 9.10 của `final_report.md` (tiếng Anh, như mọi đoạn trích từ báo cáo).")
-        show_md(secs[guide], base)
+    mg_part, cvae_part = dl.split_guide(secs[guide]) if guide else ("", "")
+    if mg_part:
+        st.subheader("FedDP-Marginal theo yêu cầu triển khai")
+        st.caption("Mục 9.10b của `final_report.md` (tiếng Anh, như mọi đoạn trích từ báo cáo), đọc từ `results/recommend.json`.")
+        show_md(mg_part, base)
     c = st.columns(2)
-    for col, name, cap in ((c[0], "utility_privacy.png", "Utility - privacy theo ε."), (c[1], "overhead.png", "Overhead của từng cấu hình.")):
+    for col, name, cap in ((c[0], "utility_privacy.png", "Utility - privacy theo ε, FedDP-Marginal và CVAE."),
+                           (c[1], "overhead.png", "Overhead mỗi vòng của đường CVAE (FedDP-Marginal chỉ gửi ba lần phát hành).")):
         p = dl.figure(cfg, name)
         if p:
             col.image(str(p), caption=cap, width="stretch")
     p = dl.figure(cfg, "pareto.png")
     if p:
-        st.image(str(p), caption="Pareto: macro-F1 so với MIA AUC, kích thước điểm theo overhead.", width="stretch")
-    for key in [k for k in secs if k.split()[0] in ("9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "9.8", "9.9")]:
-        with st.expander(key, expanded=key.startswith("9.9")):
+        st.image(str(p), caption="Pareto: macro-F1 so với MIA AUC, kích thước điểm theo overhead; FedDP-Marginal là ô vuông cỡ cố định.", width="stretch")
+
+    st.subheader("Thiết kế ban đầu của spec: quy tắc R6 và đường CVAE")
+    st.caption("Phần này giữ để đối chiếu với spec. Quy tắc R6 xếp hạng theo macro-F1 TAug, con số gần như không tách được các cấu hình; khung không chọn cấu hình theo quy tắc này.")
+    rec = dl.recommendation(R)
+    if rec:
+        with st.expander("Quy tắc R6 của spec và cấu hình nó chọn"):
+            rule = rec["rule"]
+            st.markdown(f"Quy tắc (ngưỡng ở `thresholds` trong config): MIA AUC ≤ {rule.get('mia_auc_max')}, ε ≤ {rule.get('eps_max')} nếu có DP, thời gian mỗi vòng ≤ "
+                        f"{rule.get('overhead_ratio_max')} × FL thường (B3); trong các cấu hình thoả, chọn macro-F1 TAug (RF) cao nhất.")
+            if rec["recommended"]:
+                extra = f" Quy tắc theo đúng chữ chọn **{rec['literal']}**; các cấu hình hoà trong nhiễu: {', '.join(rec['tied'])}; hoà được phá theo mức bảo vệ." if rec["tie_break_used"] else ""
+                st.info(f"Quy tắc R6 chọn: **{rec['recommended']}**." + extra)
+            else:
+                st.info("Không cấu hình nào thoả cả ba điều kiện; xem bảng và hình Pareto.")
+            if rec["tstr_recommended"]:
+                st.markdown(f"Nếu xếp hạng theo TSTR (dữ liệu sinh thay dữ liệu thật), cùng quy tắc chọn **{rec['tstr_recommended']}**.")
+            if rec["dp_alternative"]:
+                st.markdown(f"Nếu cần bảo đảm DP hình thức, lựa chọn DP mà quy tắc sẽ chọn nếu bỏ điều kiện overhead là **{rec['dp_alternative']}**.")
+            st.dataframe(rec["table"], hide_index=True, width="stretch")
+            st.caption("R6 xếp hạng các bộ sinh (CVAE và FedDP-Marginal) với nhau; nó không nói rằng dữ liệu sinh tốt hơn dữ liệu thật khi dữ liệu thật gộp được (mục 9.6, 9.9 của báo cáo).")
+    if cvae_part:
+        with st.expander("Đường CVAE của spec: cấu hình nào cho yêu cầu nào (M1, M2, M3)"):
+            st.caption("Mục 9.10 của `final_report.md`, phần trước 9.10b (tiếng Anh).")
+            show_md(cvae_part, base)
+    note = dl.why_cvae_note(R, cfg)
+    if note:
+        with st.expander("Vì sao spec chọn CVAE, và R1, R2 nói gì về lựa chọn đó"):
+            st.markdown(note)
+    st.subheader("Các mục của báo cáo")
+    for key in [k for k in secs if k.split()[0] in ("9.0", "9.1", "9.2", "9.3", "9.4", "9.5", "9.6", "9.7", "9.8", "9.9", "9.9b")]:
+        with st.expander(key, expanded=key.split()[0] == "9.9b"):
             show_md(secs[key], base)
 
 
@@ -306,21 +327,28 @@ def page_generate(cfg: dict, path: str | None) -> None:
     except Exception as e:                                                     # missing processed data / preprocessor
         st.error(f"Không nạp được dữ liệu đã xử lý: {e}")
         return
-    st.markdown("Chọn cấu hình, lớp và số lượng; bảng là các **gói tin tổng hợp** do bộ giải mã CVAE sinh ra, đổi về đơn vị gốc (ô trống = đặc trưng không áp dụng). "
-                "Cùng cấu hình, seed, lớp và số lượng luôn cho cùng một bảng.")
-    by = {g.label: (g, seeds) for g, seeds in avail}
+    by = {g.label: (g, seeds) for g, seeds in dl.framework_first(avail)}
     c1, c2 = st.columns(2)
-    label = c1.selectbox("Cấu hình", list(by), format_func=lambda k: f"{k} - {by[k][0].title}")
+    label = c1.selectbox("Cấu hình", list(by), format_func=lambda k: f"{k} - {by[k][0].title}" + (" (khung)" if by[k][0].kind == "mg" else " (CVAE, đường cơ sở)"))
     g, seeds = by[label]
+    if g.kind == "mg":
+        st.markdown("Chọn cấu hình, lớp và số lượng; bảng là các **gói tin tổng hợp** lấy mẫu từ các bảng đếm có nhiễu DP mà FedDP-Marginal đã phát hành (cây Chow-Liu), "
+                    "đổi về đơn vị gốc (ô trống = đặc trưng không áp dụng). Cùng cấu hình, seed, lớp và số lượng luôn cho cùng một bảng.")
+    else:
+        st.markdown("Chọn cấu hình, lớp và số lượng; bảng là các **gói tin tổng hợp** do bộ giải mã CVAE (đường cơ sở của spec) sinh ra, đổi về đơn vị gốc "
+                    "(ô trống = đặc trưng không áp dụng). Cùng cấu hình, seed, lớp và số lượng luôn cho cùng một bảng.")
     train_seed = c2.selectbox("Seed huấn luyện của mô hình", seeds)
     st.caption(f"Cách huấn luyện và bảo vệ: {protections_vi(cfg, g)}.")
     c3, c4, c5 = st.columns(3)
     cls_opt = c3.selectbox("Lớp", ["Tất cả các lớp"] + assets.classes)
     n = c4.number_input("Số mẫu mỗi lớp", min_value=1, max_value=dl.MAX_PER_CLASS, value=100, step=50)
     sample_seed = c5.number_input("Seed lấy mẫu", min_value=0, value=0, step=1)
-    if g.dp:
+    if g.kind == "mg":
         variant = "plain"
-        st.info("Cấu hình có DP chỉ sinh bằng **bộ giải mã thuần**: nhiễu dư theo lớp được ước lượng từ toàn bộ train nên nằm ngoài ε. Mẫu là hậu xử lý của mô hình đã huấn luyện với DP.")
+        st.info("FedDP-Marginal không có bộ giải mã: mẫu được lấy từ các bảng đếm đã phát hành có DP, nên mọi dòng là hậu xử lý và nằm trong ε.")
+    elif g.dp:
+        variant = "plain"
+        st.info("Cấu hình CVAE có DP chỉ sinh bằng **bộ giải mã thuần**: nhiễu dư theo lớp được ước lượng từ toàn bộ train nên nằm ngoài ε. Mẫu là hậu xử lý của mô hình đã huấn luyện với DP.")
     else:
         variant = st.radio("Cách sinh", ["residual", "plain"], horizontal=True, format_func=lambda v: VARIANT_LABELS[v],
                            help="Nhiễu dư: thêm nhiễu Gauss theo độ lệch chuẩn phần dư của từng lớp (ước lượng trên train) vào giá trị trung bình của bộ giải mã; đây là biến thể dùng cho TAug/TSTR của B2, B3, M2.")
@@ -352,7 +380,10 @@ def page_generate(cfg: dict, path: str | None) -> None:
         m[0].metric("TSTR macro-F1 (RF)", fmt_ms(q["tstr_rf"]), help="Huấn luyện bộ phân loại chỉ bằng dữ liệu sinh, test trên dữ liệu thật.")
         m[1].metric("Chỉ dữ liệu thật (B0, RF)", fmt_ms(q["real_only_rf"]))
         m[2].metric("C2ST AUC", "-" if q["c2st_auc"] is None else f"{q['c2st_auc']:.4f}", help="Gần 1: bộ phân loại phân biệt dữ liệu sinh với dữ liệu thật gần như hoàn hảo.")
-        m[3].metric("MIA AUC", "-" if q["mia_auc"] is None else f"{q['mia_auc']:.3f}", help="Tấn công suy luận thành viên; gần 0,5 là ngẫu nhiên. Tấn công này yếu và chưa qua đối chứng dương với CVAE.")
+        m[3].metric("MIA AUC", "-" if q["mia_auc"] is None else f"{q['mia_auc']:.3f}",
+                    help=("Tấn công suy luận thành viên trên dữ liệu sinh; gần 0,5 là ngẫu nhiên. Với FedDP-Marginal, tấn công trên các bảng đã phát hành (mục 9.12) mới qua đối chứng dương "
+                          "và phân biệt được bản không DP với bản có DP." if g.kind == "mg"
+                          else "Tấn công suy luận thành viên trên dữ liệu sinh; gần 0,5 là ngẫu nhiên. Tấn công này yếu và chưa qua đối chứng dương với CVAE."))
         st.caption(f"Số đo của `{q['config']}` (trung bình ± std qua các seed). " + (f"ε đạt (max theo client, δ = {cfg['dp']['delta']:g}): {q['eps_max']:.3f}." if q["eps_max"] else "Không có DP: không có bảo đảm ε."))
     if not g.dp:
         st.warning("Cấu hình này không có bảo đảm quyền riêng tư hình thức. Mẫu sinh có thể mang thông tin về dữ liệu train; các phép đo thực nghiệm (MIA, tỉ lệ trùng) chỉ là bằng chứng yếu.")
@@ -368,11 +399,17 @@ def page_threat(cfg: dict, path: str | None) -> None:
     st.markdown(
         "**Mô hình đe dọa (spec).** Máy chủ FL là *honest-but-curious*: chạy đúng giao thức nhưng cố suy luận từ những gì nó nhận được. "
         "Các client trung thực và **không thông đồng** với nhau hay với máy chủ. Mô phỏng chạy trên một máy, không có mạng thật.")
+    st.markdown("**FedDP-Marginal (bộ sinh của khung).**")
+    st.markdown("| Cơ chế | Bảo vệ khỏi | Không bảo vệ |\n|---|---|---|\n"
+                "| MG: DP phân tán trên bảng đếm (mỗi client cộng phần nhiễu Skellam của mình, máy chủ chỉ nhận tổng qua SecAgg+) | Máy chủ không thấy bảng của từng client, chỉ thấy tổng đã có nhiễu; "
+                "dữ liệu sinh lấy mẫu từ bảng đã phát hành nên nằm trong ε ở mức bản ghi | ε chỉ đúng khi các client trung thực (ε với ít client trung thực hơn ở mục 9.10b); nhãn lớp; cả một phiên hay một capture; việc tune siêu tham số |\n"
+                "| MGl: DP cục bộ (mỗi client tự cộng đủ nhiễu) | Không cần tin các client khác | Nhiễu cộng lại gấp K lần nên tiện ích thấp hơn; máy chủ thấy bảng có nhiễu của từng client |")
+    st.markdown("**Đường CVAE của spec (đường cơ sở).**")
     st.markdown("| Cơ chế | Bảo vệ khỏi | Không bảo vệ |\n|---|---|---|\n"
                 "| DP-SGD ở client | Rò rỉ thông tin về từng **bản ghi** huấn luyện qua mô hình toàn cục và dữ liệu sinh từ nó (hậu xử lý). ε ở mức bản ghi | Nhãn lớp; cả một phiên tấn công gồm nhiều packet tương quan; thống kê chuẩn hoá tính tập trung; việc tune siêu tham số |\n"
                 f"| SecAgg (SecAgg+ của Flower; {sa.get('num_shares', '?')} chia sẻ, ngưỡng khôi phục {sa.get('reconstruction_threshold', '?')}) | Máy chủ thấy **cập nhật của từng client**: chỉ nhận tổng đã che | Mô hình tổng hợp cuối cùng và dữ liệu sinh từ nó vẫn có thể rò rỉ; không đem lại bảo đảm ε |\n"
                 "| DP + SecAgg | Cả hai: máy chủ không thấy cập nhật từng client, và mô hình/dữ liệu sinh có bảo đảm ε | Các giới hạn của DP ở trên |")
-    st.caption("Theo spec: SecAgg bảo vệ cập nhật của từng client khỏi máy chủ, còn DP bảo vệ khỏi rò rỉ từ mô hình và dữ liệu sinh.")
+    st.caption("Theo spec: SecAgg bảo vệ cập nhật của từng client khỏi máy chủ, còn DP bảo vệ khỏi rò rỉ từ mô hình và dữ liệu sinh. Mục 9.8 của báo cáo (bên dưới) mô tả cả hai bộ sinh.")
     R = get_interpretation(path, _stamp(dl.results_dir(cfg) / "interpretation.json"))
     md = get_report(path, _stamp(dl.report_path(cfg)))
     if md:
@@ -395,7 +432,7 @@ def page_threat(cfg: dict, path: str | None) -> None:
         show_md(sec, dl.report_path(cfg).parent)
     note = dl.why_cvae_note(R, cfg)
     if note:
-        st.subheader("Vì sao thiết kế ban đầu dùng CVAE?")
+        st.subheader("Vì sao spec ban đầu dùng CVAE (nay là đường cơ sở)?")
         st.markdown(note + "\n\nChi tiết: mục 9.9 của báo cáo (trang 3).")
 
 
@@ -409,10 +446,15 @@ def main() -> None:
     page = st.sidebar.radio("Trang", PAGES, key="page")
     R = get_interpretation(path, _stamp(dl.results_dir(cfg) / "interpretation.json"))
     pm = dl.premise(R)
+    mg = bool(dl.why_mg_note(R, cfg))
+    head = ("**Kết luận chính (trang 3):** khung dùng FedDP-Marginal, bộ sinh liên kết dựa trên bảng đếm có DP; CVAE của spec là đường cơ sở. "
+            if mg else "**Kết luận chính (trang 3):** ")
     if pm and pm["unsupported"]:
-        st.sidebar.markdown("**Kết luận chính (trang 3):** theo R1 và R2, dữ liệu sinh không cải thiện IDS khi gộp được dữ liệu thật. Lý do vẫn dùng CVAE và phạm vi còn lại của nó được nêu ở trang 3.")
+        st.sidebar.markdown(head + "Theo R1 và R2, dữ liệu sinh không cải thiện IDS khi gộp được dữ liệu thật; giá trị của khung là huấn luyện IDS khi dữ liệu thô phải ở lại client.")
+    elif pm and all(v["best"] < (pm["smote"].get(clf) or float("inf")) for clf, v in pm["per_clf"].items()):
+        st.sidebar.markdown(head + "Khi gộp được dữ liệu thật, dữ liệu sinh giúp IDS ít hơn SMOTE (R1, R2); giá trị của khung là huấn luyện IDS khi dữ liệu thô phải ở lại client.")
     elif pm:
-        st.sidebar.markdown("**Kết luận chính:** xem R1, R2 và mục 9.9 ở trang 3 để biết dữ liệu sinh có cải thiện IDS hay không và vì sao dùng CVAE.")
+        st.sidebar.markdown(head + "Xem R1, R2 và mục 9.9b ở trang 3 để biết dữ liệu sinh giúp IDS đến đâu.")
     {PAGES[0]: lambda: page_data(cfg), PAGES[1]: lambda: page_results(cfg, path), PAGES[2]: lambda: page_tradeoff(cfg, path),
      PAGES[3]: lambda: page_generate(cfg, path), PAGES[4]: lambda: page_threat(cfg, path)}[page]()
 

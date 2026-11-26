@@ -262,8 +262,20 @@ def R6_fixture():
 def test_recommendation_table_and_picks():
     rec = dl.recommendation(R6_fixture())
     assert list(rec["table"]["configuration"]) == ["B3", "M2", "M1-eps1"] and rec["recommended"] == "M2" and rec["literal"] == "B3" and rec["tie_break_used"] and rec["dp_alternative"] == "M1-eps1"
-    assert list(rec["table"]["eligible"]) == [True, True, False]
+    assert list(rec["table"]["eligible"]) == [True, True, False] and rec["tstr_recommended"] is None
     assert dl.recommendation(None) is None and dl.recommendation({"R6": {}}) is None
+    fx = R6_fixture()
+    fx["R6"]["tstr_ranking"] = {"literal": "M2", "tied": ["M2"], "recommended": "M2"}
+    assert dl.recommendation(fx)["tstr_recommended"] == "M2"
+
+
+def test_split_guide_and_framework_first():
+    """The demo shows FedDP-Marginal first: 9.10b before the guide of the CVAE route, MG before the CVAE generators (SPEC_DEVIATIONS R.15)."""
+    body = "CVAE intro\n\n| a |\n|---|\n\n#### 9.10b After the optimisation round: FedDP-Marginal per deployment requirement\n\nMG text"
+    assert dl.split_guide(body) == ("MG text", "CVAE intro\n\n| a |\n|---|") and dl.split_guide("only the CVAE") == ("", "only the CVAE")
+    g = lambda lab, kind: dl.Generator(lab, "t", lab, kind, kind != "b3", kind == "mg", True, 5.0)                 # noqa: E731
+    avail = [(g("B3", "b3"), [0]), (g("MG-eps5", "mg"), [0, 1]), (g("M2", "m2"), [0]), (g("MG-eps1", "mg"), [0])]
+    assert [x[0].label for x in dl.framework_first(avail)] == ["MG-eps5", "MG-eps1", "B3", "M2"]
 
 
 def test_premise_is_unsupported_only_when_no_generator_helps_and_the_cvae_always_loses():
@@ -424,7 +436,9 @@ def test_readme_results_and_limitations_are_what_the_generators_write_from_the_c
         return t[t.index(b) + len(b):t.index(e)].strip("\n")
     assert block("results") == rg.results_block(R, cfg, rg.lang_of(name)).strip("\n"), f"{name} results block is stale: run `ppfeddata aggregate`"
     assert block("limitations") == rg.limitations_block(lim.limitations(cfg, R, None)).strip("\n"), f"{name} limitations block is stale: run `ppfeddata aggregate`"
-    assert "**Why a CVAE at all?**" in block("results") and "Not tested" in block("results") and "**Which of M1, M2, M3 for which requirement?**" in block("results")
+    assert "**Why a CVAE at all?**" in block("results") and "Not tested" in block("results") and "**Which configuration for which requirement?**" in block("results")
+    res = block("results")                                       # the framework's generator comes before the spec's premise (SPEC_DEVIATIONS R.15)
+    assert res.index("**Why FedDP-Marginal and not the CVAE?**") < res.index("**Why a CVAE at all?**") and "Not tested: other generators." not in res
 
 
 def test_results_block_reports_the_numbers_of_the_json(tmp_path):
@@ -697,10 +711,15 @@ def test_demo_page_3_shows_which_configuration_for_which_requirement(monkeypatch
     at.run()
     at.sidebar.radio(key="page").set_value(PAGES[2]).run()
     assert not at.exception and not at.error
-    assert any("Cấu hình nào cho yêu cầu nào" in s.value for s in at.subheader)
+    subs = [s.value for s in at.subheader]
     text = " ".join(m.value for m in at.markdown)
+    if "#### 9.10b" in rep.read_text(encoding="utf-8"):                    # FedDP-Marginal first, the spec's CVAE route after it (SPEC_DEVIATIONS R.15)
+        assert subs.index("FedDP-Marginal theo yêu cầu triển khai") < subs.index("Thiết kế ban đầu của spec: quy tắc R6 và đường CVAE")
+        assert "What the IoT / MQTT setting changes" in text and any("Why FedDP-Marginal and not the CVAE?" in s.value for s in at.success)
+        assert not any("M3-eps5" in s.value for s in at.success)                                          # the spec's rule R6 is not shown as the recommendation
+    assert any(e.label.startswith("Đường CVAE của spec") for e in at.expander)
     assert "Requirement to configuration" in text and "What in the IoT / MQTT data changes the choice" in text
-    assert not any(e.label.startswith("9.10") for e in at.expander)                                       # shown once, under its own subheader
+    assert not any(e.label.startswith("9.10") for e in at.expander)                                       # shown once, not again among the report sections
 
 
 @pytest.mark.skipif(not HAVE_REAL, reason="needs the trained models and data/processed")

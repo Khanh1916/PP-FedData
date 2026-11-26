@@ -287,8 +287,9 @@ def limitations(cfg: dict[str, Any], interp: dict[str, Any] | None = None, summ:
         "As in the spec, the claim of epsilon is scoped to the features of a record: the class label is treated as known side information. Epsilon is not claimed to hide labels, class "
         "counts or which classes a client holds.", "spec Definition of Done")
     add("Time features and independent packets",
-        "The time features (gap to the previous frame, time since the first frame of the stream, round-trip time) depend on how the capture was exported, and the CVAE generates "
-        "every packet independently: a generated packet has no stream context, so the temporal structure of a session is not reproduced.", "spec Definition of Done; leakage_report.md (ablation without the time columns)")
+        "The time features (gap to the previous frame, time since the first frame of the stream, round-trip time) depend on how the capture was exported, and both generators (FedDP-Marginal "
+        "and the CVAE) generate every packet independently: a generated packet has no stream context, so the temporal structure of a session is not reproduced.",
+        "spec Definition of Done; leakage_report.md (ablation without the time columns)")
     add("Non-private tuning", tuning_text(cfg), "SPEC_DEVIATIONS 7.3, 9.5, 9.14, R.5, R.10; configs/best_marginal.yaml")
     add("Single-machine simulation",
         "Federated training is simulated on one machine (Flower simulation, the clients are Ray actors sharing the same CPU): no network latency is measured, so the times per round "

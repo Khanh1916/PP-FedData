@@ -102,10 +102,12 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         k1, k2 = _counts(tstr), _counts(taug)
         mia, pc = r4.get("mia", {}), r4.get("positive_control", {})
         curve = r4["curves"].get(f"TSTR-{PRIMARY}")
-        s = (f"**R4 - What does DP cost, and what does it bring?** Cost, plain decoder against the epsilon = infinity point: TSTR macro-F1 delta {_range(tstr)} ({k1['worse']} of {len(tstr)} comparisons worse), "
+        mgc = _r4_mg_clause(R)
+        s = ("**R4 - What does DP cost, and what does it bring?** " + (f"{mgc} " if mgc else "")
+             + f"CVAE route (M1, plain decoder, against B3-plain, the epsilon = infinity point with the same decoder): TSTR macro-F1 delta {_range(tstr)} ({k1['worse']} of {len(tstr)} comparisons worse), "
              f"TAug delta {_range(taug)} ({k2['none']} of {len(taug)} no effect). ")
         if curve:
-            s += (f"Over epsilon = 1, 5, 10 the TSTR-{PRIMARY.upper()} curve is {'monotone within noise' if curve['monotone_within_noise'] else 'NOT monotone within noise'} and "
+            s += (f"Over epsilon = 1, 5, 10 its TSTR-{PRIMARY.upper()} curve is {'monotone within noise' if curve['monotone_within_noise'] else 'NOT monotone within noise'} and "
                   f"{'flat' if curve['flat'] else 'not flat'} (range {curve['range']:.3f} against seed std up to {curve['max_std']:.3f}). ")
         if mia:
             s += (f"Benefit: no empirical benefit is measurable. MIA AUC is {min(mia['values']):.3f}-{max(mia['values']):.3f} at every epsilon including infinity "
@@ -143,8 +145,9 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
             s += f", not utility or MIA: every candidate's TAug-{PRIMARY.upper()} macro-F1 lies in {min(r['taug_f1'] for r in rows):.4f}-{max(r['taug_f1'] for r in rows):.4f}. "
         alt = r6.get("dp_alternative")
         if alt:
-            s += f"If a formal DP guarantee is required, the DP option the rule would pick without the overhead filter is {alt['recommended']} (tied: {', '.join(alt['tied'])})."
-        out.append(s)
+            s += f"If a formal DP guarantee is required, the DP option the rule would pick without the overhead filter is {alt['recommended']} (tied: {', '.join(alt['tied'])}). "
+        s += _r6_framework_note(R, cfg)
+        out.append(s.rstrip())
 
     gb = _guide_bullet(R, cfg)
     if gb:
@@ -152,6 +155,9 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     sb = _sensitivity_bullet(R)
     if sb:
         out.append(sb)
+    pv = _pivot_facts(cfg)                                     # the framework's generator before the spec's premise (SPEC_DEVIATIONS R.15)
+    if pv:
+        out.append(_pivot_bullet(pv))
 
     # red flags
     W = R.get("why")
@@ -160,22 +166,22 @@ def answers(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         by = {x["id"]: x for x in W["rows"]}
         tstr = ", ".join(f"{by[k]['macro_f1'][PRIMARY]:.3f} ({k.split(':')[0]})" for k in ("B3:TSTR", "M2:TSTR") if k in by and PRIMARY in by[k]["macro_f1"])
         b0 = W["b0"].get(PRIMARY)
-        head = ("**Why a CVAE at all?** " + ("R1 and R2 do not support the CVAE as a way to improve the IDS" if pm["unsupported"] else "R1 and R2 support the CVAE only in part as a way to improve the IDS")
+        mg_now = bool(pv)
+        head = ("**Why a CVAE at all?** " + ("(The premise of the spec; since the optimisation round the CVAE is the baseline and the framework uses FedDP-Marginal, previous answer.) " if mg_now else "")
+                + ("R1 and R2 do not support the CVAE as a way to improve the IDS" if pm["unsupported"] else "R1 and R2 support the CVAE only in part as a way to improve the IDS")
                 + f" (worse than class weights and SMOTE in {pm['r2_worse']} of {pm['r2_n']} comparisons; generators better than real data only: "
                 + ", ".join(f"{clf.upper()} {v['better']} of {v['n']}, at most {v['best']:+.3f}" + (f" against {pm['smote'][clf]:+.3f} for SMOTE" if pm["smote"].get(clf) is not None else "") for clf, v in pm["per_clf"].items()) + "). "
                 "The CVAE is the premise of the spec (a federated, label-conditional generator whose data balance the classes of the IDS), not the outcome of a comparison between generators, and this study is its test.")
         fed = _fed_clause(R)
+        others = ("other generators than FedDP-Marginal (deep generators such as WGAN-GP, CTGAN, diffusion)" if mg_now else "other generators")
         tail = (" What is left of the case is the setting where raw data cannot be pooled, which TAug, B0 and B1 all need: there the synthetic data alone give "
                 f"{PRIMARY.upper()} {tstr} against {b0:.3f} for real data only, without pooling the raw data. "
-                + (f"{fed} " + (f"{_fed_prot_clause(R)} {_fed_smote_clause(R)} Not tested: other generators. See 9.9." if _fed_prot(R) and _fed_smote_clause(R) else
-                                f"{_fed_prot_clause(R)} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators. See 9.9." if _fed_prot(R)
-                                else "Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, other generators, a DP or SecAgg version of the direct classifier. See 9.9.")
+                + (f"{fed} " + (f"{_fed_prot_clause(R)} {_fed_smote_clause(R)} Not tested: {others}. See 9.9." if _fed_prot(R) and _fed_smote_clause(R) else
+                                f"{_fed_prot_clause(R)} Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, {others}. See 9.9." if _fed_prot(R)
+                                else f"Not tested, so the CVAE is not shown to be the best option even there: federated SMOTE, {others}, a DP or SecAgg version of the direct classifier. See 9.9.")
                    if fed else "Not tested, so the CVAE is not shown to be the best option even there: training the classifier itself by FL, "
-                   "federated class weights or SMOTE, other generators. See 9.9.") if tstr and b0 else " See 9.9.")
+                   f"federated class weights or SMOTE, {others}. See 9.9.") if tstr and b0 else " See 9.9.")
         out.append(head + tail)
-    pv = _pivot_facts(cfg)
-    if pv:
-        out.append(_pivot_bullet(pv))
     fu = _followup_facts(cfg)
     if fu and _followup_bullet(fu):
         out.append(_followup_bullet(fu))
@@ -319,27 +325,65 @@ def _mia_block(R: dict[str, Any]) -> list[str]:
     return L
 
 
-def _r4(R: dict[str, Any]) -> list[str]:
+def _curve_rows(curves: dict[str, Any], prefix: str = "") -> list[dict[str, Any]]:
+    return [{"curve": prefix + name, **{f"eps {k}": f"{v[0]:.3f} ± {v[1]:.3f}" for k, v in cv["values"].items()}, "monotone within noise": "yes" if cv["monotone_within_noise"] else "NO",
+             "range": f"{cv['range']:.3f}", "largest seed std": f"{cv['max_std']:.3f}", "flat (range <= std)": "yes" if cv["flat"] else "no"} for name, cv in curves.items()]
+
+
+def _r4_mg_clause(R: dict[str, Any]) -> str | None:
+    """FedDP-Marginal in the R4 answer: each variant against its own epsilon = infinity release (None before round Q1 or without the block)."""
+    M = (R.get("R4") or {}).get("mg")
+    if not M or not M.get("cost"):
+        return None
+    tstr = [c for c in M["cost"] if c["protocol"] == "TSTR"]
+    fams = sorted({c["label"].split("-eps")[0] for c in tstr})
+    name = {"MG": "MG (distributed DP through SecAgg+)", "MGl": "MGl (local DP)"}
+    per = "; ".join(f"{name.get(f, f)} {_range([c['macro_f1'] for c in tstr if c['label'].split('-eps')[0] == f], 3)}" for f in fams)
+    k = _counts([c["macro_f1"] for c in tstr])
+    s = (f"FedDP-Marginal, the framework's generator, against its own epsilon = infinity release ({M['reference']}): TSTR macro-F1 delta {per} "
+         f"({k['worse']} of {len(tstr)} comparisons worse)")
+    cv = (M.get("curves") or {}).get(f"MG: TSTR-{PRIMARY}")
+    if cv:
+        s += (f"; the TSTR-{PRIMARY.upper()} curve of MG over epsilon = 1, 5, 10 is {'monotone within noise' if cv['monotone_within_noise'] else 'NOT monotone within noise'} and "
+              f"{'flat' if cv['flat'] else 'not flat'} (range {cv['range']:.3f} against seed std up to {cv['max_std']:.3f})")
+    return s + "."
+
+
+def _r6_framework_note(R: dict[str, Any], cfg: dict[str, Any]) -> str:
+    """After the optimisation round: R6 is the spec's rule; the framework picks FedDP-Marginal per requirement (empty when no FedDP-Marginal candidate is in R6)."""
+    r6 = R["R6"]
+    cand = r6.get("candidates") or []
+    if not any(r.get("generator") == "FedDP-Marginal" for r in cand):
+        return ""
+    taug, tr = [r["taug_f1"] for r in cand], r6.get("tstr_ranking")
+    return (f"This is the rule of the spec, which ranks by TAug (every candidate within {min(taug):.4f}-{max(taug):.4f})"
+            + (f"; ranked by TSTR, the metric that counts when the synthetic data replace the real data, the same rule picks **{tr['recommended']}**" if tr and r6.get("recommended") else "")
+            + ". The framework does not choose by this rule: it uses FedDP-Marginal and picks its configuration by deployment requirement (`recommend`, 9.10b).")
+
+
+def _r4(R: dict[str, Any], cfg: dict[str, Any] | None = None) -> list[str]:
     r4 = R["R4"]
     L = ["### 9.4 R4 - What does DP cost, and what does it bring?", ""]
     if not r4.get("cost"):
-        return L + ["_(no DP configuration with predictions in the ledger)_", ""]
+        return L + ["_(no DP configuration with predictions in the ledger)_", ""] + _r4_mg(R, cfg)
+    M = r4.get("mg")
+    if M and M.get("cost"):
+        L += ["Each generator is compared with its own epsilon = infinity point: the CVAE route (M1) with B3-plain, FedDP-Marginal (MG, MGl) with its release without DP "
+              f"({M['reference']}); the two blocks below are kept apart (SPEC_DEVIATIONS R.15).", ""]
     by: dict[str, dict[str, Any]] = {}
     for c in r4["cost"]:
         by.setdefault(c["label"], {"configuration": c["label"]})[f"{c['protocol']}-{c['classifier'].upper()}"] = f"{dci(c['macro_f1'])} {verdict(c['macro_f1'])}"
-    L += ["**Cost.** Delta = test macro-F1 of the DP generator (plain decoder, epsilon = worst client) minus B3-plain, the epsilon = infinity point with the same decoder.", "", _table(list(by.values())), ""]
+    L += ["**Cost, CVAE route.** Delta = test macro-F1 of the DP CVAE (M1, plain decoder, epsilon = worst client) minus B3-plain, the epsilon = infinity point with the same decoder.", "", _table(list(by.values())), ""]
     prow = []
     for p in r4["privacy"]:
         f = lambda x, nd=4: f"{x[0]:.{nd}f} ± {x[1]:.{nd}f}" if x else "-"       # noqa: E731
-        prow.append({"epsilon": "infinity (B3-plain)" if p["eps"] == "inf" else p["eps"], "achieved (max over clients and seeds)": f"{p['eps_max']:.3f}" if p["eps_max"] is not None else "-",
+        prow.append({"configuration": p["label"].split(" (")[0], "epsilon": "infinity" if p["eps"] == "inf" else p["eps"],
+                     "achieved (max over clients and seeds)": f"{p['eps_max']:.3f}" if p["eps_max"] is not None else "-",
                      "MIA AUC": f(p["mia_auc"]), "DCR ratio": f(p["dcr_ratio"]), "duplicate rate": f(p["dup_rate"], 5), "validation ELBO (FL final)": f(p["val_elbo"], 2)})
-    L += ["**Empirical privacy and generator quality against epsilon** (mean ± std over seeds; the validation ELBO is each run's own, with its own architecture and beta, so compare "
+    L += ["**Empirical privacy and generator quality against epsilon, CVAE route** (mean ± std over seeds; the validation ELBO is each run's own, with its own architecture and beta, so compare "
           "the infinity row with the others only roughly):", "", _table(prow), ""]
-    crow = []
-    for name, cv in r4["curves"].items():
-        crow.append({"curve": name, **{f"eps {k}": f"{v[0]:.3f} ± {v[1]:.3f}" for k, v in cv["values"].items()}, "monotone within noise": "yes" if cv["monotone_within_noise"] else "NO",
-                     "range": f"{cv['range']:.3f}", "largest seed std": f"{cv['max_std']:.3f}", "flat (range <= std)": "yes" if cv["flat"] else "no"})
-    L += ["**Shape of the utility-privacy curve** (a step to a larger epsilon that is worse by more than the larger seed std of the two points would break monotonicity):", "", _table(crow), ""]
+    L += ["**Shape of the utility-privacy curve, CVAE route** (a step to a larger epsilon that is worse by more than the larger seed std of the two points would break monotonicity):", "",
+          _table(_curve_rows(r4["curves"], "M1: ")), ""]
     mia, pc = r4["mia"], r4["positive_control"]
     L += ["**Membership inference.** " + (f"The AUC is within 0.5 ± {mia['chance_band']} at every epsilon, infinity included (spread {mia['spread']:.4f})"
                                           if mia["near_chance"] else f"The AUC leaves the band 0.5 ± {mia['chance_band']} for some epsilon (spread {mia['spread']:.4f})")
@@ -351,7 +395,32 @@ def _r4(R: dict[str, Any]) -> list[str]:
               + ("detects an over-fitted CVAE." if pc["overfit_cvae_detected"] else "**does not detect an over-fitted CVAE**; the spec's condition 'MIA AUC approaches 0.5 as epsilon shrinks, after passing the positive control' "
                  "cannot be established with this attack")
               + f". On a pure copier of the members it reaches ({cop}). An AUC near 0.5 therefore says only that no synthetic row is a near-copy of a training row.", ""]
-    return L + _mia_block(R)
+    return L + _mia_block(R) + _r4_mg(R, cfg)
+
+
+def _r4_mg(R: dict[str, Any], cfg: dict[str, Any] | None) -> list[str]:
+    """The FedDP-Marginal block of 9.4: MG and MGl against the release without DP, the synthetic-data checks and the curves (empty without the block)."""
+    M = (R.get("R4") or {}).get("mg")
+    if not M or not M.get("cost"):
+        return []
+    by: dict[str, dict[str, Any]] = {}
+    for c in M["cost"]:
+        by.setdefault(c["label"], {"configuration": c["label"]})[f"{c['protocol']}-{c['classifier'].upper()}"] = f"{dci(c['macro_f1'])} {verdict(c['macro_f1'])}"
+    f = lambda x, nd=4: f"{x[0]:.{nd}f} ± {x[1]:.{nd}f}" if x else "-"           # noqa: E731
+    prow = [{"configuration": p["label"], "epsilon": "infinity" if p["eps"] == "inf" else p["eps"], "achieved (max over clients and seeds)": f"{p['eps_max']:.3f}" if p["eps_max"] is not None else "-",
+             "MIA AUC": f(p["mia_auc"]), "DCR ratio": f(p["dcr_ratio"]), "duplicate rate": f(p["dup_rate"], 5)} for p in M["privacy"]]
+    qa = _q1_attack(cfg)
+    mv = [p["mia_auc"][0] for p in M["privacy"] if p["mia_auc"]]
+    near = bool(mv) and all(abs(v - 0.5) <= MIA_CHANCE_BAND for v in mv)
+    syn = (f"The attack on the synthetic data stays within 0.5 ± {MIA_CHANCE_BAND} here too ({min(mv):.3f}-{max(mv):.3f}, infinity included)" if near
+           else f"The attack on the synthetic data leaves 0.5 ± {MIA_CHANCE_BAND} for some epsilon" if mv else "The attack on the synthetic data has no value on file")
+    return ["**Cost, FedDP-Marginal (the framework's generator).** Delta = test macro-F1 of MG (Skellam noise split over the clients and summed by SecAgg+) or MGl (each client adds the full noise) "
+            f"minus {M['reference']}, the same three releases without noise (round Q1, 9.12). FedDP-Marginal has no decoder: its rows are sampled from the released tables.", "",
+            _table(list(by.values())), "",
+            "**Empirical checks of the synthetic data against epsilon, FedDP-Marginal** (mean ± std over seeds; the attack on the synthetic data, as for the CVAE above):", "", _table(prow), "",
+            "**Shape of the utility-privacy curve, FedDP-Marginal:**", "", _table(_curve_rows(M["curves"])), "",
+            "**What DP brings to FedDP-Marginal.** " + (f"{syn}. Against the released tables, with an attack that passes its positive control, the result differs: {qa}."
+                                                         if qa else f"{syn}; the attack on the released tables (round Q1) has not been run, and the attack on the synthetic data detects near-copies only."), ""]
 
 
 def _r5(R: dict[str, Any]) -> list[str]:
@@ -412,9 +481,12 @@ def _r6(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         L += [f"**Ranked by TSTR instead of TAug.** When the synthetic data replace the real data, the macro-F1 to rank by is TSTR-{PRIMARY.upper()}. The same rule then picks {tr['literal']} "
               f"(tied within noise: {', '.join(tr['tied'])}) and, after the tie-break, **{tr['recommended']}**: "
               + ("the same recommendation as above." if tr["recommended"] == r6["recommended"] else "a different recommendation from the one above."), ""]
-    L += ["**What R6 does not say.** R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. "
+    mg = any(r.get("generator") == "FedDP-Marginal" for r in cand)
+    L += ["**What R6 does not say.** " + ("R6 ranks the generator pipelines (the CVAE routes and FedDP-Marginal) against each other; it does not say that a generator pipeline is better than not using one. "
+                                          if mg else "R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. ")
           + ("R1 and R2 say it is not when the real training data can be pooled; section 9.9 gives the setting in which the recommendation applies." if _premise(R)["unsupported"]
-             else "See R1 and R2 for how a CVAE pipeline compares with the simple methods."), ""]
+             else "See R1 and R2 for how a CVAE pipeline compares with the simple methods.")
+          + (" " + _r6_framework_note(R, cfg) if mg else ""), ""]
     return L
 
 
@@ -748,7 +820,9 @@ def _guide_facts(R: dict[str, Any]) -> dict[str, Any] | None:
     G = R.get("guide")
     if not G or not R.get("R6", {}).get("candidates") or not G.get("by_class", {}).get("rows"):
         return None
-    cost, cand = R.get("cost", {}), {r["label"]: r for r in R["R6"]["candidates"]}
+    # 9.10 (part 1) is the guide of the spec's CVAE route; FedDP-Marginal has its own guide (9.10b), so its rows are left out here (SPEC_DEVIATIONS R.15)
+    cvae = [r for r in R["R6"]["candidates"] if r.get("generator", "CVAE") == "CVAE"]
+    cost, cand = R.get("cost", {}), {r["label"]: r for r in cvae}
     sc = {s["id"]: s for s in G["scenarios"]}
     bc = G["by_class"]
     rows = {r["label"]: r for r in bc["rows"]}
@@ -758,10 +832,10 @@ def _guide_facts(R: dict[str, Any]) -> dict[str, Any] | None:
         cs = [p["macro_f1"] for p in R["R5"]["pairs"] if p["pair"] == pair]
         return {"n": len(cs), "none": sum(c["effect"] == "none" for c in cs), "max_abs": max(abs(c["delta"]) for c in cs)} if cs else None
 
-    dp = [r for r in R["R6"]["candidates"] if r["kind"] == "dp"]
+    dp = [r for r in cvae if r["kind"] == "dp"]
     f: dict[str, Any] = {"cost": cost, "cand": cand, "sc": sc, "bc": bc, "rows": rows, "ov": ov, "dp": dp, "m2_utility": secagg_utility("M2 - B3"), "m3_utility": secagg_utility("M3-eps5 - M1-eps5"),
                          "tstr_delta": [c["macro_f1"]["delta"] for c in R["R4"].get("cost", []) if c["protocol"] == "TSTR"], "dp_loss": (R.get("why") or {}).get("dp_tstr_relative_loss"),
-                         "dp_change": [c for c in bc["dp_change"] if c["classifier"] == PRIMARY], "flat": sc["S2"]["eps_curve_flat"],
+                         "dp_change": [c for c in bc["dp_change"] if c["classifier"] == PRIMARY and c.get("generator", "CVAE") == "CVAE"], "flat": sc["S2"]["eps_curve_flat"],
                          "curve": R["R4"].get("curves", {}).get(f"TSTR-{PRIMARY}"), "dp_time": [cost[r["label"]]["ratio"] for r in dp if r["label"] in cost]}
     return f
 
@@ -789,7 +863,11 @@ def _guide_bullet(R: dict[str, Any], cfg: dict[str, Any] | None = None) -> str |
         return None
     cand, sc, ov = f["cand"], f["sc"], f["ov"]
     taug = [r["taug_f1"] for r in cand.values()]
-    s = (f"**Which of M1, M2, M3 for which requirement?** Utility does not decide it (the TAug-{PRIMARY.upper()} macro-F1 of every candidate lies in {min(taug):.4f}-{max(taug):.4f}); what each one protects and what it costs does (9.10). ")
+    rec = _rec_best(cfg)
+    s = ("**Which configuration for which requirement?** "
+         + (f"The framework answers with FedDP-Marginal, chosen per deployment requirement by `recommend` (9.10b): {', '.join(f'{k} → {v}' for k, v in rec)}. "
+            "Within the spec's CVAE route, kept as the baseline (9.10): " if rec else "")
+         + f"utility does not decide between M1, M2 and M3 (the TAug-{PRIMARY.upper()} macro-F1 of every candidate lies in {min(taug):.4f}-{max(taug):.4f}); what each one protects and what it costs does (9.10). ")
     parts = []
     if sc["S1"]["choose"] and "M2 / B3" in ov:
         u = f["m2_utility"]
@@ -814,21 +892,36 @@ def _guide_bullet(R: dict[str, Any], cfg: dict[str, Any] | None = None) -> str |
 
 
 
+def _rec_best(cfg: dict[str, Any] | None) -> list[tuple[str, str]]:
+    """(scenario, recommended configuration) of results/recommend.json, FedDP-Marginal per deployment requirement (empty before `recommend` ran)."""
+    import json as _json
+    from pathlib import Path as _P
+
+    if not cfg or not (cfg.get("compute") or {}).get("runs_csv"):
+        return []
+    p = _P(cfg["compute"]["runs_csv"]).parent / "recommend.json"
+    rec = _json.loads(p.read_text(encoding="utf-8")) if p.exists() else []
+    return [(r["requirement"]["name"], (r.get("best") or {}).get("label") or "none") for r in rec if r.get("requirement")]
+
+
 def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
-    L = ["### 9.10 Which configuration for which requirement (M1, M2, M3)", ""]
+    L = ["### 9.10 Which configuration for which requirement", ""]
     f = _guide_facts(R)
     if not f:
-        return L + ["_(not available: run `ppfeddata aggregate` with the processed data present)_", ""]
+        return L + ["_(not available: run `ppfeddata aggregate` with the processed data present)_", ""] + _guide_o4(cfg)
     G, th, cost, cand, sc, ov, bc = R["guide"], cfg["thresholds"], f["cost"], f["cand"], f["sc"], f["ov"], f["bc"]
     taug = [r["taug_f1"] for r in cand.values()]
     rf, mlp = PRIMARY, "mlp"
-    L += ["R6 (9.6) ranks the configurations by one number, the TAug macro-F1, and that number does not separate them (all candidates lie in "
+    if _rec_best(cfg):
+        L += ["**The framework's answer is FedDP-Marginal, chosen per deployment requirement: 9.10b below** (`ppfeddata recommend`). The first part of this section is the guide of the "
+              "spec's design, the CVAE route (M1, M2, M3), kept as the baseline; its tables hold the CVAE configurations only (SPEC_DEVIATIONS R.15).", ""]
+    L += ["**The spec's CVAE route (M1, M2, M3).** R6 (9.6) ranks the configurations by one number, the TAug macro-F1, and that number does not separate them (all CVAE candidates lie in "
           f"{min(taug):.4f}-{max(taug):.4f}), so M1, M2 and M3 were not compared for use but filtered. What does separate them is what each protects and what it costs. This section sets the measured costs next to "
           "the requirement a deployment may have. It applies only when the raw data cannot be pooled (9.9); when they can, use class weights or SMOTE, whatever the protection requirement.", ""]
 
     # A. what each option costs
     major = bc["majority"]
-    order = ["B3", "B3-plain", "M2"] + [r["label"] for r in f["dp"]] + [r["label"] for r in R["R6"]["candidates"] if r["kind"] == "dpsa"]
+    order = ["B3", "B3-plain", "M2"] + [r["label"] for r in f["dp"]] + [r["label"] for r in cand.values() if r["kind"] == "dpsa"]
     why = {x["id"]: x for x in (R.get("why") or {}).get("rows", [])}
     table = []
     for lab in order:
@@ -877,7 +970,7 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                     "what it costs (measured)": f"TSTR macro-F1 {f['dp_loss']['min'] * 100:.0f} to {f['dp_loss']['max'] * 100:.0f} % against epsilon = infinity (R4); recall of the rare classes {_fmt_range([c['rare_mean'] for c in ch])} against {ch[0]['rare_mean_inf']:.2f}; "
                                                 f"{_fmt_range(f['dp_time'], 1)}x time per round (above the {th['overhead_ratio_max']:g}x filter of R6)"
                                                 + ("; the TSTR curve is flat over epsilon = 1, 5, 10" + (f" (range {f['curve']['range']:.3f}, seed std up to {f['curve']['max_std']:.3f})" if f["curve"] else "") + ", so the smallest epsilon costs no more utility here" if f["flat"] else ""),
-                    "what it does not give": "protection of the class label; protection of a whole capture (see below); a hidden update, the server sees the noisy update; an empirical benefit (the attack is at chance for every generator)"})
+                    "what it does not give": "protection of the class label; protection of a whole capture (see below); a hidden update, the server sees the noisy update; an empirical benefit (the attacks are at chance for every CVAE configuration, R4)"})
     if s3 and "M3-eps5 / M1-eps5" in ov:
         o, u = ov["M3-eps5 / M1-eps5"], f["m3_utility"]
         eps = sorted({cand[x]["eps_max"] for x in s3 if cand[x]["eps_max"] is not None})
@@ -885,8 +978,9 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
                     "what it costs (measured)": f"what {sc['S2']['choose'][0] if s2 else 'M1'} costs, plus {o['time_ratio']:.2f}x time and {o['bytes_per_param_ratio']:.2f}x bytes per parameter against M1-eps5" + (f"; utility: {u['none']} of {u['n']} comparisons with M1-eps5 show no effect" if u else ""),
                     "what it does not give": "SecAgg adds no epsilon credit" + (f"; only epsilon = {', '.join(f'{e:.0f}' for e in eps)} was run for it" if eps else "")})
     dpt = f["dp_time"]
+    mg_note = " (in the CVAE route; FedDP-Marginal trains no model over rounds, it sends three releases, 9.9b)" if _rec_best(cfg) else ""
     req.append({"requirement": "Clients that cannot afford DP-SGD's extra compute (the R6 overhead filter is " + f"{th['overhead_ratio_max']:g}x plain FL)",
-                "choose": (", ".join(s4) + " is the only protected configuration within it") if s4 else "none of the protected configurations is within it",
+                "choose": ((", ".join(s4) + " is the only protected configuration within it") if s4 else "none of the protected configurations is within it") + mg_note,
                 "what it costs (measured)": (f"DP configurations take {_fmt_range(dpt, 1)}x the time per round of B3 on this CPU" if dpt else "see the cost table"),
                 "what it does not give": "a measurement on real IoT hardware or a real network (single-machine simulation, 9.8 and section 10)"})
     L += ["**Requirement to configuration.**", "", _table(req), ""]
@@ -898,7 +992,7 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     if cr:
         per = "; ".join(f"seed {s}: {v['thin']} of {v['cells']}, {v['empty']} with none" for s, v in cr["seeds"].items())
         L += [f"- **The rare attack classes are thin at the clients, and DP is where it shows.** In the Dirichlet partition (alpha {cr['alpha']:g}) the (client, rare class) cells that hold at most {cr['cutoff']} records are ({per}). "
-              + (f"With DP the synthetic-only {rf.upper()} recovers the rare classes much worse (mean recall {_fmt_range([c['rare_mean'] for c in ch])} against {ch[0]['rare_mean_inf']:.2f} at epsilon = infinity), "
+              + (f"With DP the synthetic-only {rf.upper()} of the CVAE route recovers the rare classes much worse (mean recall {_fmt_range([c['rare_mean'] for c in ch])} against {ch[0]['rare_mean_inf']:.2f} at epsilon = infinity), "
                  f"while {major} moves from {ch[0]['major_recall_inf']:.2f} to {_fmt_range([c['major_recall'] for c in ch])}: the DP cost falls mostly on the rare classes. "
                  "Mean over the seeds; the DP rows have the largest spread between seeds (flag F4), and they also differ from B3-plain in architecture and hyper-parameters (the DP-tuned model), so the gap is not only the noise." if ch else ""), ""]
     pu = G.get("privacy_unit")
@@ -918,7 +1012,8 @@ def _guide(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         b3, m2 = cost.get("B3"), cost.get("M2")
         L += ["- **MQTT devices are constrained, so compute and bytes matter.** Measured on one CPU by simulation, without network latency: DP-SGD takes "
               f"{_fmt_range(dpt, 1)}x the time per round of plain FL" + (f", SecAgg {m2['ratio']:.2f}x" if m2 else "") + (f"; the plain model sends {b3['bytes'] / 1e6:.1f} MB per round, SecAgg {m2['bytes'] / 1e6:.1f} MB" if b3 and m2 else "")
-              + "; the DP-tuned model is smaller, so its messages are smaller in absolute terms even though SecAgg adds bytes per parameter (cost table above).", ""]
+              + "; the DP-tuned model is smaller, so its messages are smaller in absolute terms even though SecAgg adds bytes per parameter (cost table above)."
+              + (" FedDP-Marginal avoids the per-round training cost: three releases of count tables (bytes and time in 9.9b and 9.12)." if _rec_best(cfg) else ""), ""]
     qa = _q1_attack(cfg)
     L += ["- **The adversary of the threat model is the aggregation server.** SecAgg answers exactly that threat at a small measured cost; DP answers a different one (what the released model or the synthetic data reveal). "
           "For the CVAE route the study could not measure a privacy benefit for either: the membership-inference attack on the synthetic data is at chance for every configuration, the non-private ones included, and "
@@ -1362,8 +1457,13 @@ def mark_q(r: dict[str, Any]) -> str:
     return " †" if r.get("stream_effect") and r["stream_effect"] != r["effect"] else ""
 
 
-def _protection() -> list[str]:
-    return ["### 9.8 What secure aggregation and differential privacy each protect", "",
+def _protection(cfg: dict[str, Any] | None = None) -> list[str]:
+    mg = ["- **FedDP-Marginal** (MG, MGl; the framework's generator, 9.9b) releases only noisy count tables (the marginals of a Chow-Liu tree) and samples the synthetic rows from them, so every row is "
+          "post-processing inside epsilon (record level, as for DP-SGD). MG splits Skellam noise over the clients and sums the shares through SecAgg+: the server sees only the noisy sum of the tables, "
+          "and the epsilon of the nominal mechanism holds while the clients are honest (the epsilon with fewer honest clients is reported in 9.10b and 9.11). MGl lets every client add the full noise "
+          "(local DP): no trust in the other clients is needed, at the cost of K times the noise variance. The class label, a whole capture and the non-private tuning are outside epsilon, as for the CVAE."
+          ] if cfg is not None and _pivot_facts(cfg) else []
+    return ["### 9.8 What secure aggregation and differential privacy each protect", "", *mg,
             "- **SecAgg** (M2, M3) hides each client's model update from the aggregation server: an honest-but-curious server sees only the sum of the updates of the clients that took part. "
             "It does not limit what the aggregated model, or the synthetic data generated from it, reveals about a training record, and it gives no epsilon (SecAgg+ is not credited with privacy amplification here). "
             "It does not defend against a malicious client.",
@@ -1418,6 +1518,9 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     by = {x["id"]: x for x in W["rows"]}
     mf = lambda key, clf=PRIMARY: by[key]["macro_f1"].get(clf) if key in by else None             # noqa: E731
     b0 = mf("B0:TRTR")
+    mg_now = bool(_pivot_facts(cfg))
+    if mg_now:
+        L += ["This section explains the original choice of the spec. Since the optimisation round the framework uses FedDP-Marginal and the CVAE is the baseline (9.9b).", ""]
 
     L += ["**Where the choice comes from.** The CVAE is the premise of the study, not the outcome of a comparison between generators: the spec (title and 'Idea') asks whether a label-conditional CVAE trained by "
           "federated learning on non-IID clients, protected by DP-SGD, secure aggregation or both, can produce data that balance the classes for the IDS classifiers (RF and MLP). R1 and R2 are the test of "
@@ -1432,7 +1535,9 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     rows = [{"setting": x["setting"], "option": x["option"], "needs pooled real data": "yes" if x["needs_pooled_real_data"] else "no",
              **{f"{clf.upper()} macro-F1": (f"{x['macro_f1'][clf]:.3f}" if clf in x["macro_f1"] else "-") for clf in CLFS}} for x in W["rows"]]
     L += ["**What the choice can still rest on.** TAug, B0 and B1 all train on the pooled real training data, so none of them is available when raw data cannot leave the clients, the setting of the threat model. "
-          "There the federated CVAE is the only option of this study that produces data without pooling the raw records, and the question becomes what the synthetic data alone are worth (TSTR) and what protection can be "
+          + ("There a federated generator (the CVAE of the spec, or FedDP-Marginal since the optimisation round) is the option of this study that produces data without pooling the raw records"
+             if mg_now else "There the federated CVAE is the only option of this study that produces data without pooling the raw records")
+          + ", and the question becomes what the synthetic data alone are worth (TSTR) and what protection can be "
           "layered on them. The table puts both settings side by side (test macro-F1, mean over seeds).", "", _table(rows), ""]
 
     ret, dpl = W["retention_primary"], W.get("dp_tstr_relative_loss")
@@ -1444,8 +1549,10 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     m3, mb0, mb1 = mf("B3:TSTR", "mlp"), mf("B0:TRTR", "mlp"), mf("B1b:TRTR", "mlp")
     if m3 is not None and mb0 is not None and m3 > mb0:
         sent.append(f"the MLP is above real data only ({m3:.3f} against {mb0:.3f}), a gap that flag F2 traces to B0 being trained on imbalanced data" + (f" (it stays below SMOTE, {mb1:.3f})" if mb1 is not None and m3 < mb1 else ""))
-    if dpl:
-        sent.append(f"DP lowers the synthetic-only macro-F1 by {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % against epsilon = infinity at every epsilon tested (R4)")
+    if dpl and dpl["max"] < 0:
+        sent.append(f"DP lowers the synthetic-only macro-F1 of the CVAE (M1) by {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % against epsilon = infinity at every epsilon tested (R4)")
+    elif dpl:
+        sent.append(f"DP changes the synthetic-only macro-F1 of the CVAE (M1) by {dpl['min'] * 100:+.0f} to {dpl['max'] * 100:+.0f} % against epsilon = infinity (R4)")
     if sent:
         L += ["; ".join(sent) + ".", ""]
 
@@ -1457,26 +1564,36 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
     ok = lambda k: ts.get(k) is not None and ts[k] == ts[k]                                         # noqa: E731
     if ok("B3") and ok("B2"):
         fit.append(f"it trains on a CPU: {ts['B3']:.0f} s for the 30 federated rounds of B3 per seed ({ts['B2']:.0f} s centralised)" + (f", {ts['M1-eps5']:.0f} s with DP" if ok("M1-eps5") else ""))
-    L += ["**Why this generator and not another.** The spec does not compare generators, so this is not a result. What can be said is which properties make the CVAE fit the design: " + "; ".join(fit)
-          + ". That a GAN or another generator would be heavier or worse was not measured (the optional WGAN-GP baseline of the spec was not run, SPEC_DEVIATIONS 6.7).", ""]
+    if mg_now:
+        L += ["**Why this generator in the spec, and what replaced it.** The spec does not compare generators; the optimisation round did, and under DP the federated marginal generator "
+              "FedDP-Marginal stayed much closer to its own non-DP version than the CVAE, so the framework moved to it (9.9b). What made the CVAE fit the design of the spec: " + "; ".join(fit)
+              + ". That a GAN or another deep generator would be heavier or worse was not measured (the optional WGAN-GP baseline of the spec was not run, SPEC_DEVIATIONS 6.7).", ""]
+    else:
+        L += ["**Why this generator and not another.** The spec does not compare generators, so this is not a result. What can be said is which properties make the CVAE fit the design: " + "; ".join(fit)
+              + ". That a GAN or another generator would be heavier or worse was not measured (the optional WGAN-GP baseline of the spec was not run, SPEC_DEVIATIONS 6.7).", ""]
 
     pc, mia = R["R4"].get("positive_control", {}), W.get("mia", {})
     near = bool(mia) and all(abs(v - 0.5) <= MIA_CHANCE_BAND for v in mia.values() if v == v)
     c2 = W["c2st"].get("B3")
     c2all = [v for v in W["c2st"].values() if v == v]
     c2txt = (f"close to 1 for every generator, from {min(c2all):.4f} to {max(c2all):.4f}" if c2all and min(c2all) > cfg["thresholds"]["c2st_auc_max"] else "see section 5")
+    mg_c2 = [v for k, v in W["c2st"].items() if k.startswith("MG") and v == v]
+    better_fid = ("FedDP-Marginal, the other generator tested, is in the same range, so a generator with better fidelity was not tested"
+                  if mg_c2 and min(mg_c2) > cfg["thresholds"]["c2st_auc_max"] else "a generator with better fidelity might behave differently (not tested)")
     L += ["**What this does not show.**", "",
           (f"- The synthetic rows are easy to tell from real ones (C2ST AUC {c2:.4f} for B3; {c2txt}; section 5), so fidelity is poor and the premise was tested with a generator of this quality; "
-           "a generator with better fidelity might behave differently (not tested).") if c2 is not None else "- Fidelity: see section 5.",
+           f"{better_fid}.") if c2 is not None else "- Fidelity: see section 5.",
           "- Privacy: the membership-inference check is " + ("at chance for every generator, the non-private B3 included" + (f" ({W['mia']['B3']:.3f})" if W['mia'].get('B3') == W['mia'].get('B3') else "") if near else "not at chance for every generator")
           + (", and it did not pass its positive control on an over-fitted CVAE" if pc.get("available") and not pc["overfit_cvae_detected"] else "")
           + (f"; a second attack with access to the released model did pass its positive control (calibrated AUC {_mia_facts(R)['cal'](_mia_facts(R)['overfit']):.3f}) and "
              + ("detected leakage in " + ", ".join(_mia_facts(R)["detected"]) if _mia_facts(R)["detected"] else "detected no leakage in B3 or in the DP models") if _mia_facts(R) and _mia_facts(R)["passes"] else "")
-          + ", so the study cannot show that the synthetic data leak less than the real data. Only epsilon (M1, M3) gives a guarantee"
-          + (f", and it costs {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % of the synthetic-only macro-F1 (R4)." if dpl else "."),
+          + ", so the study cannot show that the synthetic data of the CVAE leak less than the real data. Only epsilon (M1, M3) gives a guarantee"
+          + (f", and it costs {abs(dpl['max']) * 100:.0f}-{abs(dpl['min']) * 100:.0f} % of the synthetic-only macro-F1 (R4)." if dpl and dpl["max"] < 0 else ".")
+          + (f" FedDP-Marginal differs: {_q1_attack(cfg)}." if _q1_attack(cfg) else ""),
           ("- Not tested: " + ("" if _fed_smote_clause(R) else "federated SMOTE (B1 ran on pooled real data, so R2 compares with centralised simple methods); ")
-           + ("" if _fed_prot(R) else "a DP or SecAgg version of the direct federated classifier; ") + "other generators (the optional WGAN-GP, "
-           "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)"
+           + ("" if _fed_prot(R) else "a DP or SecAgg version of the direct federated classifier; ")
+           + ("generators other than the CVAE and FedDP-Marginal (9.9b) (the optional WGAN-GP, " if mg_now else "other generators (the optional WGAN-GP, ")
+           + "TVAE or CTGAN-type models, diffusion); other ways of using the synthetic data than topping every class up to `target_per_class`. Training the classifier itself by FL was tested after the main study (above)"
            + (", with federated SMOTE (round R)" if _fed_smote_clause(R) else "") + (" and with distributed DP (after round R)." if _fed_dist(R) else ".")
            if _fed_facts(R) else
            "- Not tested: federated training of the IDS classifier itself (for example FedAvg on the MLP), the obvious alternative when raw data cannot be pooled and no synthetic data have to be shared; federated "
@@ -1489,9 +1606,18 @@ def _why_cvae(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
         bits.append(f"(1) the real data can be pooled and the goal is a better IDS: class weights or SMOTE, no generator ({PRIMARY.upper()} " + " / ".join(f"{v:.3f}" for v in b1) + f" against {b0:.3f} for real data only);")
     if r6.get("recommended"):
         alt = r6.get("dp_alternative")
-        bits.append(f"({len(bits) + 1}) the raw data cannot leave the clients and data must be generated or shared: a federated CVAE, **{r6['recommended']}** by the rule of 9.6"
-                    + (f", or {alt['recommended']} if a formal guarantee is required" if alt else "") + ", accepting a synthetic-only macro-F1 below that of real data.")
-    L += ["**How to read R6 with this in mind.** R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. Read R1 to R6 together: " + " ".join(bits), ""]
+        if mg_now:
+            cv_rec = next((x for x in [r6["recommended"]] if not x.startswith("MG")), None)
+            bits.append(f"({len(bits) + 1}) the raw data cannot leave the clients and data must be generated or shared: FedDP-Marginal, the framework's generator, with the configuration "
+                        "chosen per deployment requirement (9.10b), accepting a synthetic-only macro-F1 below that of real data"
+                        + (f"; within the spec's CVAE route the rule of 9.6 gives **{cv_rec}**" + (f", or {alt['recommended']} if a formal guarantee is required" if alt and not alt["recommended"].startswith("MG") else "")
+                           if cv_rec else "") + ".")
+        else:
+            bits.append(f"({len(bits) + 1}) the raw data cannot leave the clients and data must be generated or shared: a federated CVAE, **{r6['recommended']}** by the rule of 9.6"
+                        + (f", or {alt['recommended']} if a formal guarantee is required" if alt else "") + ", accepting a synthetic-only macro-F1 below that of real data.")
+    L += ["**How to read R6 with this in mind.** " + ("R6 ranks the generator pipelines against each other; it does not say that a generator pipeline is better than not using one. " if mg_now
+                                                     else "R6 ranks the CVAE pipelines against each other; it does not say that a CVAE pipeline is better than not using one. ")
+          + "Read R1 to R6 together: " + " ".join(bits), ""]
     return L
 
 
@@ -1503,7 +1629,7 @@ def render(R: dict[str, Any], cfg: dict[str, Any]) -> list[str]:
          f"(the macro-F1 recomputed from the predictions equals the ledger's to {m['integrity_max_abs_diff_vs_ledger']:.0e}); `results/interpretation.json` holds the same numbers in machine-readable form.", ""]
     L += _how_judged(R)
     L += ["### 9.0 Answers at a glance", ""] + [f"- {a}" for a in answers(R, cfg)] + [""]
-    L += _r1(R) + _r2(R) + _r3(R) + _r4(R) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection() + _why_cvae(R, cfg) + _pivot(cfg, R) + _guide(R, cfg) + _followup(cfg)
+    L += _r1(R) + _r2(R) + _r3(R) + _r4(R, cfg) + _r5(R) + _r6(R, cfg) + _flags(R) + _protection(cfg) + _why_cvae(R, cfg) + _pivot(cfg, R) + _guide(R, cfg) + _followup(cfg)
     L += _q1(R, cfg)
     from ppfeddata.compare_published import section_for
     L += section_for(cfg)

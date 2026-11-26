@@ -202,11 +202,20 @@ def entries(summ: pd.DataFrame, fam: dict[str, str] | None = None) -> list[dict[
     return [e for e in E if any(n in names for n in e["cfgs"].values())]
 
 
+def generator_of(e: dict[str, Any]) -> str:
+    """'FedDP-Marginal' for the entries of the framework's generator (MG, MGl), 'CVAE' for the spec's routes (B2, B3, M1-M3)."""
+    return e.get("generator", "CVAE")
+
+
+MG_INF = "MGs-nodp"                 # the epsilon = infinity release of FedDP-Marginal (round Q1); MGp-nodp releases the same tables in plain Flower rounds
+
+
 def reference_entries(summ: pd.DataFrame) -> list[dict[str, Any]]:
     names = set(summ["config"])
     gen = lambda prefix: {(p, c): f"{prefix}-{p}-{c}" for p in ("TSTR", "TAug") for c in ("rf", "mlp")}      # noqa: E731
     E = [dict(label="B3-plain (eps = inf)", color="ref", cfgs=gen("B3-plain"))]
     E += [dict(label=f"M1 Phase 7 hp, eps {e}", color="ref", eps=e, cfgs=gen(f"M1-eps{e}-plain")) for e in (1, 5, 10)]
+    E += [dict(label=f"{MG_INF} (eps = inf)", color="ref", cfgs=gen(MG_INF), generator="FedDP-Marginal")]
     return [e for e in E if any(n in names for n in e["cfgs"].values())]
 
 
@@ -308,17 +317,35 @@ def fig_recall_rare(cfg: dict[str, Any], summ: pd.DataFrame, ents: list[dict[str
 
 
 def _eps_axis(summ: pd.DataFrame, fam: dict[str, str]) -> tuple[list[float], list[str]]:
-    eps = sorted({float(e["eps"]) for e in entries(summ, fam) if e.get("eps") and e["label"].startswith("M1")})
+    eps = sorted({float(e["eps"]) for e in entries(summ, fam) if e.get("eps") and e["label"].startswith(("M1", "MG"))})
     return eps, [f"{e:g}" for e in eps] + ["∞"]
+
+
+def _mg_lines(summ: pd.DataFrame, fam: dict[str, str]) -> list[tuple[str, str, str, dict[float, str]]]:
+    """The FedDP-Marginal curves of the epsilon figures: (label, colour, style, {epsilon: ledger prefix}); the epsilon = infinity point is MG_INF for both."""
+    by = {e["label"]: e for e in entries(summ, fam) if generator_of(e) == "FedDP-Marginal"}
+    out = []
+    for fam_label, name, color, style in (("MG", "MG (FedDP-Marginal, DP + SecAgg+)", COLORS["dpsa"], "s--"), ("MGl", "MGl (FedDP-Marginal, local DP)", COLORS["dp"], "v:")):
+        pre = {float(e["eps"]): e["cfgs"][("TSTR", "rf")].rsplit("-TSTR-rf", 1)[0] for lab, e in by.items() if lab.startswith(f"{fam_label}-eps")}
+        if pre:
+            out.append((name, color, style, pre))
+    return out
 
 
 def fig_utility_privacy(summ: pd.DataFrame, fam: dict[str, str], out: Path) -> Path:
     plt = _plt()
     eps, labels = _eps_axis(summ, fam)
     xs = list(range(len(eps) + 1))
-    fig, axes = plt.subplots(1, 3, figsize=(12.5, 3.8))
-    for ax, metric, title in ((axes[0], "macro_f1", "test macro-F1 (RF)"), (axes[1], "mia_auc_mean", "MIA AUC (0.5 = no signal; weak attack)"),
+    mg = _mg_lines(summ, fam)
+    fig, axes = plt.subplots(1, 3, figsize=(13.5, 4.0))
+    for ax, metric, title in ((axes[0], "macro_f1", "test macro-F1 (RF)"), (axes[1], "mia_auc_mean", "MIA AUC on the synthetic data (0.5 = no signal; weak attack)"),
                               (axes[2], "dcr_ratio_mean", "DCR ratio (1 = no copying)")):
+        for name, color, style, pre in mg:                                    # the framework's generator first; synthetic data only (TSTR)
+            m = [mean_std(summ, f"{pre[e]}-TSTR-rf", metric) if e in pre else None for e in eps] + [mean_std(summ, f"{MG_INF}-TSTR-rf", metric)]
+            pts = [(x, v) for x, v in zip(xs, m) if v]
+            if pts:
+                ax.errorbar([p[0] for p in pts], [p[1][0] for p in pts], yerr=[p[1][1] for p in pts], fmt=style, capsize=3, color=color,
+                            label=(name if metric != "macro_f1" else f"{name.split(' (')[0]} (FedDP-Marginal), TSTR-rf"))
         for proto, style in (("TSTR", "o-"), ("TAug", "^-")):
             if metric != "macro_f1" and proto != "TSTR":
                 continue
@@ -326,13 +353,13 @@ def fig_utility_privacy(summ: pd.DataFrame, fam: dict[str, str], out: Path) -> P
             m.append(mean_std(summ, f"B3-plain-{proto}-rf", metric))
             pts = [(x, v) for x, v in zip(xs, m) if v]
             if pts:
-                ax.errorbar([p[0] for p in pts], [p[1][0] for p in pts], yerr=[p[1][1] for p in pts], fmt=style, capsize=3, color=COLORS["dp"],
-                            label=("DP (M1)" if metric != "macro_f1" else f"M1, {proto}-rf"))
+                ax.errorbar([p[0] for p in pts], [p[1][0] for p in pts], yerr=[p[1][1] for p in pts], fmt=style, capsize=3, color=COLORS["dp"], alpha=0.6,
+                            label=("M1 (CVAE, DP)" if metric != "macro_f1" else f"M1 (CVAE), {proto}-rf"))
             if "M3" in fam and 5.0 in eps:
                 v = mean_std(summ, f"{fam['M3']}-eps5-plain-{proto}-rf", metric)
                 if v:
-                    ax.errorbar([eps.index(5.0)], [v[0]], yerr=[v[1]], fmt="s" if proto == "TSTR" else "D", capsize=3, color=COLORS["dpsa"], markersize=8,
-                                label="M3 (DP + SecAgg)" if metric != "macro_f1" else f"M3, {proto}-rf")
+                    ax.errorbar([eps.index(5.0)], [v[0]], yerr=[v[1]], fmt="P" if proto == "TSTR" else "D", capsize=3, color=COLORS["dpsa"], markersize=8, alpha=0.6,
+                                label="M3 (CVAE, DP + SecAgg)" if metric != "macro_f1" else f"M3 (CVAE), {proto}-rf")
         if metric == "macro_f1":
             b0 = mean_std(summ, "B0-rf", "macro_f1")
             if b0:
@@ -342,10 +369,10 @@ def fig_utility_privacy(summ: pd.DataFrame, fam: dict[str, str], out: Path) -> P
         if metric == "dcr_ratio_mean":
             ax.axhline(1.0, color="gray", ls=":", lw=0.8)
         ax.set_xticks(xs, labels)
-        ax.set_xlabel("ε (worst client, record level; ∞ = no DP)")
+        ax.set_xlabel(f"ε (worst client, record level; ∞ = no DP: {MG_INF}, B3-plain)" if mg else "ε (worst client, record level; ∞ = no DP)", fontsize=8)
         ax.set_title(title, fontsize=9)
         ax.grid(alpha=0.3)
-        ax.legend(fontsize=7)
+        ax.legend(fontsize=6.5)
     return _save(fig, out)
 
 
@@ -353,18 +380,24 @@ def fig_fidelity(summ: pd.DataFrame, fam: dict[str, str], out: Path) -> Path:
     plt = _plt()
     eps, labels = _eps_axis(summ, fam)
     xs = list(range(len(eps) + 1))
-    fig, axes = plt.subplots(1, 2, figsize=(9.5, 3.8))
+    mg = _mg_lines(summ, fam)
+    fig, axes = plt.subplots(1, 2, figsize=(10.5, 4.0))
     for ax, metric, title in ((axes[0], "wasserstein_mean", "Wasserstein distance (lower is better)"), (axes[1], "c2st_auc_mean", "C2ST AUC (0.5 = indistinguishable)")):
-        for suffix, style, name in (("-plain", "o-", "plain decoder"), ("", "s--", "with residual noise")):
+        for name, color, style, pre in mg:
+            m = [mean_std(summ, f"{pre[e]}-TSTR-rf", metric) if e in pre else None for e in eps] + [mean_std(summ, f"{MG_INF}-TSTR-rf", metric)]
+            pts = [(x, v) for x, v in zip(xs, m) if v]
+            if pts:
+                ax.errorbar([p[0] for p in pts], [p[1][0] for p in pts], yerr=[p[1][1] for p in pts], fmt=style, capsize=3, color=color, label=name)
+        for suffix, style, name in (("-plain", "o-", "M1 (CVAE), plain decoder"), ("", "^-", "M1 (CVAE), with residual noise")):
             m = [mean_std(summ, f"{fam['M1']}-eps{e:g}{suffix}-TSTR-rf", metric) for e in eps] if "M1" in fam else [None] * len(eps)
             m.append(mean_std(summ, f"B3{'-plain' if suffix else ''}-TSTR-rf", metric))
             pts = [(x, v) for x, v in zip(xs, m) if v]
             if pts:
-                ax.errorbar([p[0] for p in pts], [p[1][0] for p in pts], yerr=[p[1][1] for p in pts], fmt=style, capsize=3, label=name)
+                ax.errorbar([p[0] for p in pts], [p[1][0] for p in pts], yerr=[p[1][1] for p in pts], fmt=style, capsize=3, alpha=0.6, label=name)
         if metric == "c2st_auc_mean":
             ax.axhline(0.5, color="gray", ls=":", lw=0.8)
         ax.set_xticks(xs, labels)
-        ax.set_xlabel("ε (∞ = B3, no DP)")
+        ax.set_xlabel(f"ε (∞ = no DP: {MG_INF} for FedDP-Marginal, B3 / B3-plain for the CVAE)" if mg else "ε (∞ = B3, no DP)", fontsize=8)
         ax.set_title(title, fontsize=9)
         ax.grid(alpha=0.3)
         ax.legend(fontsize=7)
@@ -427,6 +460,8 @@ def fig_pareto(summ: pd.DataFrame, ents: list[dict[str, Any]], out: Path) -> Pat
         ax.errorbar(x[0], y[0], xerr=x[1], yerr=y[1], fmt="none", ecolor="gray", alpha=0.5)
         if c:
             ax.scatter([x[0]], [y[0]], s=size, color=COLORS[e["color"]], edgecolor="k", alpha=0.8)
+        elif generator_of(e) == "FedDP-Marginal":              # federated, but three releases instead of training rounds: filled square of fixed size
+            ax.scatter([x[0]], [y[0]], s=size, marker="s", color=COLORS[e["color"]], edgecolor="k", alpha=0.8)
         else:                                                  # not federated: hollow marker of fixed size
             ax.scatter([x[0]], [y[0]], s=size, facecolors="none", edgecolors=COLORS[e["color"]], linewidths=1.8)
         ax.annotate(e["label"].replace("eps", "ε"), (x[0], y[0]), textcoords="offset points", xytext=(6, 5), fontsize=8)
@@ -438,7 +473,7 @@ def fig_pareto(summ: pd.DataFrame, ents: list[dict[str, Any]], out: Path) -> Pat
     ax.text(0.99, 0.01, f"y-axis span {hi - lo:.4f} macro-F1: differences are inside the seed std", transform=ax.transAxes, fontsize=7, ha="right", va="bottom", color="gray")
     ax.set_xlabel("MIA AUC of the synthetic set (0.5 = no signal; weak attack)")
     ax.set_ylabel("test macro-F1, real + synthetic (TAug, RF)")
-    ax.set_title("Utility against empirical privacy risk; point size = time per round relative to B3\n(B2 is not federated: hollow, fixed size)", fontsize=9)
+    ax.set_title("Utility against empirical privacy risk; point size = time per round relative to B3\n(B2, not federated: hollow; FedDP-Marginal, no training rounds: square of fixed size)", fontsize=9)
     ax.grid(alpha=0.3)
     return _save(fig, out)
 
@@ -482,7 +517,9 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
     L = [f"# PP-FedData - final report ({mode})", "",
          "Auto-generated by `ppfeddata aggregate` from the run ledger (`results/runs.csv`), the FL round logs and the config; no number is typed by hand. "
          f"Seeds {seeds}; {len(df)} ledger rows ({df['config'].nunique()} configurations). Utility is measured on the real test split. "
-         "DP configurations are shown with the **plain decoder**, the variant that depends only on the DP-trained weights and is covered by epsilon "
+         + ("The framework's generator is **FedDP-Marginal** (rows MG, MGl; section 9.9b); the CVAE routes of the spec (B2, B3, M1-M3) are the baseline. "
+            if any(generator_of(e) == "FedDP-Marginal" for e in ents) else "")
+         + "DP configurations of the CVAE are shown with the **plain decoder**, the variant that depends only on the DP-trained weights and is covered by epsilon "
          "(epsilon = worst client, record level, delta " + f"{cfg['dp']['delta']:g}" + "); B3 at epsilon = infinity is B3-plain. The headline DP family "
          f"is {fam.get('M1', 'n/a')} / {fam.get('M3', 'n/a')} (hyper-parameters searched under DP-SGD, SPEC_DEVIATIONS 9.11-9.14). "
          + ("Section 9 applies the interpretation rules of Phase 12 (answers R1-R6, red flags, recommendation)." if interp is not None else
@@ -584,26 +621,32 @@ def write_final_report(cfg: dict[str, Any], summ: pd.DataFrame, df: pd.DataFrame
     L += ["## 6. Cost", "",
           "Time per round is the median of rounds 2+ of the FL round logs (round 1 includes starting Ray), averaged over seeds. Bytes per round: plain FL = float32 model x clients x 2; "
           "SecAgg = counted on the grid (all four protocol stages). The DP-tuned model (hidden 128-64) is smaller than the B3 / M2 model (hidden 256-128), so compare bytes per parameter, "
-          f"and compare M2 with B3 and M3 with M1. Overhead threshold in the config: {th['overhead_ratio_max']}x the plain FL round.", "", _table(crow), "",
+          f"and compare M2 with B3 and M3 with M1. Overhead threshold in the config: {th['overhead_ratio_max']}x the plain FL round."
+          + (" FedDP-Marginal trains no model over rounds: it sends three releases of count tables, so it has no row here; its bytes and time are in 9.9b and 9.12."
+             if any(generator_of(e) == "FedDP-Marginal" for e in ents) else ""), "", _table(crow), "",
           f"![overhead]({fig_rel}/{figs['cost'].name})", "", f"![Pareto]({fig_rel}/{figs['pareto'].name})", ""]
 
     # ---- DP detail: the residual-noise variant and the reference family
     rows = []
     for e in ents:
-        if e["color"] in ("dp", "dpsa"):
+        if e["color"] in ("dp", "dpsa") and generator_of(e) == "CVAE":
             pfx = e["cfgs"][("TSTR", "rf")].rsplit("-TSTR-rf", 1)[0]
             std = pfx[:-6]
             rows.append({"configuration": e["label"], "TSTR-rf plain": ms(summ, f"{pfx}-TSTR-rf", "macro_f1"), "TSTR-rf with residual noise (not covered by eps)": ms(summ, f"{std}-TSTR-rf", "macro_f1"),
                          "TAug-rf plain": ms(summ, f"{pfx}-TAug-rf", "macro_f1"), "TAug-rf with residual noise": ms(summ, f"{std}-TAug-rf", "macro_f1")})
-    L += ["## 7. DP configurations: plain decoder against the variant with residual noise", "",
-          "The residual-noise scales are computed from the pooled train data and are not covered by epsilon (SPEC_DEVIATIONS 8.8, 9.4); the gap shows how much utility depends on that statistic.", "", _table(rows), ""]
+    has_mg = any(generator_of(e) == "FedDP-Marginal" for e in ents)
+    L += ["## 7. DP configurations of the CVAE: plain decoder against the variant with residual noise", "",
+          "The residual-noise scales are computed from the pooled train data and are not covered by epsilon (SPEC_DEVIATIONS 8.8, 9.4); the gap shows how much utility depends on that statistic."
+          + (" FedDP-Marginal has no decoder: its rows are sampled from the released noisy tables, so all of them are post-processing inside epsilon." if has_mg else ""), "", _table(rows), ""]
     rrows = []
     for e in refs:
         rrows.append({"configuration": e["label"], "TSTR-rf": ms(summ, e["cfgs"][("TSTR", "rf")], "macro_f1"), "TSTR-mlp": ms(summ, e["cfgs"][("TSTR", "mlp")], "macro_f1"),
                       "TAug-rf": ms(summ, e["cfgs"][("TAug", "rf")], "macro_f1"), "TAug-mlp": ms(summ, e["cfgs"][("TAug", "mlp")], "macro_f1"),
                       "eps achieved (max)": ms(summ, e["cfgs"][("TSTR", "rf")], "dp_eps_max", 3) if e.get("eps") else "-"})
     L += ["## 8. Reference rows (not in the spec matrix)", "",
-          "B3-plain is the epsilon = infinity point; the Phase 7 family used hyper-parameters tuned without DP and a clipping bound of 1 (SPEC_DEVIATIONS 9.5); it is kept to show what the DP-specific search changed.", "", _table(rrows), ""]
+          "B3-plain is the epsilon = infinity point of the CVAE route; the Phase 7 family used hyper-parameters tuned without DP and a clipping bound of 1 (SPEC_DEVIATIONS 9.5); it is kept to show what the DP-specific search changed."
+          + (f" {MG_INF} is the epsilon = infinity point of FedDP-Marginal (round Q1, 9.12; MGp-nodp releases the same tables without secure aggregation)."
+             if any(generator_of(e) == "FedDP-Marginal" for e in refs) else ""), "", _table(rrows), ""]
     a1 = sorted({float(a) for a in summ[summ["method"] == "A1"]["alpha"].dropna()})
     if a1:
         rare = [c for c in rare_classes(cfg, summ) if f"recall_{c}" in df.columns]

@@ -596,6 +596,34 @@ def test_guide_scenarios_name_the_configurations_that_answer_each_requirement(wo
     cheap = [dict(c, ok_overhead=True) for c in cand]
     assert it._scenarios(r4, {"candidates": cheap})[3]["choose"] == ["M2"]                                                   # S4 names SecAgg alone, DP rows are never listed there
     assert it._scenarios({"curves": {}}, {"candidates": cand})[1]["choose"] == ["M1-eps1", "M1-eps5", "M1-eps10"]            # without a curve there is no basis to pick one epsilon
+    mg = [dict(c, label="MG-eps5", generator="FedDP-Marginal") for c in cand if c["label"] == "M3-eps5"]
+    assert it._scenarios(r4, {"candidates": cand + mg})[2]["choose"] == ["M3-eps5"]                                          # FedDP-Marginal is matched by `recommend` (9.10b), not here
+
+
+def test_reference_entries_add_the_infinity_point_of_feddp_marginal():
+    refs = ag.reference_entries(pd.DataFrame({"config": ["B3-plain-TSTR-rf", "MGs-nodp-TSTR-rf"]}))
+    assert [r["label"] for r in refs] == ["B3-plain (eps = inf)", "MGs-nodp (eps = inf)"] and [ag.generator_of(r) for r in refs] == ["CVAE", "FedDP-Marginal"]
+    assert [r["label"] for r in ag.reference_entries(pd.DataFrame({"config": ["B3-plain-TSTR-rf"]}))] == ["B3-plain (eps = inf)"]
+
+
+def test_r4_keeps_each_generator_against_its_own_infinity_point(world):
+    """SPEC_DEVIATIONS R.15: M1 against B3-plain at the top level, FedDP-Marginal under "mg" against its release without DP; the two never share a curve."""
+    assert world.R["R4"]["mg"] is None and {c["label"] for c in world.R["R4"]["cost"]} == {"M1-eps1", "M1-eps5", "M1-eps10"}       # the world has no FedDP-Marginal
+    R = json.loads(json.dumps(it.to_jsonable(world.R)))
+    c = R["R4"]["cost"][0]["macro_f1"]
+    mk = lambda lab, eps, d: {"label": lab, "eps": eps, "protocol": "TSTR", "classifier": "rf", "macro_f1": dict(c, delta=d, lo=d - 0.01, hi=d + 0.01, effect="worse")}  # noqa: E731
+    curve = {"values": {"1": [0.37, 0.02], "5": [0.43, 0.01], "10": [0.45, 0.01]}, "violations": [], "monotone_within_noise": True, "range": 0.08, "max_std": 0.02, "flat": False}
+    R["R4"]["mg"] = {"reference": "MGs-nodp", "cost": [mk("MG-eps1", 1, -0.08), mk("MGl-eps1", 1, -0.17)], "curves": {"MG: TSTR-rf": curve},
+                     "privacy": [{"eps": "inf", "label": "MGs-nodp", "mia_auc": [0.49, 0.001], "dcr_ratio": None, "dup_rate": None, "eps_max": None}]}
+    txt = "\n".join(render(R, world.cfg))
+    sec = txt.split("### 9.4")[1].split("### 9.5")[0]
+    assert "**Cost, CVAE route.**" in sec and "**Cost, FedDP-Marginal (the framework's generator).**" in sec and "minus MGs-nodp" in sec
+    assert "| MG: TSTR-rf |" in sec and "| M1: TSTR-rf |" in sec and sec.index("**Cost, CVAE route.**") < sec.index("**Cost, FedDP-Marginal")
+    r4 = next(line for line in txt.splitlines() if line.startswith("- **R4"))
+    assert "against its own epsilon = infinity release (MGs-nodp)" in r4 and "MG (distributed DP through SecAgg+) -0.080 to -0.080" in r4 and "MGl (local DP) -0.170 to -0.170" in r4
+    assert "CVAE route (M1, plain decoder, against B3-plain" in r4 and "2 of 2 comparisons worse" in r4
+    no_mg = "\n".join(render(json.loads(json.dumps(it.to_jsonable(world.R))), world.cfg))
+    assert "**Cost, FedDP-Marginal" not in no_mg and "the framework's generator" not in no_mg.split("### 9.1 R1")[0]
 
 
 def test_guide_privacy_unit_and_client_rarity_from_the_files(tmp_path):
@@ -627,14 +655,14 @@ def test_guide_section_is_generated_from_the_numbers(world):
     R = json.loads(json.dumps(it.to_jsonable(world.R)))
     text = "\n".join(render(R, world.cfg))
     sec = text.split("### 9.10")[1].split("## 10.")[0]
-    assert "### 9.10 Which configuration for which requirement (M1, M2, M3)" in text and tables_are_well_formed(text)
+    assert "### 9.10 Which configuration for which requirement" in text and "**The spec's CVAE route (M1, M2, M3).**" in sec and tables_are_well_formed(text)
     o = {x["pair"]: x for x in R["R5"]["overhead"]}
     assert f"{o['M2 / B3']['time_ratio']:.2f}x time per round and {o['M2 / B3']['bytes_per_param_ratio']:.2f}x bytes per parameter against B3" in sec
     assert f"plus {o['M3-eps5 / M1-eps5']['time_ratio']:.2f}x time and {o['M3-eps5 / M1-eps5']['bytes_per_param_ratio']:.2f}x bytes per parameter against M1-eps5" in sec
     for lab in ("B3", "B3-plain", "M2", "M1-eps1", "M1-eps5", "M1-eps10", "M3-eps5"):
         assert re.search(rf"^\| {re.escape(lab)} \|", sec, flags=re.M), lab
     ans = text.split("### 9.1 R1")[0]
-    assert "**Which of M1, M2, M3 for which requirement?**" in ans and "**M2** if only the aggregation server must not see the updates" in ans and "not a measured privacy benefit" in ans
+    assert "**Which configuration for which requirement?**" in ans and "**M2** if only the aggregation server must not see the updates" in ans and "not a measured privacy benefit" in ans
     assert "none of M1, M2, M3: class weights (B1a) or SMOTE (B1b)" in sec and "M2 is the only protected configuration within it" in sec and "A2 was not run" in sec
     assert "a number of clients other than 5" in sec and "Measured on this study's data; the causes are not tested" in sec
     # the text follows the data, it is not fixed
@@ -653,4 +681,4 @@ def test_guide_section_is_generated_from_the_numbers(world):
     R3 = json.loads(json.dumps(R))
     del R3["guide"]
     t3 = "\n".join(render(R3, world.cfg))
-    assert "### 9.10" in t3 and "_(not available" in t3.split("### 9.10")[1] and "**Which of M1, M2, M3" not in t3
+    assert "### 9.10" in t3 and "_(not available" in t3.split("### 9.10")[1] and "**Which configuration for which requirement?**" not in t3

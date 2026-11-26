@@ -201,11 +201,45 @@ def _curve_checks(values: dict[float, tuple[float, float]], higher_is_better: bo
     return {"values": {str(k): list(v) for k, v in values.items()}, "violations": viol, "monotone_within_noise": not viol, "range": float(rng), "max_std": float(sig), "flat": bool(rng <= sig)}
 
 
+def _is_cvae(e: dict[str, Any]) -> bool:
+    return ag.generator_of(e) == "CVAE"
+
+
+def _r4_mg(ctx: Context) -> dict[str, Any] | None:
+    """R4 for FedDP-Marginal: MG (distributed DP through SecAgg+) and MGl (local DP) minus its own epsilon = infinity release (MG_INF, round Q1).
+    Kept apart from the CVAE block: its reference is not B3-plain and it has no decoder (SPEC_DEVIATIONS R.15)."""
+    ref = next((e for e in ctx.refs if ag.generator_of(e) == "FedDP-Marginal"), None)
+    mg = sorted((e for e in ctx.ents if not _is_cvae(e) and e["color"] in ("dp", "dpsa")), key=lambda e: (e["label"].split("-eps")[0], e["eps"]))
+    if not mg or not ref:
+        return None
+    out: dict[str, Any] = {"reference": ref["label"].split(" (")[0], "cost": [], "privacy": [], "curves": {}}
+    for e in mg:
+        for proto in PROTOS:
+            for clf in CLFS:
+                a, b = e["cfgs"][(proto, clf)], ref["cfgs"][(proto, clf)]
+                if ctx.has(a) and ctx.has(b):
+                    out["cost"].append({"label": e["label"], "eps": e["eps"], "protocol": proto, "classifier": clf, "macro_f1": ctx.cmp(a, b)})
+    for lab, e, eps in [("inf", ref, None)] + [(f"{e['eps']:g}", e, e["eps"]) for e in mg]:
+        n = e["cfgs"][("TSTR", PRIMARY)]
+        g = ctx.df[ctx.df["config"] == n]
+        out["privacy"].append({"eps": lab, "label": e["label"].split(" (")[0], "mia_auc": ag.mean_std(ctx.summ, n, "mia_auc_mean"), "dcr_ratio": ag.mean_std(ctx.summ, n, "dcr_ratio_mean"),
+                               "dup_rate": ag.mean_std(ctx.summ, n, "dup_rate"),
+                               "eps_max": float(g["dp_eps_max"].max()) if "dp_eps_max" in g and g["dp_eps_max"].notna().any() else None})
+    for fam in sorted({e["label"].split("-eps")[0] for e in mg}):
+        ents = [e for e in mg if e["label"].split("-eps")[0] == fam]
+        for clf in CLFS:
+            vals = {e["eps"]: ag.mean_std(ctx.summ, e["cfgs"][("TSTR", clf)], "macro_f1") for e in ents}
+            if len(vals) > 1 and all(v is not None for v in vals.values()):
+                out["curves"][f"{fam}: TSTR-{clf}"] = _curve_checks(vals)
+    return out
+
+
 def r4(ctx: Context) -> dict[str, Any]:
-    """R4: what does DP cost and what does it bring? M1(eps) minus B3-plain (the eps = infinity point, same plain decoder) and the empirical privacy columns."""
-    m1 = sorted((e for e in ctx.ents if e["color"] == "dp"), key=lambda e: e["eps"])
+    """R4: what does DP cost and what does it bring? M1(eps) minus B3-plain (the eps = infinity point, same plain decoder) and the empirical privacy columns.
+    Only the CVAE route (M1) is in the top-level keys; FedDP-Marginal is under "mg", against its own epsilon = infinity release (SPEC_DEVIATIONS R.15)."""
+    m1 = sorted((e for e in ctx.ents if e["color"] == "dp" and _is_cvae(e)), key=lambda e: e["eps"])
     ref = next((e for e in ctx.refs if e["label"].startswith("B3-plain")), None)
-    out: dict[str, Any] = {"cost": [], "privacy": [], "curves": {}, "reference_available": ref is not None}
+    out: dict[str, Any] = {"cost": [], "privacy": [], "curves": {}, "reference_available": ref is not None, "mg": _r4_mg(ctx)}
     if not m1:
         return out
     for e in m1:
@@ -244,7 +278,7 @@ def r5(ctx: Context, cost: dict[str, dict[str, Any]]) -> dict[str, Any]:
     """R5: what does SecAgg cost? |M2 - B3| and M3 - M1(eps = 5) in utility, plus the overhead."""
     out: dict[str, Any] = {"pairs": [], "overhead": []}
     m2, b3, m3 = _entry(ctx.ents, "M2"), _entry(ctx.ents, "B3"), _entry(ctx.ents, "M3-eps5")
-    m1_5 = next((e for e in ctx.ents if e["color"] == "dp" and e.get("eps") == 5), None)
+    m1_5 = next((e for e in ctx.ents if e["color"] == "dp" and e.get("eps") == 5 and _is_cvae(e)), None)
     for name, x, y in (("M2 - B3", m2, b3), ("M3-eps5 - M1-eps5", m3, m1_5)):
         if not (x and y):
             continue
@@ -283,7 +317,7 @@ def r6(ctx: Context, cost: dict[str, dict[str, Any]]) -> dict[str, Any]:
         mia = ctx.summary_value(tstr, "mia_auc_mean")
         c = cost.get(e["label"])
         ratio = float(c["ratio"]) if c and not math.isnan(c["ratio"]) else None
-        r = {"label": e["label"], "kind": e["color"], "federated": e["label"] != "B2", "taug_cfg": taug, "tstr_cfg": tstr, "taug_f1": ctx.summary_value(taug, "macro_f1"),
+        r = {"label": e["label"], "kind": e["color"], "generator": ag.generator_of(e), "federated": e["label"] != "B2", "taug_cfg": taug, "tstr_cfg": tstr, "taug_f1": ctx.summary_value(taug, "macro_f1"),
              "tstr_f1": ctx.summary_value(tstr, "macro_f1"), "mia_auc": mia, "eps_max": eps, "time_ratio": ratio, "fl_total_s": ctx.summary_value(tstr, "fl_total_s"),
              "ok_mia": bool(mia <= th["mia_auc_max"]), "ok_eps": eps is None or eps <= th["eps_max_recommend"] * (1 + 1e-9),      # float tolerance only
              "ok_overhead": ratio is None or ratio <= th["overhead_ratio_max"]}
@@ -343,11 +377,11 @@ def why(ctx: Context) -> dict[str, Any]:
         out["c2st"][label] = sv(first(label), "c2st_auc_mean")
         out["mia"][label] = sv(first(label), "mia_auc_mean")
         out["train_seconds"][label] = sv(first(label), "cvae_train_s")
-    ref = next((e for e in ctx.refs if e["label"].startswith("B3-plain")), None)               # relative TSTR loss of DP against epsilon = infinity (same decoder)
+    ref = next((e for e in ctx.refs if e["label"].startswith("B3-plain")), None)               # relative TSTR loss of DP against epsilon = infinity (same decoder), CVAE route only
     loss = []
     if ref:
         for e in ctx.ents:
-            if e["color"] == "dp":
+            if e["color"] == "dp" and _is_cvae(e):
                 for clf in CLFS:
                     base = sv(ref["cfgs"][("TSTR", clf)], "macro_f1")
                     if base:
@@ -385,7 +419,7 @@ def _by_class(ctx: Context) -> dict[str, Any]:
     rows: list[dict[str, Any]] = []
 
     def add(label: str, decoder: str, e: dict[str, Any], kind: str, eps: float | None = None) -> None:
-        row: dict[str, Any] = {"label": label, "decoder": decoder, "kind": kind, "eps": eps}
+        row: dict[str, Any] = {"label": label, "decoder": decoder, "kind": kind, "eps": eps, "generator": ag.generator_of(e)}
         for clf in CLFS:
             st = _recall_stats(ctx, e["cfgs"].get(("TSTR", clf)))
             if st:
@@ -397,19 +431,25 @@ def _by_class(ctx: Context) -> dict[str, Any]:
         add("B3-plain", "plain", ref, "ref")
     for e in ctx.ents:
         if e["color"] != "baseline" and e["label"] != "B2":
-            add(e["label"], "plain" if e["color"] in ("dp", "dpsa") else "residual noise", e, e["color"], e.get("eps"))
+            add(e["label"], "none (noisy tables)" if not _is_cvae(e) else "plain" if e["color"] in ("dp", "dpsa") else "residual noise", e, e["color"], e.get("eps"))
+    mg_ref = next((e for e in ctx.refs if not _is_cvae(e)), None)
+    if mg_ref:
+        add(mg_ref["label"].split(" (")[0], "none (noisy tables)", mg_ref, "ref")
     b0 = _entry(ctx.ents, "B0")
     real = {clf: st for clf in CLFS if b0 and (st := _recall_stats(ctx, b0["cfgs"].get(("TRTR", clf))))}
-    major, base = _majority_class(ctx), next((r for r in rows if r["label"] == "B3-plain"), None)
+    major = _majority_class(ctx)
+    base_of = {"CVAE": next((r for r in rows if r["label"] == "B3-plain"), None),          # each generator against its own epsilon = infinity point (SPEC_DEVIATIONS R.15)
+               "FedDP-Marginal": next((r for r in rows if mg_ref and r["label"] == mg_ref["label"].split(" (")[0]), None)}
     change = []
     for r in rows:
+        base = base_of.get(r["generator"])
         if r["kind"] not in ("dp", "dpsa") or not base:
             continue
         for clf in CLFS:
             if clf in r and clf in base and base[clf]["rare_mean"]:
-                change.append({"label": r["label"], "classifier": clf, "rare_mean": r[clf]["rare_mean"], "rare_mean_inf": base[clf]["rare_mean"],
-                               "rare_relative": float(r[clf]["rare_mean"] / base[clf]["rare_mean"] - 1), "major_recall": r[clf]["recall"].get(major),
-                               "major_recall_inf": base[clf]["recall"].get(major)})
+                change.append({"label": r["label"], "generator": r["generator"], "reference": base["label"], "classifier": clf, "rare_mean": r[clf]["rare_mean"],
+                               "rare_mean_inf": base[clf]["rare_mean"], "rare_relative": float(r[clf]["rare_mean"] / base[clf]["rare_mean"] - 1),
+                               "major_recall": r[clf]["recall"].get(major), "major_recall_inf": base[clf]["recall"].get(major)})
     return {"classes": list(ctx.classes), "rare": list(ctx.rare), "majority": major, "rows": rows, "real_only": real, "dp_change": change}
 
 
@@ -454,8 +494,10 @@ def _privacy_unit(ctx: Context) -> dict[str, Any] | None:
 
 def _scenarios(R4: dict[str, Any], R6: dict[str, Any]) -> list[dict[str, Any]]:
     """Which labelled configurations answer which requirement. S1: only the aggregation server must not see the updates; S2: a formal guarantee on the released
-    model / synthetic data; S3: both; S4: clients that cannot afford DP-SGD's extra compute (the overhead filter of R6)."""
-    cand = R6.get("candidates", [])
+    model / synthetic data; S3: both; S4: clients that cannot afford DP-SGD's extra compute (the overhead filter of R6).
+    These are the requirements of the spec's CVAE route (M1, M2, M3); FedDP-Marginal is matched to requirements by `recommend` (9.10b), so its rows are left out here
+    (SPEC_DEVIATIONS R.15)."""
+    cand = [r for r in R6.get("candidates", []) if r.get("generator", "CVAE") == "CVAE"]
     dp = sorted((r for r in cand if r["kind"] == "dp"), key=lambda r: r["eps_max"] if r["eps_max"] is not None else 1e9)
     flat = bool((R4.get("curves", {}).get(f"TSTR-{PRIMARY}") or {}).get("flat"))
     return [{"id": "S1", "choose": [r["label"] for r in cand if r["kind"] == "secagg"]},

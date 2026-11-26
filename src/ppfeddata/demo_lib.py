@@ -1,8 +1,9 @@
 """Phase 13: the logic behind demo/app.py, kept out of the Streamlit script so that it can be tested without Streamlit.
 
-- `generators` / `sample`: draw synthetic rows from a trained CVAE of the spec matrix (B2, B3, M1, M2, M3) for one class or all classes, and return them in raw units.
-  The path is the one of the evaluation (`models.generate.generate`): the same model, seed and counts give the same rows as `artifacts/<run>/synthetic.npz`.
-  A DP configuration is sampled with the plain decoder only: the per-class residual noise is estimated on the pooled train split and is not covered by epsilon
+- `generators` / `sample`: draw synthetic rows from a trained generator for one class or all classes, and return them in raw units: FedDP-Marginal (MG-eps1/5/10,
+  the framework's generator since the optimisation round; rows sampled from the released noisy tables) or a CVAE of the spec matrix (B2, B3, M1, M2, M3; the baseline).
+  The path is the one of the evaluation (`models.generate.generate`, `models.marginal.sample`): the same model, seed and counts give the same rows as `artifacts/<run>/synthetic.npz`.
+  A DP configuration of the CVAE is sampled with the plain decoder only: the per-class residual noise is estimated on the pooled train split and is not covered by epsilon
   (SPEC_DEVIATIONS 7.1, 8.8), so releasing rows made with it would void the guarantee the configuration is named after.
 - results readers: `summary.csv`, `interpretation.json`, the sections of `final_report.md`, the data overview from the split manifest and the feature schema.
 """
@@ -52,7 +53,7 @@ class Generator:
 
 
 def generators(cfg: dict[str, Any]) -> list[Generator]:
-    """The CVAE configurations of the spec matrix (group `matrix`): the ones that have a generator model."""
+    """The configurations that have a generator model: the CVAE routes of the spec matrix (group `matrix`), then FedDP-Marginal at epsilon 1, 5, 10."""
     from ppfeddata.run_experiment import fl_run_name, load_matrix
 
     out = []
@@ -83,6 +84,11 @@ def available_seeds(cfg: dict[str, Any], g: Generator) -> list[int]:
 
 def available_generators(cfg: dict[str, Any]) -> list[tuple[Generator, list[int]]]:
     return [(g, s) for g in generators(cfg) if (s := available_seeds(cfg, g))]
+
+
+def framework_first(avail: list[tuple[Generator, list[int]]]) -> list[tuple[Generator, list[int]]]:
+    """The generators with a model, FedDP-Marginal (the framework's generator) before the CVAE baselines, each group in the order of `generators`."""
+    return [x for x in avail if x[0].kind == "mg"] + [x for x in avail if x[0].kind != "mg"]
 
 
 def synthetic_path(cfg: dict[str, Any], g: Generator, seed: int, variant: str) -> Path:
@@ -325,7 +331,7 @@ def recommendation(R: dict[str, Any] | None) -> dict[str, Any] | None:
     rows = [{"configuration": c["label"], "TAug RF macro-F1": c["taug_f1"], "TSTR RF macro-F1": c["tstr_f1"], "MIA AUC": c["mia_auc"], "epsilon (max)": c["eps_max"],
              "time per round vs B3": c["time_ratio"], "MIA ok": c["ok_mia"], "epsilon ok": c["ok_eps"], "overhead ok": c["ok_overhead"], "eligible": c["eligible"]} for c in r6["candidates"]]
     return {"table": pd.DataFrame(rows), "recommended": r6.get("recommended"), "literal": r6.get("literal"), "tied": r6.get("tied") or [], "tie_break_used": bool(r6.get("tie_break_used")),
-            "dp_alternative": (r6.get("dp_alternative") or {}).get("recommended"), "rule": r6.get("rule") or {}}
+            "dp_alternative": (r6.get("dp_alternative") or {}).get("recommended"), "tstr_recommended": (r6.get("tstr_ranking") or {}).get("recommended"), "rule": r6.get("rule") or {}}
 
 
 def premise(R: dict[str, Any] | None) -> dict[str, Any] | None:
@@ -335,13 +341,30 @@ def premise(R: dict[str, Any] | None) -> dict[str, Any] | None:
     return _premise(R) if R else None
 
 
-def why_cvae_note(R: dict[str, Any] | None, cfg: dict[str, Any]) -> str | None:
-    """The 'Why a CVAE at all?' paragraph of section 9.0 (generated from the same numbers as the report)."""
+def _answer(R: dict[str, Any] | None, cfg: dict[str, Any], head: str) -> str | None:
     if not R:
         return None
     from ppfeddata.interpret_report import answers
 
-    return next((a for a in answers(R, cfg) if a.startswith("**Why a CVAE at all?**")), None)
+    return next((a for a in answers(R, cfg) if a.startswith(head)), None)
+
+
+def why_cvae_note(R: dict[str, Any] | None, cfg: dict[str, Any]) -> str | None:
+    """The 'Why a CVAE at all?' paragraph of section 9.0 (generated from the same numbers as the report): the spec's premise, now the baseline."""
+    return _answer(R, cfg, "**Why a CVAE at all?**")
+
+
+def why_mg_note(R: dict[str, Any] | None, cfg: dict[str, Any]) -> str | None:
+    """The 'Why FedDP-Marginal and not the CVAE?' paragraph of section 9.0: why the framework uses FedDP-Marginal (None before the optimisation round)."""
+    return _answer(R, cfg, "**Why FedDP-Marginal and not the CVAE?**")
+
+
+def split_guide(body: str) -> tuple[str, str]:
+    """Section 9.10 of the report -> (the part on FedDP-Marginal, sub-section 9.10b, without its heading; the part on the spec's CVAE route). Either may be empty."""
+    m = re.search(r"^#### +9\.10b\b.*$", body, flags=re.M)
+    if not m:
+        return "", body.strip("\n")
+    return body[m.end():].strip("\n"), body[:m.start()].strip("\n")
 
 
 # --------------------------------------------------------------------------------------------------
