@@ -186,7 +186,7 @@ For reference (trained and tested on real data): B0 real data only: RF 0.448, ML
 python -m ppfeddata.cli demo
 ```
 
-Opens a Streamlit app with five pages (the interface is in Vietnamese): (1) data overview and class distribution, (2) tables and figures of the results, (3) FedDP-Marginal per deployment requirement first, then the
+Opens a Streamlit app with five pages (the interface is in English, like the report it quotes): (1) data overview and class distribution, (2) tables and figures of the results, (3) FedDP-Marginal per deployment requirement first, then the
 utility - privacy - overhead trade-off, with the spec's rule R6 and the CVAE route in collapsed sections, (4) sample generation (choose a configuration, FedDP-Marginal listed first, a class and a number of rows; download
 CSV), (5) threat model of both generators and limitations. The demo only reads the `results/` and `artifacts/`
 that the experiments produced, and samples from the trained generators (FedDP-Marginal or a CVAE) through the same code path as the evaluation. DP configurations of the CVAE are sampled with the plain decoder only (the

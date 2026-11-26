@@ -57,6 +57,7 @@ def test_files_are_written(tmp_path):
     assert "## consortium" in md and "Recommended:" in md
     html = (tmp_path / "reports" / "recommend.html").read_text(encoding="utf-8")
     assert "__ROWS__" not in html and "MGd-eps5" in html and json.loads((tmp_path / "recommend.json").read_text(encoding="utf-8"))
+    assert '<html lang="en">' in html and "Trust the server?" in html                                  # English, like the demo that links it (SPEC_DEVIATIONS R.16)
 
 
 def test_honest_clients_use_the_measured_curve_and_mia_limit_excludes():

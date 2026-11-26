@@ -668,7 +668,15 @@ def test_cli_knows_the_new_commands():
 # --------------------------------------------------------------------------------------------------
 # the demo pages (Streamlit's own test runner)
 # --------------------------------------------------------------------------------------------------
-PAGES = ["1. Dữ liệu", "2. Kết quả", "3. Đánh đổi và khuyến nghị", "4. Tạo mẫu", "5. Mô hình đe dọa và hạn chế"]
+PAGES = ["1. Data", "2. Results", "3. Trade-offs and recommendation", "4. Generate samples", "5. Threat model and limitations"]
+VIETNAMESE = re.compile("[ăâđêôơưạảấầẩẫậắằẳẵặẹẻẽếềểễệỉịọỏốồổỗộớờởỡợụủứừửữựỳỵỷỹ]", re.IGNORECASE)
+
+
+def test_demo_interface_is_in_english():
+    """The demo quotes the English report, so its own text is English too; so is the page that `recommend` writes, which the demo links (SPEC_DEVIATIONS R.16)."""
+    from ppfeddata import recommend as rc
+    for name, text in (("demo/app.py", (ROOT / "demo" / "app.py").read_text(encoding="utf-8")), ("recommend.HTML", rc.HTML)):
+        assert not VIETNAMESE.search(text), (name, sorted({m.group(0) for m in VIETNAMESE.finditer(text)}))
 
 
 def app():
@@ -699,7 +707,7 @@ def test_demo_sidebar_states_the_main_conclusion_from_the_json(monkeypatch):
     from ppfeddata.interpret_report import premise
     pm = premise(R)
     side = " ".join(m.value for m in at.sidebar.markdown)
-    assert ("không cải thiện IDS" in side) == bool(pm and pm["unsupported"])
+    assert ("do not improve the IDS" in side) == bool(pm and pm["unsupported"])
 
 
 def test_demo_page_3_shows_which_configuration_for_which_requirement(monkeypatch):
@@ -714,10 +722,10 @@ def test_demo_page_3_shows_which_configuration_for_which_requirement(monkeypatch
     subs = [s.value for s in at.subheader]
     text = " ".join(m.value for m in at.markdown)
     if "#### 9.10b" in rep.read_text(encoding="utf-8"):                    # FedDP-Marginal first, the spec's CVAE route after it (SPEC_DEVIATIONS R.15)
-        assert subs.index("FedDP-Marginal theo yêu cầu triển khai") < subs.index("Thiết kế ban đầu của spec: quy tắc R6 và đường CVAE")
+        assert subs.index("FedDP-Marginal per deployment requirement") < subs.index("The spec's original design: rule R6 and the CVAE route")
         assert "What the IoT / MQTT setting changes" in text and any("Why FedDP-Marginal and not the CVAE?" in s.value for s in at.success)
         assert not any("M3-eps5" in s.value for s in at.success)                                          # the spec's rule R6 is not shown as the recommendation
-    assert any(e.label.startswith("Đường CVAE của spec") for e in at.expander)
+    assert any(e.label.startswith("The spec's CVAE route") for e in at.expander)
     assert "Requirement to configuration" in text and "What in the IoT / MQTT data changes the choice" in text
     assert not any(e.label.startswith("9.10") for e in at.expander)                                       # shown once, not again among the report sections
 
@@ -729,7 +737,7 @@ def test_demo_generates_samples_from_the_real_models(monkeypatch):
     at.run()
     at.sidebar.radio(key="page").set_value(PAGES[3]).run()
     assert not at.exception
-    next(b for b in at.button if b.label == "Sinh mẫu").click().run()
+    next(b for b in at.button if b.label == "Generate samples").click().run()
     assert not at.exception and not at.error
     s = at.session_state["samples"]
     assert len(s.table) == 6 * 100 and s.generator.label and set(s.table["label"]) == {"NORMAL", "BCF", "DELAYED", "SYN", "INVALID", "WILL"}

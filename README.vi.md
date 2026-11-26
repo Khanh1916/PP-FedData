@@ -186,7 +186,7 @@ Macro-F1 của bộ phân loại RF, trung bình các seed:
 python -m ppfeddata.cli demo
 ```
 
-Mở trang Streamlit gồm 5 phần: (1) tổng quan dữ liệu và phân bố lớp, (2) bảng và hình kết quả, (3) FedDP-Marginal theo yêu cầu triển khai trước, rồi đánh đổi utility - privacy - overhead, quy tắc R6 của spec và đường CVAE
+Mở trang Streamlit gồm 5 phần (giao diện bằng tiếng Anh, như báo cáo mà demo trích): (1) tổng quan dữ liệu và phân bố lớp, (2) bảng và hình kết quả, (3) FedDP-Marginal theo yêu cầu triển khai trước, rồi đánh đổi utility - privacy - overhead, quy tắc R6 của spec và đường CVAE
 nằm trong các mục thu gọn, (4) tạo mẫu (chọn cấu hình, FedDP-Marginal đứng đầu danh sách, lớp, số lượng; tải CSV),
 (5) mô hình đe dọa của cả hai bộ sinh và hạn chế. Demo chỉ đọc `results/` và `artifacts/` do các thí nghiệm tạo ra, và lấy mẫu từ các bộ sinh đã huấn luyện (FedDP-Marginal hoặc CVAE) bằng đúng đường mã của phần đánh giá. Cấu hình
 CVAE có DP chỉ sinh bằng bộ giải mã thuần (nhiễu dư theo lớp được ước lượng từ toàn bộ train nên nằm ngoài ε). Không gửi telemetry (`.streamlit/config.toml`). Các trang và dữ liệu đầu vào: [demo/README.md](demo/README.md).

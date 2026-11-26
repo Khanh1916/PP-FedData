@@ -242,7 +242,7 @@ def run(cfg: dict[str, Any], req: Requirement | None = None, out_dir: str | Path
 
 
 HTML = """<!doctype html>
-<html lang="vi"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
 <title>PP-FedData recommend</title>
 <style>
 :root{--bg:#fafaf7;--fg:#1d1d1b;--muted:#6b6b66;--line:#deded8;--acc:#1f6f8b;--ok:#2f7d4f;--card:#fff}
@@ -261,22 +261,22 @@ th:first-child,td:first-child{text-align:left}
 tr.out{color:var(--muted)} tr.front td:first-child{font-weight:600;color:var(--acc)}
 .why{font-size:.8rem}
 </style></head><body><main>
-<h1>Cấu hình nào cho yêu cầu triển khai nào</h1>
-<p style="color:var(--muted)">Số đo đọc từ <code>results/scorecard.json</code> (TSTR trên tập test thật, trung bình theo seed). ε là ε còn đúng dưới giả định tin cậy đã chọn.</p>
+<h1>Which configuration for which deployment requirement</h1>
+<p style="color:var(--muted)">Measurements read from <code>results/scorecard.json</code> (TSTR on the real test set, mean over seeds). ε is the ε that still holds under the chosen trust assumption.</p>
 <div class="f">
-<label>Kịch bản mẫu<select id="scn"><option value="">(tự chọn)</option></select></label>
-<label>Tin server?<select id="ts"><option value="1">có</option><option value="0">không</option></select></label>
-<label>Số client trung thực tối thiểu<select id="tc"><option value="">tất cả (tin các client)</option><option>4</option><option>3</option><option>2</option><option value="1">1 (các client khác có thể thông đồng)</option></select></label>
-<label>MIA AUC tối đa<input id="mia" type="number" min="0.5" max="1" step="0.01" placeholder="không giới hạn"></label>
-<label>ε tối đa<select id="eps"><option value="">không cần DP</option><option>1</option><option>5</option><option>10</option></select></label>
-<label>MB / vòng tối đa<input id="mbr" type="number" min="0" step="0.1" placeholder="∞"></label>
-<label>MB tổng tối đa<input id="mbt" type="number" min="0" step="1" placeholder="∞"></label>
-<label>Số vòng tối đa<input id="rnd" type="number" min="1" step="1" placeholder="∞"></label>
-<label>Ưu tiên<select id="pri"><option value="tstr_f1">macro-F1 (6 lớp)</option><option value="bin_f1">F1 nhị phân</option><option value="rare_recall">recall lớp hiếm</option></select></label>
-<label>Recall lớp hiếm tối thiểu<input id="rr" type="number" min="0" max="1" step="0.01" placeholder="0"></label>
+<label>Example scenario<select id="scn"><option value="">(custom)</option></select></label>
+<label>Trust the server?<select id="ts"><option value="1">yes</option><option value="0">no</option></select></label>
+<label>Minimum honest clients<select id="tc"><option value="">all (clients trusted)</option><option>4</option><option>3</option><option>2</option><option value="1">1 (the other clients may collude)</option></select></label>
+<label>Maximum MIA AUC<input id="mia" type="number" min="0.5" max="1" step="0.01" placeholder="no limit"></label>
+<label>Maximum ε<select id="eps"><option value="">no DP needed</option><option>1</option><option>5</option><option>10</option></select></label>
+<label>Maximum MB per round<input id="mbr" type="number" min="0" step="0.1" placeholder="∞"></label>
+<label>Maximum MB in total<input id="mbt" type="number" min="0" step="1" placeholder="∞"></label>
+<label>Maximum rounds<input id="rnd" type="number" min="1" step="1" placeholder="∞"></label>
+<label>Priority<select id="pri"><option value="tstr_f1">macro-F1 (6 classes)</option><option value="bin_f1">binary F1</option><option value="rare_recall">rare-class recall</option></select></label>
+<label>Minimum rare-class recall<input id="rr" type="number" min="0" max="1" step="0.01" placeholder="0"></label>
 </div>
 <div class="best" id="best"></div>
-<div class="wrap"><table><thead><tr><th>cấu hình</th><th>macro-F1</th><th>F1 nhị phân</th><th>recall lớp hiếm</th><th>ε</th><th>SecAgg</th><th>DP</th><th>MB/vòng</th><th>vòng</th><th>MB tổng</th><th>lý do loại</th></tr></thead><tbody id="tb"></tbody></table></div>
+<div class="wrap"><table><thead><tr><th>configuration</th><th>macro-F1</th><th>binary F1</th><th>rare-class recall</th><th>ε</th><th>SecAgg</th><th>DP</th><th>MB/round</th><th>rounds</th><th>MB total</th><th>excluded because</th></tr></thead><tbody id="tb"></tbody></table></div>
 </main>
 <script>
 const ROWS=__ROWS__, SC=__SCENARIOS__, TOL=__EPS_TOL__;
@@ -293,20 +293,20 @@ function low(x,y,rel){if(isNaN(x)||isNaN(y)||(x===Infinity&&y===Infinity))return
 function dom(a,b){const c=["tstr_f1","bin_f1","rare_recall"].map(m=>cmp(a,b,m));c.push(low(a.e,b.e,TOL),(a.secagg?1:0)-(b.secagg?1:0),low(num(a.mb_round),num(b.mb_round),.05),low(num(a.mb_total),num(b.mb_total),.05));return c.every(v=>v>=0)&&c.some(v=>v>0)}
 function draw(){const ts=$("ts").value==="1",tc=$("tc").value,MI=num($("mia").value),E=num($("eps").value),MR=num($("mbr").value),MT=num($("mbt").value),RN=num($("rnd").value),RR=num($("rr").value),P=$("pri").value;
  const rs=ROWS.map(r=>{const e=effEps(r,tc),w=[];
-  if(!ts&&!(r.secagg||r.dp_mode==="local"))w.push("server thấy cập nhật");
-  if(!isNaN(E)&&!(e<=E*(1+TOL)))w.push(e===Infinity?"không có DP":"ε "+fmt(e,2)+" > "+E);
-  if(!isNaN(MR)&&num(r.mb_round)>MR)w.push(fmt(r.mb_round,2)+" MB/vòng");
-  if(!isNaN(MT)&&num(r.mb_total)>MT)w.push(fmt(r.mb_total,1)+" MB tổng");
-  if(!isNaN(RN)&&num(r.rounds)>RN)w.push(fmt(r.rounds,0)+" vòng");
-  if(!isNaN(RR)&&!(num(r.rare_recall)>=RR))w.push("recall hiếm "+fmt(r.rare_recall));
-  if(!isNaN(MI)&&!(num(r.mia_auc)<MI))w.push(isNaN(num(r.mia_auc))?"chưa đo MIA":"MIA "+fmt(r.mia_auc));
+  if(!ts&&!(r.secagg||r.dp_mode==="local"))w.push("server sees the updates");
+  if(!isNaN(E)&&!(e<=E*(1+TOL)))w.push(e===Infinity?"no DP":"ε "+fmt(e,2)+" > "+E);
+  if(!isNaN(MR)&&num(r.mb_round)>MR)w.push(fmt(r.mb_round,2)+" MB/round");
+  if(!isNaN(MT)&&num(r.mb_total)>MT)w.push(fmt(r.mb_total,1)+" MB total");
+  if(!isNaN(RN)&&num(r.rounds)>RN)w.push(fmt(r.rounds,0)+" rounds");
+  if(!isNaN(RR)&&!(num(r.rare_recall)>=RR))w.push("rare recall "+fmt(r.rare_recall));
+  if(!isNaN(MI)&&!(num(r.mia_auc)<MI))w.push(isNaN(num(r.mia_auc))?"MIA not measured":"MIA "+fmt(r.mia_auc));
   return {...r,e,w}});
  const ok=rs.filter(r=>!r.w.length);ok.forEach(r=>r.front=!ok.some(o=>o!==r&&dom(o,r)));
  rs.sort((a,b)=>(a.w.length?1:0)-(b.w.length?1:0)||(b.front?1:0)-(a.front?1:0)||num(b[P])-num(a[P]));
  const fr=ok.filter(r=>r.front).sort((a,b)=>num(b[P])-num(a[P])),best=fr[0];
- $("best").innerHTML=best?`<b>Khuyến nghị: ${best.label}</b> · ${({tstr_f1:"macro-F1",bin_f1:"F1 nhị phân",rare_recall:"recall lớp hiếm"})[P]} ${fmt(best[P])} · ε ${fmt(best.e,2)}`
-  +(fr.slice(1).filter(r=>cmp(best,r,P)===0).length?` · ngang nhau trong độ lệch seed: ${fr.slice(1).filter(r=>cmp(best,r,P)===0).map(r=>r.label).join(", ")}`:""):"Không có cấu hình hợp lệ nào thoả yêu cầu.";
- $("tb").innerHTML=rs.map(r=>`<tr class="${r.w.length?"out":(r.front?"front":"")}"><td>${r.label}</td><td>${fmt(r.tstr_f1)}</td><td>${fmt(r.bin_f1)}</td><td>${fmt(r.rare_recall)}</td><td>${fmt(r.e,2)}</td><td>${r.secagg?"có":"không"}</td><td>${r.dp_mode||"không"}</td><td>${fmt(r.mb_round,2)}</td><td>${fmt(r.rounds,0)}</td><td>${fmt(r.mb_total,1)}</td><td class="why">${r.w.join("; ")}</td></tr>`).join("")}
+ $("best").innerHTML=best?`<b>Recommendation: ${best.label}</b> · ${({tstr_f1:"macro-F1",bin_f1:"binary F1",rare_recall:"rare-class recall"})[P]} ${fmt(best[P])} · ε ${fmt(best.e,2)}`
+  +(fr.slice(1).filter(r=>cmp(best,r,P)===0).length?` · tied within the seed spread: ${fr.slice(1).filter(r=>cmp(best,r,P)===0).map(r=>r.label).join(", ")}`:""):"No valid configuration meets the requirement.";
+ $("tb").innerHTML=rs.map(r=>`<tr class="${r.w.length?"out":(r.front?"front":"")}"><td>${r.label}</td><td>${fmt(r.tstr_f1)}</td><td>${fmt(r.bin_f1)}</td><td>${fmt(r.rare_recall)}</td><td>${fmt(r.e,2)}</td><td>${r.secagg?"yes":"no"}</td><td>${r.dp_mode||"no"}</td><td>${fmt(r.mb_round,2)}</td><td>${fmt(r.rounds,0)}</td><td>${fmt(r.mb_total,1)}</td><td class="why">${r.w.join("; ")}</td></tr>`).join("")}
 draw();
 </script></body></html>
 """
