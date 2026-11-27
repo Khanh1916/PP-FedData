@@ -12,7 +12,9 @@ ROOT = Path(__file__).resolve().parents[1]
 PKG = ROOT / "src" / "ppfeddata"
 DOCS = [ROOT / "docs" / "ARCHITECTURE.md", ROOT / "docs" / "ARCHITECTURE.vi.md", PKG / "README.md", ROOT / "configs" / "README.md",
         ROOT / "results" / "README.md", ROOT / "tests" / "README.md", ROOT / "demo" / "README.md", ROOT / "artifacts" / "README.md",
-        ROOT / "notebooks" / "README.md", ROOT / ".streamlit" / "README.md", ROOT / "data" / "README.md", ROOT / "AGENTS.md"]
+        ROOT / "notebooks" / "README.md", ROOT / ".streamlit" / "README.md", ROOT / "data" / "README.md", ROOT / "AGENTS.md",
+        ROOT / "docs" / "USAGE.md", ROOT / "docs" / "USAGE.vi.md"]
+USAGE = [ROOT / "docs" / "USAGE.md", ROOT / "docs" / "USAGE.vi.md"]
 HISTORY = [ROOT / "docs" / f"{name}{lang}.md" for name in ("PP-FedData_Implementation_Spec", "SPEC_DEVIATIONS") for lang in ("", ".vi")]   # links only: they name past files too
 NOT_COMMITTED = ("data/", "artifacts/", "configs/local.yaml", "results/runs.csv", "results/summary.csv")
 COMMANDS = set(build_parser()._subparsers._group_actions[0].choices)
@@ -95,6 +97,33 @@ def test_the_commands_named_as_producers_exist(name):
             continue
         for cmd in re.findall(r"`([a-z][\w-]*)(?:\s[^`]*)?`", cells[1]):
             assert cmd in COMMANDS, f"{name}: {cmd} is not a CLI command ({row[:80]})"
+
+
+@pytest.mark.parametrize("md", USAGE, ids=lambda p: p.name)
+def test_every_command_line_of_the_usage_guide_parses(md):
+    """Each `python -m ppfeddata.cli ...` line of the usage guide (code blocks and table cells) is accepted by the real parser: a renamed command
+    or option fails here instead of in a reader's terminal."""
+    import shlex
+    lines = re.findall(r"^python -m ppfeddata\.cli ([^#\n]*)", md.read_text(encoding="utf-8"), flags=re.M)
+    lines += re.findall(r"`python -m ppfeddata\.cli ([^`]+)`", md.read_text(encoding="utf-8"))
+    assert len(lines) >= 15, lines
+    for args in lines:
+        argv = shlex.split(args)
+        if "--help" in argv:
+            assert argv[0] == "--help"
+            continue
+        ns = build_parser().parse_args(argv)
+        assert ns.command in COMMANDS, args
+
+
+def test_the_usage_guide_and_its_translation_mirror_each_other():
+    """Same line count, same headings level by level, same code blocks (comments aside) and the same commands in the same order."""
+    en, vi = (p.read_text(encoding="utf-8").splitlines() for p in USAGE)
+    assert len(en) == len(vi)
+    kind = lambda s: re.match(r"(#+ |\|---|\||```\w*|- |\d+\. |   - |)", s).group(1)      # noqa: E731
+    assert [kind(a) for a in en] == [kind(b) for b in vi]
+    cmds = lambda ls: [re.sub(r"\s+#.*", "", s).rstrip() for s in ls if s.startswith("python -m ppfeddata.cli")]      # noqa: E731
+    assert cmds(en) == cmds(vi)
 
 
 def test_tests_readme_lists_every_test_file():

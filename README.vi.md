@@ -31,7 +31,7 @@ python -m pip install -e .
 python -m pytest -q    # 10-15 phút trên CPU laptop; không cần dữ liệu thô
 ```
 
-Mọi kết quả đều đọc được mà không cần dữ liệu thô: [báo cáo cuối](results/reports/final_report.md), [hướng dẫn chọn cấu hình](results/reports/recommend.md) và các hình trong `results/figures/`. Muốn chạy lại nghiên cứu thì cần bộ dữ liệu ([Dữ liệu](#dữ-liệu)) và đủ các bước [Cài đặt](#cài-đặt).
+Mọi kết quả đều đọc được mà không cần dữ liệu thô: [báo cáo cuối](results/reports/final_report.md), [hướng dẫn chọn cấu hình](results/reports/recommend.md) và các hình trong `results/figures/`. Muốn chạy lại nghiên cứu thì cần bộ dữ liệu ([Dữ liệu](#dữ-liệu)) và đủ các bước [Cài đặt](#cài-đặt). Từng bước, theo việc bạn muốn làm: [docs/USAGE.vi.md](docs/USAGE.vi.md).
 
 ## Cách hoạt động
 
@@ -85,6 +85,7 @@ Các hướng CVAE (B2, B3, M1-M3) đi qua cùng các bước 1, 2, 4 và 5. Sơ
 
 | Muốn... | Đọc |
 |---|---|
+| dùng mã từng bước: đọc kết quả, demo, chọn cấu hình, sinh dữ liệu, chạy lại, đổi thiết lập, dữ liệu riêng, xử lý sự cố | [docs/USAGE.vi.md](docs/USAGE.vi.md) |
 | hiểu thiết kế và mã | [docs/ARCHITECTURE.vi.md](docs/ARCHITECTURE.vi.md), rồi README của từng thư mục ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md); tiếng Anh) |
 | xem mọi kết quả và cách diễn giải | [results/reports/final_report.md](results/reports/final_report.md): 9.0 tóm tắt, 9.9b vì sao chọn FedDP-Marginal, 9.10b theo yêu cầu, 9.11 vòng tiếp theo, 9.12 FedDP-Marginal không DP |
 | chọn cấu hình cho một triển khai | [results/reports/recommend.md](results/reports/recommend.md), trang tương tác `results/reports/recommend.html` (tải về rồi mở), trang 3 của demo |
@@ -371,6 +372,7 @@ PP-FedData/
 ├── results/              kết quả được commit: reports/, figures/, *.json, manifests/, repro/; runs.csv và summary.csv không commit
 ├── docs/
 │   ├── ARCHITECTURE.md, ARCHITECTURE.vi.md   thành phần, luồng dữ liệu, cơ chế bảo vệ, bản đồ mã
+│   ├── USAGE.md, USAGE.vi.md                 dùng từng bước theo mục đích, thiết lập, dữ liệu riêng, xử lý sự cố
 │   ├── PP-FedData_Implementation_Spec.md     các luật (spec v1.5); .vi.md: tiếng Việt
 │   └── SPEC_DEVIATIONS.md                    mọi chỗ lệch spec, kèm bằng chứng; .vi.md: tiếng Việt
 ├── tests/                pytest cho mọi bước

@@ -13,6 +13,8 @@ generator, FedDP-Marginal (`MG*` runs), against real-data baselines. Every stage
 Where to read first:
 
 - `README.md` (English) / `README.vi.md` (Vietnamese): overview, results, the commands table ("Running each phase"), run times.
+- `docs/USAGE.md` / `docs/USAGE.vi.md`: step-by-step use by goal, the settings people change, own data, troubleshooting. A test
+  parses every `python -m ppfeddata.cli` line of both, so a renamed command or option must be changed there too.
 - `docs/ARCHITECTURE.md`: components, data flow, code map.
 - `docs/PP-FedData_Implementation_Spec.md`: the rules of the study (the spec).
 - `docs/SPEC_DEVIATIONS.md`: every deviation from the spec and every decision, with evidence (row codes such as `R.13`).

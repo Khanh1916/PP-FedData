@@ -31,7 +31,7 @@ python -m pip install -e .
 python -m pytest -q    # 10-15 minutes on a laptop CPU; needs no raw data
 ```
 
-Every result can be read without the raw data: the [final report](results/reports/final_report.md), the [configuration guide](results/reports/recommend.md) and the figures in `results/figures/`. Re-running the study needs the dataset ([Data](#data)) and the full [Installation](#installation) steps.
+Every result can be read without the raw data: the [final report](results/reports/final_report.md), the [configuration guide](results/reports/recommend.md) and the figures in `results/figures/`. Re-running the study needs the dataset ([Data](#data)) and the full [Installation](#installation) steps. Step by step, by what you want to do: [docs/USAGE.md](docs/USAGE.md).
 
 ## How it works
 
@@ -85,6 +85,7 @@ The CVAE routes (B2, B3, M1-M3) go through the same steps 1, 2, 4 and 5. Diagram
 
 | To... | Read |
 |---|---|
+| use the code step by step: read the results, the demo, choose a configuration, generate data, re-run, change settings, own data, troubleshooting | [docs/USAGE.md](docs/USAGE.md) |
 | understand the design and the code | [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md), then the README of each folder ([src/ppfeddata](src/ppfeddata/README.md), [configs](configs/README.md), [results](results/README.md), [tests](tests/README.md), [tools](tools/README.md), [demo](demo/README.md)) |
 | see every result and its interpretation | [results/reports/final_report.md](results/reports/final_report.md): 9.0 summary, 9.9b why FedDP-Marginal, 9.10b per requirement, 9.11 follow-up round, 9.12 FedDP-Marginal without DP |
 | choose a configuration for a deployment | [results/reports/recommend.md](results/reports/recommend.md), the interactive page `results/reports/recommend.html` (download and open it), demo page 3 |
@@ -373,6 +374,7 @@ PP-FedData/
 ├── results/              committed results: reports/, figures/, *.json, manifests/, repro/; runs.csv and summary.csv not committed
 ├── docs/
 │   ├── ARCHITECTURE.md, ARCHITECTURE.vi.md   components, data flow, privacy mechanics, code map
+│   ├── USAGE.md, USAGE.vi.md                 step-by-step use by goal, settings, own data, troubleshooting
 │   ├── PP-FedData_Implementation_Spec.md     the rules (spec v1.5); .vi.md: Vietnamese
 │   └── SPEC_DEVIATIONS.md                    every deviation from the spec, with evidence; .vi.md: Vietnamese
 ├── tests/                pytest for every stage
